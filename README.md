@@ -33,6 +33,7 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 06 | [Economics & Funnel](./06-economics-and-funnel.md) | Funnel design, unit economics model, targets |
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
+| 09 | [The AI Team](./09-ai-team.md) | Agents & skills — the workforce, and the built-ins we reuse |
 | — | [engine/](./engine/README.md) | **The build** — AI-run operating system: self-improving loops, compliance linter, approval gates |
 
 ## The build (`engine/`)
