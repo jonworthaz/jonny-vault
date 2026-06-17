@@ -9,9 +9,9 @@ than rebuild.*
 ```
                          You (approval gates)
                                  │
-              ┌──────────────────┴───────────────────┐
-              │           Orchestrator (main)         │
-              └──────────────────┬───────────────────┘
+                    ai-entrepreneur 🟣 (strategy / direction)
+                       skill: strategic-direction
+                                 │  sets direction, delegates
    ┌──────────────┬──────────────┼──────────────┬──────────────┐
    ▼              ▼              ▼              ▼              ▼
 niche-researcher copywriter  compliance-    growth-analyst  affiliate-
@@ -32,6 +32,7 @@ encodes the procedure.
 
 | Agent | Owns | Tools | Reuses |
 |---|---|---|---|
+| **ai-entrepreneur** 🟣 | Strategy & direction; answers "what should we do" | Read, Grep, Glob, Bash, WebSearch, WebFetch | `strategic-direction` skill (opus); delegates to all specialists + `Plan` |
 | **compliance-reviewer** 🔴 | The guardrail gate before anything ships | Read, Grep, Bash | `compliance-check` skill (opus, run proactively) |
 | **growth-analyst** | Unit economics + the scale gate | Read, Bash, Grep | `unit-economics` skill |
 | **copywriter** | Honest, converting copy (self-lints) | Read, Bash, Write | `compliance-check` skill |
@@ -42,6 +43,7 @@ encodes the procedure.
 
 | Skill | What it does | Wraps |
 |---|---|---|
+| **strategic-direction** | Founder-grade framework for decisions & answers | the plan + engine state |
 | **compliance-check** | Lints copy against doc 07 before it ships | `engine/src/guardrails.ts` |
 | **run-engine** | Operate the loops + resolve approval gates | `engine/src/cli.ts` |
 | **unit-economics** | Compute/interpret CAC, payback, LTV, the scale gate | `engine/src/loops/analysis.ts` |
@@ -65,6 +67,7 @@ We lean on these as-is:
 
 | Business function | Loop | Custom agent | Built-in backup |
 |---|---|---|---|
+| Set direction / make the call | — | ai-entrepreneur | Plan |
 | Pick the niche | niche | niche-researcher | deep-research, Explore |
 | Write the copy | creative | copywriter | — |
 | Approve the copy | creative | **compliance-reviewer** | — |
