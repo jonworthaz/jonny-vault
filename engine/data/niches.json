@@ -1,0 +1,25 @@
+{
+  "_comment": "Seed signals for the Niche Selection Loop (Phase 0). Scores are 0-100. Replace these placeholder signals with real demand/CPC/competitor data from your validation sprint; the loop re-scores from whatever is here.",
+  "candidates": [
+    {
+      "name": "Creator content engine",
+      "job": "Turns one topic/URL into a month of platform-native posts, scripts, thumbnails",
+      "signals": { "demand": 82, "intent": 70, "pricingHeadroom": 75, "buildability": 80, "affiliateFit": 88 }
+    },
+    {
+      "name": "Niche SEO/content writer",
+      "job": "Bulk on-brand long-form + programmatic SEO for SMBs/agencies",
+      "signals": { "demand": 78, "intent": 80, "pricingHeadroom": 72, "buildability": 78, "affiliateFit": 70 }
+    },
+    {
+      "name": "Sales/outbound copilot",
+      "job": "Researches prospects + drafts personalised outreach at scale",
+      "signals": { "demand": 80, "intent": 85, "pricingHeadroom": 80, "buildability": 72, "affiliateFit": 82 }
+    },
+    {
+      "name": "Vertical pro-GPT (trades/tutors/realtors)",
+      "job": "Daily workflow tool for a specific profession",
+      "signals": { "demand": 68, "intent": 78, "pricingHeadroom": 78, "buildability": 70, "affiliateFit": 60 }
+    }
+  ]
+}

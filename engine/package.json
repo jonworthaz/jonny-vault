@@ -1,0 +1,22 @@
+{
+  "name": "lean-subscription-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-run business operating system: self-improving loops for a lean subscription business (Medvi playbook, compliant version).",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "engine": "node src/cli.ts",
+    "status": "node src/cli.ts status",
+    "cycle": "node src/cli.ts cycle",
+    "typecheck": "tsc --noEmit"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.69.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

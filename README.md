@@ -33,6 +33,24 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 06 | [Economics & Funnel](./06-economics-and-funnel.md) | Funnel design, unit economics model, targets |
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
+| — | [engine/](./engine/README.md) | **The build** — AI-run operating system: self-improving loops, compliance linter, approval gates |
+
+## The build (`engine/`)
+
+The plan is now executable. [`engine/`](./engine/README.md) is a runnable,
+AI-run business operating system that implements the playbook above:
+
+- **Self-improving loops** — niche scoring, creative generation, unit-economics
+  analysis, churn analysis, and an experiment memory that feeds back into
+  generation. State persists in `engine/data/state.json` and compounds each run.
+- **Compliance linter** — every generated ad is checked against [doc 07](./07-guardrails.md)
+  before it can be stored; Medvi-style fraud (fake personas, deepfakes, false
+  claims) is blocked by construction.
+- **Approval gates** — the AI only ever *proposes* spend/publish actions; nothing
+  moves money or goes public without a human.
+
+Runs offline with zero dependencies (`node engine/src/cli.ts cycle`), and uses
+the live Claude API automatically when `ANTHROPIC_API_KEY` is set.
 
 ## The one-line thesis
 
