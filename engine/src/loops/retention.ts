@@ -28,6 +28,7 @@ export async function runRetentionLoop(state: EngineState, reasons?: string[]): 
       churnReasons.map((r) => `- ${r}`).join("\n") +
       `\n\nPropose one honest fix per reason. Prioritise the fix likely to move 6-month retention most.`,
     maxTokens: 600,
+    loop: "retention",
     offline: () =>
       [
         "- Intro-price shock → show the post-trial price clearly before payment and email a value recap pre-renewal.",

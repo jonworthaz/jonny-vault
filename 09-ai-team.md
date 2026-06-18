@@ -38,6 +38,7 @@ encodes the procedure.
 | **copywriter** | Honest, converting copy (self-lints) | Read, Bash, Write | `compliance-check` skill |
 | **niche-researcher** | Phase-0 demand validation | Read, Write, Bash, WebSearch, WebFetch | `niche-validation` skill + `deep-research`, `Explore` |
 | **affiliate-manager** | The distribution moat (doc 04) | Read, Write, WebSearch | `compliance-reviewer` gate |
+| **support-agent** | Customer support (high-volume, cheapest model) | Read, Write (haiku) | `compliance-check` skill |
 
 ## Custom skills (`.claude/skills/`)
 
@@ -48,6 +49,7 @@ encodes the procedure.
 | **run-engine** | Operate the loops + resolve approval gates | `engine/src/cli.ts` |
 | **unit-economics** | Compute/interpret CAC, payback, LTV, the scale gate | `engine/src/loops/analysis.ts` |
 | **niche-validation** | The Phase-0 sprint procedure | `niche` loop + research tools |
+| **dashboard** | Read/operate the control dashboard | `engine/src/cli.ts dashboard` |
 
 ## Built-in agents & skills we reuse (don't rebuild)
 

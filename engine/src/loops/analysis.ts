@@ -81,6 +81,7 @@ export async function runAnalysisLoop(state: EngineState, csvArg?: string): Prom
       `Retention m1 ${(latest.m1Retention * 100).toFixed(0)}%, m3 ${(latest.m3Retention * 100).toFixed(0)}%, m6 ${(latest.m6Retention * 100).toFixed(0)}%\n` +
       `Scale gate passed: ${e.gate.pass}. What should we do next?`,
     maxTokens: 400,
+    loop: "analysis",
     offline: () =>
       e.gate.pass
         ? `Unit economics clear the gate (payback ${fmt(e.paybackMonths)}mo, LTV:CAC ${fmt(e.ltvCac)}:1). ` +

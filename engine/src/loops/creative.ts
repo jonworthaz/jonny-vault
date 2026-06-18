@@ -48,6 +48,7 @@ export async function runCreativeLoop(
       (angle ? `Angle to explore: ${angle}\n` : "") +
       `Write 3 honest, high-converting ad variants. Keep body under 280 chars.`,
     maxTokens: 1200,
+    loop: "creative",
     offline: () =>
       JSON.stringify([
         {

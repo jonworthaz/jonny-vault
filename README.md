@@ -34,7 +34,9 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
 | 09 | [The AI Team](./09-ai-team.md) | Agents & skills — the workforce, and the built-ins we reuse |
-| — | [engine/](./engine/README.md) | **The build** — AI-run operating system: self-improving loops, compliance linter, approval gates |
+| 10 | [Improvement Prompt](./10-improvement-prompt.md) | Reusable prompt to run another self-improvement pass |
+| 11 | [Landscape & Gaps](./11-landscape-and-gaps.md) | How we compare to other agent systems; what's next |
+| — | [engine/](./engine/README.md) | **The build** — loops, **control dashboard**, compliance linter, approval gates, token routing |
 
 ## The build (`engine/`)
 

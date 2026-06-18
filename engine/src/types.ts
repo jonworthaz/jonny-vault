@@ -6,6 +6,45 @@ export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 export type ActionKind = "spend" | "publish" | "config" | "experiment";
 export type ActionStatus = "pending" | "approved" | "rejected" | "executed";
 
+// Autonomy / human-takeover mode.
+//   auto   — engine runs loops freely (still gates spend/publish for approval)
+//   assist — default; engine runs when asked, proposes actions
+//   paused — HUMAN IN CONTROL; the engine will not run loops until handed back
+export type Autonomy = "auto" | "assist" | "paused";
+
+export type ActivityKind =
+  | "run"
+  | "success"
+  | "failure"
+  | "block"
+  | "approval"
+  | "control"
+  | "note";
+
+export interface ActivityEntry {
+  ts: string;
+  loop: string;
+  kind: ActivityKind;
+  message: string;
+}
+
+export interface LoopTokens {
+  input: number;
+  output: number;
+  calls: number;
+  estCostUsd: number;
+}
+
+export interface TokenUsage {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  calls: number;
+  estCostUsd: number;
+  byLoop: Record<string, LoopTokens>;
+}
+
 export interface Learning {
   id: string;
   loop: string;
@@ -81,6 +120,7 @@ export interface MetricsSnapshot {
 export interface EngineState {
   version: number;
   updatedAt: string;
+  autonomy: Autonomy;
   selectedNiche?: string;
   learnings: Learning[];
   experiments: Experiment[];
@@ -88,4 +128,6 @@ export interface EngineState {
   creatives: CreativeAsset[];
   nicheScores: NicheScore[];
   metricsHistory: MetricsSnapshot[];
+  activity: ActivityEntry[];
+  tokens: TokenUsage;
 }

@@ -17,6 +17,7 @@ cd engine
 
 # Runs fully offline with deterministic synthesis — zero dependencies needed:
 node src/cli.ts cycle
+node src/cli.ts dashboard   # the control surface: workflow, needs, tokens, control
 node src/cli.ts status
 
 # To use the real Claude API for the generative/judgment work:
@@ -55,6 +56,8 @@ toward what has actually worked. Run `cycle` repeatedly and the state compounds.
 ## Commands
 
 ```
+dashboard                      Control surface: workflow, needs, recommendations, tokens, control
+takeover | handback [auto]     Human takeover / resume (seamless — state persists)
 status                         Show engine state
 cycle                          Run one full self-improving cycle
 niche                          Score candidate niches

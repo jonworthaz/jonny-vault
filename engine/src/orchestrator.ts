@@ -1,5 +1,6 @@
-import { loadState, saveState, id } from "./store.ts";
+import { loadState, persist, id } from "./store.ts";
 import { isLive } from "./llm.ts";
+import { logActivity } from "./activity.ts";
 import type { EngineState, Learning } from "./types.ts";
 import { runNicheLoop } from "./loops/niche.ts";
 import { runCreativeLoop } from "./loops/creative.ts";
@@ -7,63 +8,64 @@ import { runAnalysisLoop } from "./loops/analysis.ts";
 import { runRetentionLoop } from "./loops/retention.ts";
 import { experimentStatus } from "./loops/experiment.ts";
 
-// The orchestrator runs loops, persists state, and enforces the one hard rule:
-// nothing that spends money or publishes externally executes without human
-// approval. Loops only ever PROPOSE such actions.
+// The orchestrator runs loops, persists state (with token metering + compaction),
+// and enforces two invariants: (1) nothing that spends money or publishes executes
+// without human approval; (2) when autonomy is "paused", the engine runs nothing.
 
 function banner(title: string): string {
-  const mode = isLive() ? "LIVE (Claude API)" : "OFFLINE (deterministic)";
-  return `\n=== ${title}  [${mode}] ===`;
+  return `\n=== ${title}  [${isLive() ? "LIVE" : "OFFLINE"}] ===`;
 }
 
-// One full self-improving cycle. Reads prior state, runs each loop, persists.
 export async function runCycle(): Promise<string> {
   const state = loadState();
-  const out: string[] = [banner("SELF-IMPROVING CYCLE")];
 
-  // 1. Niche scoring (only if we haven't committed to one yet).
+  if (state.autonomy === "paused") {
+    return "⏸ Engine is PAUSED (human in control). Run `handback` to resume, then `cycle`.";
+  }
+
+  const out: string[] = [banner("SELF-IMPROVING CYCLE")];
+  logActivity(state, "cycle", "run", "Cycle started.");
+
   if (!state.selectedNiche) {
     out.push("\n[1/5] Niche selection");
     out.push(...(await runNicheLoop(state)));
+    logActivity(state, "niche", "success", `Scored ${state.nicheScores.length} niches.`);
   } else {
     out.push(`\n[1/5] Niche selection — skipped (selected: ${state.selectedNiche}).`);
   }
 
-  // 2. Creative generation (honest copy, guardrail-checked).
   out.push("\n[2/5] Creative generation");
-  out.push(...(await runCreativeLoop(state, "paid-social")));
+  const before = state.creatives.length;
+  const creativeLines = await runCreativeLoop(state, "paid-social");
+  out.push(...creativeLines);
+  const stored = state.creatives.length - before;
+  const blocked = creativeLines.filter((l) => l.includes("BLOCKED")).length;
+  logActivity(state, "creative", blocked ? "block" : "success", `${stored} stored, ${blocked} blocked by guardrails.`);
 
-  // 3. Performance analysis + scale gate.
   out.push("\n[3/5] Performance analysis");
   out.push(...(await runAnalysisLoop(state)));
+  logActivity(state, "analysis", "success", "Economics + scale gate evaluated.");
 
-  // 4. Retention / churn analysis.
   out.push("\n[4/5] Retention analysis");
   out.push(...(await runRetentionLoop(state)));
+  logActivity(state, "retention", "success", "Churn analysed; fix proposed.");
 
-  // 5. Experiment housekeeping.
   out.push("\n[5/5] Experiments");
   out.push(...experimentStatus(state));
 
-  // Cap unbounded growth of in-memory logs so state.json stays readable.
-  state.learnings = state.learnings.slice(0, 50);
-  state.creatives = state.creatives.slice(0, 50);
-  state.proposedActions = state.proposedActions.slice(0, 50);
-
+  const pending = state.proposedActions.filter((a) => a.status === "pending").length;
   const summary: Learning = {
     id: id("learn"),
     loop: "cycle",
     ts: new Date().toISOString(),
-    insight: `Cycle complete. ${state.proposedActions.filter((a) => a.status === "pending").length} action(s) pending approval.`,
+    insight: `Cycle complete. ${pending} action(s) pending approval.`,
     confidence: 1,
   };
   state.learnings.unshift(summary);
+  logActivity(state, "cycle", "success", `Cycle complete. ${pending} pending approval(s).`);
 
-  saveState(state);
-  out.push(
-    `\nCycle saved. Pending approvals: ${state.proposedActions.filter((a) => a.status === "pending").length}. ` +
-      `Review with \`actions\`, approve with \`approve <id>\`.`,
-  );
+  persist(state); // meters tokens, compacts, saves
+  out.push(`\nCycle saved. Pending approvals: ${pending}. View \`dashboard\`; approve with \`approve <id>\`.`);
   return out.join("\n");
 }
 
@@ -71,10 +73,9 @@ export function approveAction(state: EngineState, actionId: string, approve: boo
   const a = state.proposedActions.find((x) => x.id === actionId);
   if (!a) return `No action ${actionId}.`;
   a.status = approve ? "approved" : "rejected";
-  // NOTE: approval does not auto-execute. Spend/publish require real integrations
-  // (ad account, affiliate platform) that a human must connect and trigger.
+  logActivity(state, a.loop, "approval", `${approve ? "Approved" : "Rejected"}: ${a.summary}`);
   return `Action ${actionId} ${a.status}. ${approve ? "Ready for a human/integration to execute — the engine will not move money or publish on its own." : ""}`;
 }
 
-export { loadState, saveState };
+export { loadState, persist };
 export type { EngineState };
