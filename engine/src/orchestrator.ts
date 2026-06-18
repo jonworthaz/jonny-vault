@@ -1,6 +1,7 @@
 import { loadState, persist, id } from "./store.ts";
 import { isLive } from "./llm.ts";
 import { logActivity } from "./activity.ts";
+import { markByLoop } from "./components.ts";
 import type { EngineState, Learning } from "./types.ts";
 import { runNicheLoop } from "./loops/niche.ts";
 import { runCreativeLoop } from "./loops/creative.ts";
@@ -30,6 +31,7 @@ export async function runCycle(): Promise<string> {
     out.push("\n[1/5] Niche selection");
     out.push(...(await runNicheLoop(state)));
     logActivity(state, "niche", "success", `Scored ${state.nicheScores.length} niches.`);
+    markByLoop(state, "niche", `Scored ${state.nicheScores.length} niches`);
   } else {
     out.push(`\n[1/5] Niche selection — skipped (selected: ${state.selectedNiche}).`);
   }
@@ -41,14 +43,17 @@ export async function runCycle(): Promise<string> {
   const stored = state.creatives.length - before;
   const blocked = creativeLines.filter((l) => l.includes("BLOCKED")).length;
   logActivity(state, "creative", blocked ? "block" : "success", `${stored} stored, ${blocked} blocked by guardrails.`);
+  markByLoop(state, "creative", `${stored} stored, ${blocked} blocked`);
 
   out.push("\n[3/5] Performance analysis");
   out.push(...(await runAnalysisLoop(state)));
   logActivity(state, "analysis", "success", "Economics + scale gate evaluated.");
+  markByLoop(state, "analysis", "Economics + scale gate evaluated");
 
   out.push("\n[4/5] Retention analysis");
   out.push(...(await runRetentionLoop(state)));
   logActivity(state, "retention", "success", "Churn analysed; fix proposed.");
+  markByLoop(state, "retention", "Churn analysed; fix proposed");
 
   out.push("\n[5/5] Experiments");
   out.push(...experimentStatus(state));

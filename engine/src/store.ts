@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { EngineState, TokenUsage } from "./types.ts";
 import { drainUsage } from "./llm.ts";
 import { applyUsage, compactState } from "./activity.ts";
+import { ensureComponents } from "./components.ts";
 
 // Persistent state = the engine's memory. Every loop reads prior state and
 // writes back, so each run builds on the last — this is what makes the loops
@@ -29,17 +30,24 @@ function emptyState(): EngineState {
     metricsHistory: [],
     activity: [],
     tokens: zeroTokens(),
+    components: [],
   };
 }
 
 export function loadState(): EngineState {
-  if (!existsSync(STATE_PATH)) return emptyState();
-  try {
-    const raw = readFileSync(STATE_PATH, "utf8");
-    return { ...emptyState(), ...(JSON.parse(raw) as Partial<EngineState>) } as EngineState;
-  } catch {
-    return emptyState();
+  let state: EngineState;
+  if (!existsSync(STATE_PATH)) {
+    state = emptyState();
+  } else {
+    try {
+      const raw = readFileSync(STATE_PATH, "utf8");
+      state = { ...emptyState(), ...(JSON.parse(raw) as Partial<EngineState>) } as EngineState;
+    } catch {
+      state = emptyState();
+    }
   }
+  ensureComponents(state); // auto-migrate: seed any missing modular components
+  return state;
 }
 
 // Plain save (no usage flush) — used by read-only/control commands.

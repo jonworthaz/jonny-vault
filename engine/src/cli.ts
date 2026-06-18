@@ -8,7 +8,9 @@ import { runCreativeLoop } from "./loops/creative.ts";
 import { runAnalysisLoop } from "./loops/analysis.ts";
 import { runRetentionLoop } from "./loops/retention.ts";
 import { registerExperiment, concludeExperiment, experimentStatus } from "./loops/experiment.ts";
-import type { EngineState } from "./types.ts";
+import { COMPONENTS, defOf, stateOf, mark } from "./components.ts";
+import { CONFIG } from "./config.ts";
+import type { EngineState, Provider } from "./types.ts";
 
 function flag(args: string[], name: string): string | undefined {
   const i = args.indexOf(`--${name}`);
@@ -49,7 +51,10 @@ const HELP = [
   "  experiment new \"<hyp>\" --variants a,b --metric trial_to_paid",
   "  experiment conclude <id> --winner a",
   "  actions | approve <id> | reject <id>",
-  "  takeover | handback [auto|assist]   Human takeover / resume",
+  "  takeover | handback [auto|assist]   Human takeover / resume (whole engine)",
+  "  components                     List modular agents/functions",
+  "  hold <key> | resume <key>      Put one module on hold / resume (per-agent takeover)",
+  "  model <key> <id> [--provider custom]   Change a module's model (Claude or non-Claude)",
   "  learnings",
 ];
 
@@ -176,6 +181,50 @@ async function main(): Promise<void> {
       const s = loadState();
       console.log(approveAction(s, args[0], cmd === "approve"));
       saveState(s);
+      break;
+    }
+
+    case "components": {
+      const s = loadState();
+      for (const d of COMPONENTS) {
+        const st = stateOf(s, d.key)!;
+        const t = s.tokens.byLoop[d.key];
+        console.log(`${st.status === "on-hold" ? "[on-hold]" : "[active] "} ${d.key.padEnd(20)} ${st.model} (${st.provider})  ${t ? "$" + t.estCostUsd.toFixed(4) : "$0"}`);
+        if (st.lastAction) console.log(`    last: ${st.lastAction}`);
+      }
+      break;
+    }
+
+    case "hold":
+    case "resume": {
+      const key = args[0];
+      const s = loadState();
+      const st = key ? stateOf(s, key) : undefined;
+      if (!st) return void console.log(`Unknown module: ${key}. Run \`components\`.`);
+      st.status = cmd === "hold" ? "on-hold" : "active";
+      mark(s, key, cmd === "hold" ? "Put on hold (human control)" : "Resumed");
+      logActivity(s, key, "control", `${cmd === "hold" ? "Held" : "Resumed"} module ${key}.`);
+      saveState(s);
+      console.log(`Module ${key} is now ${st.status}.` + (cmd === "hold" ? " It will not make paid model calls (falls back to offline) until resumed." : ""));
+      break;
+    }
+
+    case "model": {
+      const key = args[0];
+      const newModel = args[1];
+      const provider = (flag(args, "provider") as Provider) ?? "anthropic";
+      const s = loadState();
+      const st = key ? stateOf(s, key) : undefined;
+      if (!st || !newModel) return void console.log('Usage: model <key> <model-id> [--provider anthropic|custom]');
+      st.model = newModel;
+      st.provider = provider === "custom" ? "custom" : "anthropic";
+      mark(s, key, `Model set to ${newModel} (${st.provider})`);
+      logActivity(s, key, "control", `Model changed to ${newModel} (${st.provider}).`);
+      saveState(s);
+      let msg = `${key} now uses ${newModel} (${st.provider}).`;
+      if (st.provider === "anthropic" && !CONFIG.pricing[newModel]) msg += " ⚠ Unknown Anthropic model id — cost won't be metered; verify the id.";
+      if (st.provider === "custom") msg += " Set CUSTOM_LLM_BASE_URL (+ CUSTOM_LLM_API_KEY) for the OpenAI-compatible endpoint, or it falls back to offline.";
+      console.log(msg);
       break;
     }
 

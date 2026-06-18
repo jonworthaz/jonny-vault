@@ -45,6 +45,21 @@ export interface TokenUsage {
   byLoop: Record<string, LoopTokens>;
 }
 
+// A modular component of the business (an agent or a function). Runtime state —
+// status, the model it runs, its provider, and its last action — is here;
+// the static definition (label, owned loop, skills) lives in components.ts.
+export type ComponentStatus = "active" | "on-hold";
+export type Provider = "anthropic" | "custom";
+
+export interface ComponentState {
+  key: string;
+  status: ComponentStatus;
+  model: string;
+  provider: Provider;
+  lastAction?: string;
+  lastActionTs?: string;
+}
+
 export interface Learning {
   id: string;
   loop: string;
@@ -130,4 +145,5 @@ export interface EngineState {
   metricsHistory: MetricsSnapshot[];
   activity: ActivityEntry[];
   tokens: TokenUsage;
+  components: ComponentState[];
 }

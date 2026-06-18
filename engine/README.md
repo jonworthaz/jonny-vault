@@ -56,8 +56,11 @@ toward what has actually worked. Run `cycle` repeatedly and the state compounds.
 ## Commands
 
 ```
-dashboard                      Control surface: workflow, needs, recommendations, tokens, control
-takeover | handback [auto]     Human takeover / resume (seamless — state persists)
+dashboard                      Modular control surface: modules, token drivers, agent actions, control
+components                     List modules (agents/functions) with model + status + tokens
+hold <key> | resume <key>      Put one module on hold / resume (per-agent takeover)
+model <key> <id> [--provider custom]   Change a module's model (Claude or non-Claude/OpenAI-compatible)
+takeover | handback [auto]     Human takeover / resume the WHOLE engine (seamless — state persists)
 status                         Show engine state
 cycle                          Run one full self-improving cycle
 niche                          Score candidate niches

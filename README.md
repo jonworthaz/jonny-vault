@@ -36,7 +36,8 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 09 | [The AI Team](./09-ai-team.md) | Agents & skills — the workforce, and the built-ins we reuse |
 | 10 | [Improvement Prompt](./10-improvement-prompt.md) | Reusable prompt to run another self-improvement pass |
 | 11 | [Landscape & Gaps](./11-landscape-and-gaps.md) | How we compare to other agent systems; what's next |
-| — | [engine/](./engine/README.md) | **The build** — loops, **control dashboard**, compliance linter, approval gates, token routing |
+| 12 | [Build Plan](./12-build-plan.md) | Phased plan to make the platform successful — owners, gates, risks |
+| — | [engine/](./engine/README.md) | **The build** — loops, **modular control dashboard**, compliance linter, approval gates, per-agent model routing |
 
 ## The build (`engine/`)
 

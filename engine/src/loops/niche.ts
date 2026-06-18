@@ -53,6 +53,7 @@ export async function runNicheLoop(state: EngineState): Promise<string[]> {
       `\n\nIn 2-3 sentences, explain why "${top.c.name}" is the strongest first niche to build, and the single biggest risk to validate.`,
     maxTokens: 400,
     loop: "niche",
+    state,
     offline: () =>
       `${top.c.name} ranks highest (${top.total}) on a weighted blend of demand, buyer intent, pricing headroom, ` +
       `buildability, and affiliate fit — it does a daily-use job, which drives retention, and has an obvious affiliate pool. ` +
