@@ -1,4 +1,5 @@
 node_modules/
 .env
 data/state.json
+dashboard.html
 *.log

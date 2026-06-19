@@ -7,6 +7,8 @@ import { runNicheLoop } from "./loops/niche.ts";
 import { runCreativeLoop } from "./loops/creative.ts";
 import { runAnalysisLoop } from "./loops/analysis.ts";
 import { runRetentionLoop } from "./loops/retention.ts";
+import { runAffiliateLoop } from "./loops/affiliate.ts";
+import { runSupportLoop } from "./loops/support.ts";
 import { experimentStatus } from "./loops/experiment.ts";
 
 // The orchestrator runs loops, persists state (with token metering + compaction),
@@ -28,15 +30,15 @@ export async function runCycle(): Promise<string> {
   logActivity(state, "cycle", "run", "Cycle started.");
 
   if (!state.selectedNiche) {
-    out.push("\n[1/5] Niche selection");
+    out.push("\n[1/7] Niche selection");
     out.push(...(await runNicheLoop(state)));
     logActivity(state, "niche", "success", `Scored ${state.nicheScores.length} niches.`);
     markByLoop(state, "niche", `Scored ${state.nicheScores.length} niches`);
   } else {
-    out.push(`\n[1/5] Niche selection — skipped (selected: ${state.selectedNiche}).`);
+    out.push(`\n[1/7] Niche selection — skipped (selected: ${state.selectedNiche}).`);
   }
 
-  out.push("\n[2/5] Creative generation");
+  out.push("\n[2/7] Creative generation");
   const before = state.creatives.length;
   const creativeLines = await runCreativeLoop(state, "paid-social");
   out.push(...creativeLines);
@@ -45,17 +47,25 @@ export async function runCycle(): Promise<string> {
   logActivity(state, "creative", blocked ? "block" : "success", `${stored} stored, ${blocked} blocked by guardrails.`);
   markByLoop(state, "creative", `${stored} stored, ${blocked} blocked`);
 
-  out.push("\n[3/5] Performance analysis");
+  out.push("\n[3/7] Performance analysis");
   out.push(...(await runAnalysisLoop(state)));
   logActivity(state, "analysis", "success", "Economics + scale gate evaluated.");
   markByLoop(state, "analysis", "Economics + scale gate evaluated");
 
-  out.push("\n[4/5] Retention analysis");
+  out.push("\n[4/7] Retention analysis");
   out.push(...(await runRetentionLoop(state)));
   logActivity(state, "retention", "success", "Churn analysed; fix proposed.");
   markByLoop(state, "retention", "Churn analysed; fix proposed");
 
-  out.push("\n[5/5] Experiments");
+  out.push("\n[5/7] Affiliate recruitment");
+  out.push(...(await runAffiliateLoop(state)));
+  logActivity(state, "affiliate", "success", "Partner pools + outreach drafted.");
+
+  out.push("\n[6/7] Support");
+  out.push(...(await runSupportLoop(state)));
+  logActivity(state, "support", "success", "Support reply + FAQ drafted.");
+
+  out.push("\n[7/7] Experiments");
   out.push(...experimentStatus(state));
 
   const pending = state.proposedActions.filter((a) => a.status === "pending").length;

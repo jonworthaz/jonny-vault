@@ -7,7 +7,12 @@ import { runNicheLoop } from "./loops/niche.ts";
 import { runCreativeLoop } from "./loops/creative.ts";
 import { runAnalysisLoop } from "./loops/analysis.ts";
 import { runRetentionLoop } from "./loops/retention.ts";
+import { runAffiliateLoop } from "./loops/affiliate.ts";
+import { runSupportLoop } from "./loops/support.ts";
 import { registerExperiment, concludeExperiment, experimentStatus } from "./loops/experiment.ts";
+import { renderDashboardHtml } from "./dashboard.ts";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { COMPONENTS, defOf, stateOf, mark } from "./components.ts";
 import { CONFIG } from "./config.ts";
 import type { EngineState, Provider } from "./types.ts";
@@ -41,7 +46,8 @@ const HELP = [
   "",
   "Usage: node src/cli.ts <command>",
   "",
-  "  dashboard                      Full control dashboard (workflow, needs, tokens, control)",
+  "  dashboard [--html [path]]      Full control dashboard (text, or write an HTML snapshot)",
+  "  affiliate | support            Run the affiliate / support module (live token attribution)",
   "  status                         One-line state summary",
   "  cycle                          Run one full self-improving cycle (all loops)",
   "  niche | select-niche \"<name>\"  Score / commit a niche",
@@ -67,9 +73,17 @@ async function main(): Promise<void> {
       console.log(HELP.join("\n") + `\n\nMode: ${isLive() ? "LIVE" : "OFFLINE"}`);
       break;
 
-    case "dashboard":
-      console.log(renderDashboard(loadState()));
+    case "dashboard": {
+      if (args[0] === "--html") {
+        const rel = args[1] ?? "dashboard.html";
+        const path = join(import.meta.dirname, "..", rel);
+        writeFileSync(path, renderDashboardHtml(loadState()), "utf8");
+        console.log(`Wrote dashboard to ${path}`);
+      } else {
+        console.log(renderDashboard(loadState()));
+      }
       break;
+    }
 
     case "status":
       printStatus();
@@ -138,6 +152,22 @@ async function main(): Promise<void> {
       if (blockedIfPaused(s)) break;
       const reasons = args[0] ? args.join(" ").split(";").map((r) => r.trim()).filter(Boolean) : undefined;
       console.log((await runRetentionLoop(s, reasons)).join("\n"));
+      persist(s);
+      break;
+    }
+
+    case "affiliate": {
+      const s = loadState();
+      if (blockedIfPaused(s)) break;
+      console.log((await runAffiliateLoop(s)).join("\n"));
+      persist(s);
+      break;
+    }
+
+    case "support": {
+      const s = loadState();
+      if (blockedIfPaused(s)) break;
+      console.log((await runSupportLoop(s, args.join(" ") || undefined)).join("\n"));
       persist(s);
       break;
     }

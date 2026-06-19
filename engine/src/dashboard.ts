@@ -138,3 +138,31 @@ export function renderDashboard(state: EngineState): string {
   out.push("");
   return out.join("\n");
 }
+
+// Static HTML snapshot of the dashboard — an openable file (there is no hosted
+// URL yet; a deploy integration would provide one). Regenerate with
+// `node engine/src/cli.ts dashboard --html`.
+export function renderDashboardHtml(state: EngineState): string {
+  const esc = renderDashboard(state)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Lean Subscription Engine — Dashboard</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0b0e14; color:#cfe3ff; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; margin:0; padding:24px; }
+  h1 { color:#fff; font-size:18px; margin:0 0 4px; }
+  .meta { color:#7f93b8; margin:0 0 16px; }
+  pre { white-space:pre-wrap; word-break:break-word; }
+  code { color:#7aa2f7; }
+</style></head>
+<body>
+  <h1>Lean Subscription Engine — Control Dashboard</h1>
+  <p class="meta">Static snapshot · ${new Date().toISOString()} · regenerate: <code>node engine/src/cli.ts dashboard --html</code></p>
+  <pre>${esc}</pre>
+</body></html>
+`;
+}
