@@ -45,6 +45,47 @@
   const fileInput = $("fileInput");
   const markerList = $("markerList");
 
+  // ---- View transform (zoom / pan) ---------------------------------------
+  // The canvas is rendered at its natural pixel size; the .canvas-wrap is
+  // scaled+translated with a CSS transform (origin 0,0) for zoom & pan. Because
+  // pointer→canvas mapping reads getBoundingClientRect(), drawing stays accurate
+  // at any zoom without extra maths.
+  const MIN_SCALE = 0.05, MAX_SCALE = 12;
+  const view = { scale: 1, tx: 0, ty: 0 };
+
+  function applyView() {
+    canvasWrap.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+  }
+
+  function fitView() {
+    if (!state.image) return;
+    const sr = stage.getBoundingClientRect();
+    const pad = 16;
+    const sw = Math.max(50, sr.width - pad * 2);
+    const sh = Math.max(50, sr.height - pad * 2);
+    const s = Math.min(sw / canvas.width, sh / canvas.height);
+    view.scale = Math.max(MIN_SCALE, Math.min(s, MAX_SCALE));
+    view.tx = (sr.width - canvas.width * view.scale) / 2;
+    view.ty = (sr.height - canvas.height * view.scale) / 2;
+    applyView();
+  }
+
+  // Zoom keeping the image point under (clientX, clientY) fixed on screen.
+  function zoomAround(clientX, clientY, factor) {
+    const sr = stage.getBoundingClientRect();
+    const newScale = Math.max(MIN_SCALE, Math.min(view.scale * factor, MAX_SCALE));
+    const px = (clientX - sr.left - view.tx) / view.scale;
+    const py = (clientY - sr.top - view.ty) / view.scale;
+    view.scale = newScale;
+    view.tx = clientX - sr.left - newScale * px;
+    view.ty = clientY - sr.top - newScale * py;
+    applyView();
+  }
+  function zoomByButton(factor) {
+    const sr = stage.getBoundingClientRect();
+    zoomAround(sr.left + sr.width / 2, sr.top + sr.height / 2, factor);
+  }
+
   // ====================================================================
   //  History
   // ====================================================================
@@ -98,7 +139,9 @@
     canvas.height = img.naturalHeight;
     emptyState.hidden = true;
     canvasWrap.hidden = false;
+    $("zoomControls").hidden = false;
     render();
+    fitView();
   }
 
   // ====================================================================
@@ -324,6 +367,34 @@
   let textArrowDraft = null; // { x1,y1,x2,y2 } leader drag for a text box
   let didChange = false;
 
+  // multi-touch
+  const activePointers = new Map(); // pointerId -> { x, y } (client coords)
+  let pinch = null;                 // { dist, mid } from previous gesture frame
+  let gestureActive = false;        // true while 2+ fingers are/were down
+
+  function cancelDraft() {
+    if (drag && didChange) pushHistory();
+    draft = null;
+    textArrowDraft = null;
+    drag = null;
+    didChange = false;
+    render();
+  }
+
+  function handlePinch() {
+    const pts = [...activePointers.values()];
+    const p1 = pts[0], p2 = pts[1];
+    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    if (!pinch) { pinch = { dist, mid }; return; }
+    if (pinch.dist > 0) zoomAround(mid.x, mid.y, dist / pinch.dist);
+    // two-finger drag pans
+    view.tx += mid.x - pinch.mid.x;
+    view.ty += mid.y - pinch.mid.y;
+    applyView();
+    pinch = { dist, mid };
+  }
+
   function canvasPos(evt) {
     const rect = canvas.getBoundingClientRect();
     const sx = canvas.width / rect.width;
@@ -336,7 +407,17 @@
 
   canvas.addEventListener("pointerdown", (e) => {
     if (!state.image || state.cropping) return;
-    canvas.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+
+    // second finger down -> switch to pinch-zoom / two-finger pan
+    if (activePointers.size >= 2) {
+      cancelDraft();
+      gestureActive = true;
+      pinch = null;
+      return;
+    }
+
     const { x, y } = canvasPos(e);
     const t = state.tool;
 
@@ -392,6 +473,10 @@
 
   canvas.addEventListener("pointermove", (e) => {
     if (!state.image) return;
+    if (activePointers.has(e.pointerId)) activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activePointers.size >= 2) { handlePinch(); return; }
+    if (gestureActive) return; // a finger still down after a pinch — don't draw
+
     const { x, y } = canvasPos(e);
 
     if (textArrowDraft) {
@@ -416,7 +501,19 @@
     drawAnnotation(ctx, draft); // live preview on top
   });
 
+  canvas.addEventListener("pointercancel", (e) => {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinch = null;
+    if (activePointers.size === 0) gestureActive = false;
+    cancelDraft();
+  });
+
   canvas.addEventListener("pointerup", (e) => {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinch = null;
+    if (activePointers.size === 0) gestureActive = false;
+    if (gestureActive) return; // still lifting fingers from a multi-touch gesture
+
     if (textArrowDraft) {
       const d = textArrowDraft;
       textArrowDraft = null;
@@ -583,16 +680,20 @@
 
   function applyCrop() {
     if (!cropDraft) { endCrop(); return; }
-    const r = cropOverlay.getBoundingClientRect();
-    const scaleX = canvas.width / r.width;
-    const scaleY = canvas.height / r.height;
-    let x = Math.min(cropDraft.sx, cropDraft.ex) * scaleX;
-    let y = Math.min(cropDraft.sy, cropDraft.ey) * scaleY;
-    let w = Math.abs(cropDraft.ex - cropDraft.sx) * scaleX;
-    let h = Math.abs(cropDraft.ey - cropDraft.sy) * scaleY;
+    const or = cropOverlay.getBoundingClientRect();  // overlay == stage area (untransformed)
+    const cr = canvas.getBoundingClientRect();        // canvas (with zoom transform applied)
+    const k = canvas.width / cr.width;                // canvas pixels per client pixel (uniform)
+    // selection -> client coords -> canvas pixels
+    const selL = or.left + Math.min(cropDraft.sx, cropDraft.ex);
+    const selT = or.top + Math.min(cropDraft.sy, cropDraft.ey);
+    let x = (selL - cr.left) * k;
+    let y = (selT - cr.top) * k;
+    let w = Math.abs(cropDraft.ex - cropDraft.sx) * k;
+    let h = Math.abs(cropDraft.ey - cropDraft.sy) * k;
     if (w < 5 || h < 5) { endCrop(); return; }
     x = Math.max(0, x); y = Math.max(0, y);
     w = Math.min(w, canvas.width - x); h = Math.min(h, canvas.height - y);
+    if (w < 1 || h < 1) { endCrop(); return; }
 
     // bake everything (image + annotations) then crop the region into a new image
     render();
@@ -796,6 +897,40 @@
     $("copyBtn").addEventListener("click", copyImage);
     $("saveBtn").addEventListener("click", saveImage);
     $("exportReportBtn").addEventListener("click", exportReport);
+
+    // zoom controls
+    $("zoomIn").addEventListener("click", () => zoomByButton(1.25));
+    $("zoomOut").addEventListener("click", () => zoomByButton(1 / 1.25));
+    $("zoomFit").addEventListener("click", fitView);
+
+    // desktop: ctrl/cmd + wheel (or trackpad pinch) zooms; plain wheel pans
+    stage.addEventListener("wheel", (e) => {
+      if (!state.image || state.cropping) return;
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        zoomAround(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
+      } else {
+        view.tx -= e.deltaX;
+        view.ty -= e.deltaY;
+        applyView();
+      }
+    }, { passive: false });
+
+    // mobile: items drawer
+    const closeDrawer = () => document.body.classList.remove("panel-open");
+    $("panelToggle").addEventListener("click", () => document.body.classList.toggle("panel-open"));
+    $("panelClose").addEventListener("click", closeDrawer);
+    // tap the dimmed backdrop to close
+    document.addEventListener("click", (e) => {
+      if (document.body.classList.contains("panel-open") &&
+          e.clientX < window.innerWidth - Math.min(420, window.innerWidth * 0.88) &&
+          !e.target.closest(".panel") && !e.target.closest("#panelToggle")) {
+        closeDrawer();
+      }
+    });
+
+    // keep the image framed on orientation change / resize
+    window.addEventListener("resize", () => { if (state.image) applyView(); });
 
     // custom colour picker (any colour)
     $("customColor").addEventListener("input", (e) => setStrokeColor(e.target.value, null));

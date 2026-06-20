@@ -48,6 +48,16 @@ stays on the user's machine.
   baked in) and puts it on your **clipboard** — paste straight into an email,
   chat, doc or ticket. (**Save image** still downloads a PNG.)
 
+### Mobile & zoom
+Fully responsive and touch-friendly:
+- **Pinch to zoom** with two fingers, and **drag with two fingers to pan** — so
+  you can zoom right in to mark up a small detail accurately, then zoom back out.
+- One finger draws/annotates as normal.
+- **Zoom buttons** (＋ ／ − ／ ⤢ fit-to-screen) sit in the corner of the canvas.
+- On desktop: **Ctrl/Cmd + scroll** (or trackpad pinch) zooms; plain scroll pans.
+- On phones the tools become a scrollable strip along the bottom, and the
+  **Items** button (top right) slides in the markers/costs panel.
+
 ### Markers & costs panel
 Each numbered marker gets a row in the right-hand panel where you add a **part
 name**, a **note** (what's wrong / what to do) and an **estimated cost**. The

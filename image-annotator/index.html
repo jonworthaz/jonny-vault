@@ -18,6 +18,7 @@
     <div class="topbar-actions">
       <input type="text" id="jobTitle" class="job-title" placeholder="Job / vehicle reference (e.g. AB12 CDE — Front end)" />
     </div>
+    <button id="panelToggle" class="panel-toggle" title="Show marked items" aria-label="Show marked items">☰ Items</button>
   </header>
 
   <div class="app">
@@ -103,13 +104,22 @@
       </div>
       <div class="canvas-wrap" id="canvasWrap" hidden>
         <canvas id="canvas"></canvas>
-        <div class="crop-overlay" id="cropOverlay" hidden>
-          <div class="crop-rect" id="cropRect"></div>
-          <div class="crop-actions" id="cropActions">
-            <button id="cropApply" class="tool tool-primary">✓ Apply crop</button>
-            <button id="cropCancel" class="tool">Cancel</button>
-          </div>
+      </div>
+
+      <!-- crop overlay lives at stage level so it is unaffected by the zoom transform -->
+      <div class="crop-overlay" id="cropOverlay" hidden>
+        <div class="crop-rect" id="cropRect"></div>
+        <div class="crop-actions" id="cropActions">
+          <button id="cropApply" class="tool tool-primary">✓ Apply crop</button>
+          <button id="cropCancel" class="tool">Cancel</button>
         </div>
+      </div>
+
+      <!-- zoom controls (pinch on mobile, buttons everywhere) -->
+      <div class="zoom-controls" id="zoomControls" hidden>
+        <button id="zoomOut" class="zoom-btn" title="Zoom out">−</button>
+        <button id="zoomFit" class="zoom-btn" title="Fit to screen" aria-label="Fit to screen">⤢</button>
+        <button id="zoomIn" class="zoom-btn" title="Zoom in">+</button>
       </div>
     </main>
 
@@ -118,6 +128,7 @@
       <div class="panel-head">
         <h3>Marked items</h3>
         <small id="markerCount">0 items</small>
+        <button id="panelClose" class="panel-close" title="Close" aria-label="Close">✕</button>
       </div>
       <p class="panel-hint">Each numbered marker appears here. Add a part name, note and estimated cost — ideal for showing a customer what needs changing.</p>
       <ol class="marker-list" id="markerList"></ol>
