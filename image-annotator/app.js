@@ -734,18 +734,54 @@
     if (!state.image) return;
     state.selectedId = null;
     render();
-    if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
-      toast("Clipboard not supported here — use Save image instead");
+
+    // Preferred path: the async Clipboard API (works on https, localhost, and
+    // on file:// in Chromium browsers).
+    if (navigator.clipboard && typeof ClipboardItem !== "undefined" && canvas.toBlob) {
+      canvas.toBlob((blob) => {
+        navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+          .then(() => toast("Annotated image copied — paste anywhere (Ctrl/Cmd+V)"))
+          .catch(() => {
+            // Some browsers reject from a file:// page — try the legacy path.
+            toast(legacyCopyImage()
+              ? "Annotated image copied — paste anywhere (Ctrl/Cmd+V)"
+              : "Couldn't copy here — use Save image, or run via the local server (see README)");
+          });
+      }, "image/png");
       return;
     }
-    canvas.toBlob(async (blob) => {
-      try {
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-        toast("Annotated image copied — paste anywhere (Ctrl/Cmd+V)");
-      } catch (err) {
-        toast("Copy blocked by browser — use Save image instead");
-      }
-    }, "image/png");
+
+    // Fallback: copy a rendered <img> via execCommand (older browsers / file://).
+    toast(legacyCopyImage()
+      ? "Annotated image copied — paste anywhere (Ctrl/Cmd+V)"
+      : "Couldn't copy here — use Save image, or run via the local server (see README)");
+  }
+
+  // Legacy clipboard copy: select an off-screen image and execCommand('copy').
+  // Runs synchronously so it stays within the button's user-gesture.
+  function legacyCopyImage() {
+    try {
+      const holder = document.createElement("div");
+      holder.contentEditable = "true";
+      holder.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL("image/png");
+      holder.appendChild(img);
+      document.body.appendChild(holder);
+
+      const range = document.createRange();
+      range.selectNode(img);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      const ok = document.execCommand("copy");
+      sel.removeAllRanges();
+      document.body.removeChild(holder);
+      return ok;
+    } catch (_) {
+      return false;
+    }
   }
 
   let toastTimer = null;

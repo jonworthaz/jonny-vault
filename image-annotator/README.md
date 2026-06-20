@@ -12,16 +12,27 @@ medical/teaching diagrams, bug reports, etc.).
 
 ## How to use
 
-No build step, no server, no install. Just open the file:
-
-```
-open index.html        # macOS
-xdg-open index.html    # Linux
-# or double-click index.html in a file browser
-```
-
 It runs entirely in the browser. Nothing is uploaded anywhere — every image
-stays on the user's machine.
+stays on your machine.
+
+### Easiest: double-click the launcher (recommended — makes **Copy image** work)
+
+- **macOS / Linux** → double-click **`start-mac-linux.command`**
+- **Windows** → double-click **`start-windows.bat`**
+
+A small window opens (leave it open) and the tool launches in your browser at
+`http://localhost:8000`. Because it's served from `localhost`, the **Copy image**
+button works reliably. Close that window when you're finished.
+
+> Requires Python (already installed on most Macs/Linux; on Windows get it from
+> [python.org](https://python.org) if prompted).
+
+### Or just open the file
+
+Double-click **`index.html`** (or `open index.html` on macOS / `xdg-open
+index.html` on Linux). Everything works this way; **Copy image** works in most
+modern browsers but can be blocked in some when opened as a bare file — if so,
+use the launcher above (or **Save image**, which downloads the same picture).
 
 ## Features
 
