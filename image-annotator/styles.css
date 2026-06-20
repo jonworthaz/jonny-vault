@@ -113,6 +113,17 @@ html, body {
 .swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--bg); }
 .range-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .range-row input { width: 100%; accent-color: var(--accent); }
+.range-row b { color: var(--text); font-weight: 600; }
+
+.picker-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.picker-row input[type="color"] {
+  width: 38px; height: 26px; padding: 0;
+  border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer;
+}
+.picker-pair { display: flex; gap: 10px; }
+.picker-pair .picker-row { flex: 1; }
+.check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.check-row input { accent-color: var(--accent); }
 
 /* ---- Stage ---- */
 .stage {
@@ -240,6 +251,24 @@ html, body {
   padding: 4px 8px;
   font-size: 16px;
 }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #111;
+  color: #fff;
+  border: 1px solid var(--line);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity .18s, transform .18s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 @media (max-width: 900px) {
   .app { grid-template-columns: 64px 1fr; }

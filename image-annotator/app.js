@@ -10,7 +10,9 @@
 
   // ---- Constants ---------------------------------------------------------
   const COLORS = ["#ff5a3c", "#ffd400", "#22c55e", "#3b82f6", "#a855f7", "#ffffff", "#111111"];
-  const TOOLS = ["select", "circle", "rect", "highlight", "arrow", "pen", "text", "number"];
+  const TOOLS = ["select", "circle", "circle1", "rect", "highlight", "arrow", "pen", "text", "number"];
+  const TEXT_FONT = (fs) => `600 ${fs}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const LINE_H = 1.25; // text line-height multiple
 
   // ---- State -------------------------------------------------------------
   const state = {
@@ -19,6 +21,12 @@
     tool: "circle",
     color: COLORS[0],
     lineWidth: 4,
+    circleSize: 48,        // diameter (px) for one-click circles
+    // text-box defaults: white box, black text
+    boxBg: "#ffffff",
+    boxText: "#000000",
+    boxRadius: 8,
+    boxArrow: false,
     selectedId: null,
     nextId: 1,
     nextNumber: 1,
@@ -144,16 +152,25 @@
         break;
       }
       case "text": {
-        const fs = a.fontSize || 22;
-        c.font = `600 ${fs}px -apple-system, Segoe UI, Roboto, sans-serif`;
-        c.textBaseline = "top";
-        const pad = 6;
-        const w = c.measureText(a.text).width;
-        c.fillStyle = "rgba(0,0,0,.6)";
-        roundRect(c, a.x - pad, a.y - pad, w + pad * 2, fs + pad * 2, 5);
+        const m = textMetrics(a);
+        // leader arrow (drawn first so the box sits on top of its tail)
+        if (a.arrow && a.arrowTo) {
+          const start = edgePoint(a.x, a.y, m.w, m.h, a.arrowTo.x, a.arrowTo.y);
+          drawArrow(c, start.x, start.y, a.arrowTo.x, a.arrowTo.y, a.textColor || "#000", Math.max(2, Math.round(m.fs / 8)));
+        }
+        // box
+        c.fillStyle = a.bgColor || "#ffffff";
+        roundRect(c, a.x, a.y, m.w, m.h, a.radius ?? 8);
         c.fill();
-        c.fillStyle = a.color;
-        c.fillText(a.text, a.x, a.y);
+        c.lineWidth = 1;
+        c.strokeStyle = "rgba(0,0,0,.18)";
+        c.stroke();
+        // text
+        c.fillStyle = a.textColor || "#000000";
+        c.font = TEXT_FONT(m.fs);
+        c.textBaseline = "top";
+        c.textAlign = "left";
+        m.lines.forEach((ln, i) => c.fillText(ln, a.x + m.pad, a.y + m.pad + i * m.fs * LINE_H));
         break;
       }
       case "number": {
@@ -208,6 +225,34 @@
   // ====================================================================
   //  Geometry helpers
   // ====================================================================
+  // Measure a text-box annotation -> { w, h, fs, pad, lines }
+  function textMetrics(a) {
+    const fs = a.fontSize || 20;
+    const pad = a.padding ?? Math.round(fs * 0.45);
+    const lines = String(a.text).split("\n");
+    ctx.save();
+    ctx.font = TEXT_FONT(fs);
+    let tw = 0;
+    for (const ln of lines) tw = Math.max(tw, ctx.measureText(ln || " ").width);
+    ctx.restore();
+    return {
+      fs, pad, lines,
+      w: Math.ceil(tw + pad * 2),
+      h: Math.ceil(lines.length * fs * LINE_H + pad * 2),
+    };
+  }
+
+  // Point on the border of box (x,y,w,h) along the line toward (tx,ty)
+  function edgePoint(x, y, w, h, tx, ty) {
+    const cx = x + w / 2, cy = y + h / 2;
+    const dx = tx - cx, dy = ty - cy;
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    const sx = dx !== 0 ? (w / 2) / Math.abs(dx) : Infinity;
+    const sy = dy !== 0 ? (h / 2) / Math.abs(dy) : Infinity;
+    const s = Math.min(sx, sy);
+    return { x: cx + dx * s, y: cy + dy * s };
+  }
+
   function boundsOf(a) {
     switch (a.type) {
       case "circle":
@@ -229,8 +274,10 @@
         const ys = a.points.map((p) => p[1]);
         return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
       }
-      case "text":
-        return { x: a.x, y: a.y, w: (a.text.length * (a.fontSize || 22)) * 0.55, h: a.fontSize || 22 };
+      case "text": {
+        const m = textMetrics(a);
+        return { x: a.x, y: a.y, w: m.w, h: m.h };
+      }
       case "number": {
         const r = a.r || 16;
         return { x: a.x - r, y: a.y - r, w: r * 2, h: r * 2 };
@@ -256,9 +303,12 @@
       case "circle":
       case "rect":
       case "highlight":
-      case "text":
       case "number":
         a.x += dx; a.y += dy; break;
+      case "text":
+        a.x += dx; a.y += dy;
+        if (a.arrowTo) { a.arrowTo.x += dx; a.arrowTo.y += dy; }
+        break;
       case "arrow":
         a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; break;
       case "pen":
@@ -269,8 +319,9 @@
   // ====================================================================
   //  Pointer interaction
   // ====================================================================
-  let draft = null;      // annotation being created
-  let drag = null;       // { id, lastX, lastY } for move
+  let draft = null;          // annotation being created
+  let drag = null;           // { id, lastX, lastY } for move
+  let textArrowDraft = null; // { x1,y1,x2,y2 } leader drag for a text box
   let didChange = false;
 
   function canvasPos(evt) {
@@ -298,8 +349,26 @@
       return;
     }
 
+    if (t === "circle1") {
+      // one-click circle: drop a fixed-size circle centred on the click
+      const r = state.circleSize / 2;
+      pushHistory();
+      state.annotations.push({
+        id: state.nextId++, type: "circle",
+        x: x - r, y: y - r, w: r * 2, h: r * 2,
+        color: state.color, lineWidth: state.lineWidth,
+      });
+      afterChange();
+      return;
+    }
+
     if (t === "text") {
-      promptText(x, y, e);
+      if (state.boxArrow) {
+        // drag from the thing you're pointing at -> where the box should sit
+        textArrowDraft = { x1: x, y1: y, x2: x, y2: y };
+      } else {
+        promptText(x, y, e, null);
+      }
       return;
     }
 
@@ -325,6 +394,13 @@
     if (!state.image) return;
     const { x, y } = canvasPos(e);
 
+    if (textArrowDraft) {
+      textArrowDraft.x2 = x; textArrowDraft.y2 = y;
+      render();
+      drawArrow(ctx, x, y, textArrowDraft.x1, textArrowDraft.y1, state.boxText, Math.max(2, Math.round(state.lineWidth / 1.5)));
+      return;
+    }
+
     if (drag) {
       const a = state.annotations.find((an) => an.id === drag.id);
       if (a) { moveAnnotation(a, x - drag.lastX, y - drag.lastY); drag.lastX = x; drag.lastY = y; didChange = true; render(); }
@@ -340,7 +416,18 @@
     drawAnnotation(ctx, draft); // live preview on top
   });
 
-  canvas.addEventListener("pointerup", () => {
+  canvas.addEventListener("pointerup", (e) => {
+    if (textArrowDraft) {
+      const d = textArrowDraft;
+      textArrowDraft = null;
+      const moved = Math.hypot(d.x2 - d.x1, d.y2 - d.y1) > 8;
+      const boxX = moved ? d.x2 : d.x1;
+      const boxY = moved ? d.y2 : d.y1;
+      const arrowTo = moved ? { x: d.x1, y: d.y1 } : null; // arrow points back at the target
+      render();
+      promptText(boxX, boxY, e, arrowTo);
+      return;
+    }
     if (drag) {
       if (didChange) pushHistory();
       drag = null; didChange = false;
@@ -359,7 +446,7 @@
   });
 
   // ---- inline text entry -------------------------------------------------
-  function promptText(x, y, evt) {
+  function promptText(x, y, evt, arrowTo) {
     const input = $("textPrompt");
     input.hidden = false;
     input.value = "";
@@ -375,7 +462,12 @@
         pushHistory();
         state.annotations.push({
           id: state.nextId++, type: "text", x, y, text: val,
-          color: state.color, fontSize: Math.max(16, state.lineWidth * 5),
+          fontSize: Math.max(14, state.lineWidth * 5),
+          textColor: state.boxText,
+          bgColor: state.boxBg,
+          radius: state.boxRadius,
+          arrow: !!arrowTo,
+          arrowTo: arrowTo || null,
         });
         afterChange();
       }
@@ -535,6 +627,39 @@
     downloadURL(url, `${safeName(jobName())}-markup.png`);
   }
 
+  // Regenerate the flattened image (with all marks baked in) and copy it to the
+  // clipboard so it can be pasted straight into an email, chat, doc, etc.
+  function copyImage() {
+    if (!state.image) return;
+    state.selectedId = null;
+    render();
+    if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+      toast("Clipboard not supported here — use Save image instead");
+      return;
+    }
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        toast("Annotated image copied — paste anywhere (Ctrl/Cmd+V)");
+      } catch (err) {
+        toast("Copy blocked by browser — use Save image instead");
+      }
+    }, "image/png");
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add("show"));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => (el.hidden = true), 220);
+    }, 2400);
+  }
+
   function exportReport() {
     if (!state.image) return;
     const img = flattenedDataURL("image/png");
@@ -618,18 +743,28 @@
       s.className = "swatch" + (i === 0 ? " active" : "");
       s.style.background = col;
       s.title = col;
-      s.addEventListener("click", () => {
-        state.color = col;
-        wrap.querySelectorAll(".swatch").forEach((el) => el.classList.remove("active"));
-        s.classList.add("active");
-        // recolor current selection if any
-        if (state.selectedId != null) {
-          const a = state.annotations.find((an) => an.id === state.selectedId);
-          if (a) { pushHistory(); a.color = col; afterChange(); }
-        }
-      });
+      s.addEventListener("click", () => setStrokeColor(col, s));
       wrap.appendChild(s);
     });
+  }
+
+  // Set the stroke/shape colour and, if a non-text mark is selected, recolour it.
+  function setStrokeColor(col, swatchEl) {
+    state.color = col;
+    const wrap = $("swatches");
+    wrap.querySelectorAll(".swatch").forEach((el) => el.classList.toggle("active", el === swatchEl));
+    $("customColor").value = col;
+    if (state.selectedId != null) {
+      const a = state.annotations.find((an) => an.id === state.selectedId);
+      if (a && a.type !== "text") { pushHistory(); a.color = col; afterChange(); }
+    }
+  }
+
+  // Update a selected text box's style field live from the text-box pickers.
+  function styleSelectedText(field, value) {
+    if (state.selectedId == null) return;
+    const a = state.annotations.find((an) => an.id === state.selectedId);
+    if (a && a.type === "text") { a[field] = value; render(); }
   }
 
   function selectTool(t) {
@@ -658,8 +793,28 @@
     $("cropBtn").addEventListener("click", startCrop);
     $("cropApply").addEventListener("click", applyCrop);
     $("cropCancel").addEventListener("click", endCrop);
+    $("copyBtn").addEventListener("click", copyImage);
     $("saveBtn").addEventListener("click", saveImage);
     $("exportReportBtn").addEventListener("click", exportReport);
+
+    // custom colour picker (any colour)
+    $("customColor").addEventListener("input", (e) => setStrokeColor(e.target.value, null));
+
+    // one-click circle size
+    $("circleSize").addEventListener("input", (e) => {
+      state.circleSize = +e.target.value;
+      $("circleSizeVal").textContent = e.target.value;
+    });
+
+    // text-box style pickers (also update a selected text box live)
+    $("boxBg").addEventListener("input", (e) => { state.boxBg = e.target.value; styleSelectedText("bgColor", e.target.value); });
+    $("boxText").addEventListener("input", (e) => { state.boxText = e.target.value; styleSelectedText("textColor", e.target.value); });
+    $("boxRadius").addEventListener("input", (e) => {
+      state.boxRadius = +e.target.value;
+      $("boxRadiusVal").textContent = e.target.value;
+      styleSelectedText("radius", +e.target.value);
+    });
+    $("boxArrow").addEventListener("change", (e) => { state.boxArrow = e.target.checked; });
 
     // drag & drop onto stage
     ["dragenter", "dragover"].forEach((ev) =>
@@ -679,7 +834,10 @@
       }
     });
 
-    $("lineWidth").addEventListener("input", (e) => { state.lineWidth = +e.target.value; });
+    $("lineWidth").addEventListener("input", (e) => {
+      state.lineWidth = +e.target.value;
+      $("lineWidthVal").textContent = e.target.value;
+    });
 
     // keyboard shortcuts
     window.addEventListener("keydown", (e) => {
@@ -688,7 +846,7 @@
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
       if (document.activeElement?.tagName === "INPUT") return;
-      const map = { v: "select", c: "circle", r: "rect", h: "highlight", a: "arrow", p: "pen", t: "text", n: "number" };
+      const map = { v: "select", c: "circle", "1": "circle1", r: "rect", h: "highlight", a: "arrow", p: "pen", t: "text", n: "number" };
       if (map[e.key.toLowerCase()]) selectTool(map[e.key.toLowerCase()]);
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); }
     });

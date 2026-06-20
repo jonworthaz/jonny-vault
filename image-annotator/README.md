@@ -28,14 +28,25 @@ stays on the user's machine.
 | Tool | What it does |
 |------|--------------|
 | **Upload** | Pick a file, **drag & drop** onto the canvas, or **paste** (Ctrl/Cmd+V) an image |
-| **Circle** | Draw an ellipse around a problem |
+| **Circle** | Drag to draw an ellipse around a problem |
+| **1-click circle** | Turn it on, then **single-click** to drop a fixed-size circle exactly where you click. Size set by the *1-click circle size* slider |
 | **Box** | Rectangle outline |
 | **Highlight** | Semi-transparent colour wash over an area |
 | **Arrow** | Point at a detail |
 | **Draw** | Freehand pen |
-| **Text** | Click and type an inline note |
+| **Text box** | Click and type a note in a styled box — choose **box colour, text colour and corner radius** (default: white box, black text). Tick **Add arrow** to drag a leader line from the thing you're pointing at to where the box sits |
 | **Number** | Drop auto-incrementing numbered markers (①②③…) that sync to the side panel |
 | **Select** | Click an annotation to move it, recolour it, or delete it |
+
+### Colour & line
+- Seven quick **swatches** plus a **custom colour picker** for any colour you like.
+- **Line thickness** slider controls stroke weight (and scales text size).
+- Changing a swatch/colour while a mark is selected recolours that mark.
+
+### Copy / paste out
+- **Copy image** regenerates the flattened image (with all circles, notes etc.
+  baked in) and puts it on your **clipboard** — paste straight into an email,
+  chat, doc or ticket. (**Save image** still downloads a PNG.)
 
 ### Markers & costs panel
 Each numbered marker gets a row in the right-hand panel where you add a **part
@@ -50,9 +61,9 @@ panel keeps a running **estimated total**.
   table of every numbered item, its notes and costs, and the total.
 
 ### Shortcuts
-`V` select · `C` circle · `R` box · `H` highlight · `A` arrow · `P` draw ·
-`T` text · `N` number · `Ctrl/Cmd+Z` undo · `Ctrl/Cmd+Shift+Z` / `Ctrl+Y` redo ·
-`Delete` remove selected.
+`V` select · `C` circle · `1` one-click circle · `R` box · `H` highlight ·
+`A` arrow · `P` draw · `T` text box · `N` number · `Ctrl/Cmd+Z` undo ·
+`Ctrl/Cmd+Shift+Z` / `Ctrl+Y` redo · `Delete` remove selected.
 
 ## Files
 - `index.html` — markup / layout
