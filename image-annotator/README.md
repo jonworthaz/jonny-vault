@@ -86,6 +86,9 @@ panel keeps a running **estimated total**.
   browser's native save dialog (Chrome/Edge); elsewhere it asks for a name.
 - **Export report (HTML)** — downloads a tidy report: the annotated image plus a
   table of every numbered item, its notes and costs, and the total.
+- **Export spreadsheet (CSV)** — downloads the marked items as a `.csv` that
+  opens straight in **Excel / Google Sheets** (job reference, each item's part
+  name, notes and cost, plus the total).
 
 ### Shortcuts
 `V` select · `G` / hold `Space` pan · `C` circle · `1` one-click circle ·
