@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Damage Assessment — Multi-photo vehicle damage builder</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <div class="brand-text">
+        <strong>Damage Assessment</strong>
+        <small>Multi-photo vehicle damage builder</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <input type="text" id="jobTitle" class="job-title" placeholder="Registration / reference (e.g. AB12 CDE)" />
+    </div>
+    <button id="vehicleToggle" class="vehicle-toggle" title="Vehicle details" aria-expanded="false">🚗 Vehicle details</button>
+    <button id="panelToggle" class="panel-toggle" title="Show marked items" aria-label="Show marked items">☰ Items</button>
+  </header>
+
+  <!-- Vehicle details (assessment-wide). Collapsible; lives just under the top bar. -->
+  <section class="vehicle-bar" id="vehicleBar" hidden>
+    <div class="vehicle-fields">
+      <label class="vf"><span>Registration / reference</span><input type="text" id="vehReg" placeholder="AB12 CDE" /></label>
+      <label class="vf"><span>Make / brand</span><input type="text" id="vehMake" placeholder="e.g. Ford" /></label>
+      <label class="vf"><span>Model</span><input type="text" id="vehModel" placeholder="e.g. Focus" /></label>
+      <label class="vf"><span>Year</span><input type="text" id="vehYear" placeholder="e.g. 2019" /></label>
+      <label class="vf"><span>Colour</span><input type="text" id="vehColour" placeholder="e.g. Silver" /></label>
+    </div>
+  </section>
+
+  <div class="app">
+    <!-- Toolbar -->
+    <aside class="toolbar">
+      <div class="tool-group">
+        <span class="group-label">Photos</span>
+        <button id="uploadBtn" class="tool" title="Add a photo">⬆ Add photo</button>
+        <input type="file" id="fileInput" accept="image/*" hidden />
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Tools</span>
+        <button class="tool tool-select" data-tool="select" title="Select / move (V)"><span class="ico">⤢</span>Select</button>
+        <button class="tool tool-select" data-tool="pan" title="Pan / move the view — drag to move around when zoomed in (Space)"><span class="ico">✋</span>Pan</button>
+        <button class="tool tool-select active" data-tool="circle" title="Circle a problem — drag to size (C)"><span class="ico">◯</span>Circle</button>
+        <button class="tool tool-select" data-tool="circle1" title="One-click circle — click to drop a fixed-size circle (1)"><span class="ico">◉</span>1-click circle</button>
+        <button class="tool tool-select" data-tool="rect" title="Box (R)"><span class="ico">▢</span>Box</button>
+        <button class="tool tool-select" data-tool="highlight" title="Highlight (H)"><span class="ico">▦</span>Highlight</button>
+        <button class="tool tool-select" data-tool="arrow" title="Arrow (A)"><span class="ico">↗</span>Arrow</button>
+        <button class="tool tool-select" data-tool="pen" title="Freehand draw (P)"><span class="ico">✎</span>Draw</button>
+        <button class="tool tool-select" data-tool="text" title="Text note (T)"><span class="ico">T</span>Text</button>
+        <button class="tool tool-select" data-tool="number" title="Numbered marker (N)"><span class="ico">①</span>Number</button>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Auto-number</span>
+        <label class="check-row">
+          <input type="checkbox" id="autoNumber" /> Auto-number every mark
+        </label>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Colour &amp; size</span>
+        <div class="swatches" id="swatches"></div>
+        <label class="picker-row">
+          <span>Custom colour</span>
+          <input type="color" id="customColor" value="#ff5a3c" />
+        </label>
+        <label class="range-row">
+          <span>1-click circle size <b id="circleSizeVal">48</b></span>
+          <input type="range" id="circleSize" min="12" max="240" value="48" />
+        </label>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Text box</span>
+        <div class="picker-pair">
+          <label class="picker-row"><span>Box</span><input type="color" id="boxBg" value="#ffffff" /></label>
+          <label class="picker-row"><span>Text</span><input type="color" id="boxText" value="#000000" /></label>
+        </div>
+        <label class="range-row">
+          <span>Corner radius <b id="boxRadiusVal">8</b></span>
+          <input type="range" id="boxRadius" min="0" max="40" value="8" />
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="boxArrow" /> Add arrow (drag from target to box)
+        </label>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Edit</span>
+        <button id="undoBtn" class="tool" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button id="redoBtn" class="tool" title="Redo (Ctrl+Y)">↷ Redo</button>
+        <button id="deleteBtn" class="tool" title="Delete selected (Del)">🗑 Delete</button>
+        <button id="clearBtn" class="tool" title="Remove all annotations">✕ Clear all</button>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Crop &amp; Save</span>
+        <button id="cropBtn" class="tool" title="Crop to a region">⛶ Crop</button>
+        <button id="copyBtn" class="tool" title="Copy the annotated image to the clipboard (paste anywhere)">⧉ Copy image</button>
+        <button id="saveAsBtn" class="tool" title="Save as… — choose the file name and where it goes">📁 Save as…</button>
+        <button id="saveBtn" class="tool tool-primary" title="Save a new image file (unique name, includes the vehicle reference)">💾 Save image</button>
+      </div>
+    </aside>
+
+    <!-- Canvas stage -->
+    <main class="stage" id="stage">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-card">
+          <div class="empty-ico">🚗</div>
+          <h2>Add a photo to start the assessment</h2>
+          <p>Drag &amp; drop a photo here, or click <strong>Add photo</strong>.<br />
+             Mark up the damage, then add more photos — each keeps its own
+             notes and costs. Export a combined PDF report or spreadsheet
+             with a grand total.</p>
+          <button id="uploadBtn2" class="tool tool-primary">⬆ Add photo</button>
+        </div>
+      </div>
+
+      <!-- name field for the active photo -->
+      <div class="photo-namebar" id="photoNamebar" hidden>
+        <label class="pn-label" for="photoName">Photo name</label>
+        <input type="text" id="photoName" class="photo-name" placeholder="e.g. Car front" />
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap" hidden>
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <!-- crop overlay lives at stage level so it is unaffected by the zoom transform -->
+      <div class="crop-overlay" id="cropOverlay" hidden>
+        <div class="crop-rect" id="cropRect"></div>
+        <div class="crop-actions" id="cropActions">
+          <button id="cropApply" class="tool tool-primary">✓ Apply crop</button>
+          <button id="cropCancel" class="tool">Cancel</button>
+        </div>
+      </div>
+
+      <!-- zoom controls (pinch on mobile, buttons everywhere) -->
+      <div class="zoom-controls" id="zoomControls" hidden>
+        <button id="zoomOut" class="zoom-btn" title="Zoom out">−</button>
+        <button id="zoomFit" class="zoom-btn" title="Fit to screen" aria-label="Fit to screen">⤢</button>
+        <button id="zoomIn" class="zoom-btn" title="Zoom in">+</button>
+      </div>
+
+      <!-- undo / redo floating on the image (top-left) -->
+      <div class="edit-controls" id="editControls" hidden>
+        <button id="undoFab" class="zoom-btn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button id="redoFab" class="zoom-btn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      </div>
+
+      <!-- vertical line-thickness slider on the right edge of the image -->
+      <div class="thickness-control" id="thicknessControl" hidden>
+        <span class="tc-label">Thickness</span>
+        <input type="range" id="lineWidth" class="v-range" min="1" max="40" value="5" aria-label="Line thickness" />
+        <span class="tc-val" id="lineWidthVal">5</span>
+      </div>
+
+      <!-- filmstrip of all photos -->
+      <div class="filmstrip" id="filmstrip" hidden>
+        <div class="filmstrip-thumbs" id="filmstripThumbs"></div>
+        <button id="addPhotoStrip" class="add-photo-btn" title="Add another photo">+ Add photo</button>
+      </div>
+    </main>
+
+    <!-- Notes / parts panel -->
+    <aside class="panel">
+      <div class="panel-head">
+        <h3>Marked items</h3>
+        <small id="markerCount">0 items</small>
+        <button id="panelClose" class="panel-close" title="Close" aria-label="Close">✕</button>
+      </div>
+      <p class="panel-hint">Numbered marks for the current photo appear here. Add a part name, note and estimated cost. Turn on <strong>Auto-number every mark</strong> to number every annotation automatically.</p>
+      <ol class="marker-list" id="markerList"></ol>
+      <div class="panel-foot">
+        <label class="currency-row">
+          <span>Currency</span>
+          <select id="currency" class="currency-select">
+            <option value="MYR">Malaysian Ringgit (RM)</option>
+            <option value="USD">US Dollar ($)</option>
+          </select>
+        </label>
+        <div class="total-row">
+          <span>This photo</span>
+          <strong id="photoTotal">RM0.00</strong>
+        </div>
+        <div class="total-row grand">
+          <span>Grand total (all photos)</span>
+          <strong id="totalCost">RM0.00</strong>
+        </div>
+        <button id="exportPdfBtn" class="tool tool-primary" title="Build a combined PDF report (print → Save as PDF)">📄 Export PDF report</button>
+        <button id="exportCsvBtn" class="tool" title="Export all photos and items as a spreadsheet (CSV — opens in Excel / Google Sheets)">📊 Export spreadsheet (CSV)</button>
+      </div>
+    </aside>
+  </div>
+
+  <input type="text" id="textPrompt" class="floating-text-input" hidden />
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
