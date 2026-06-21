@@ -125,8 +125,21 @@ opinionated and lean rather than copying the doc wholesale:
   entities, a rules engine, knowledge graph/embeddings, plugins, and a desktop/SQLite
   rebuild. The full review + rationale is in the chat and [SPEC.md §5a](./claude-ideas/SPEC.md).
 
-**Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
-score editing, multiple workflows per idea, and cloud sync behind a backend.
+**v3 — capture + AI (built).**
+- **Brainstorm** section per idea (variants / derivatives / adjacent markets), with
+  prompt chips and **↗ spin-off** to a new idea.
+- **Idea Dropbox** — a low-friction inbox (type, drop text/images, `?drop=`), plus a
+  **Claude dispatch** channel (`dropbox.json`) the app ingests on load. Quick ideas
+  wait in the dropbox until promoted onto the board.
+- **AI analysis (agent-driven)** — the agent is the analysis engine (see
+  [`AGENT.md`](./claude-ideas/AGENT.md)): score the Medvi gate, brainstorm, propose
+  experiments, decide, write back. The app generates copy-paste prompts and **upserts
+  ideas by id on Import**, so an agent can fill the board **end-to-end without human
+  intervention**. (Local-first: no LLM/key embedded in the app — an optional in-browser
+  API-key mode could be added later for one-click in-app analysis.)
+
+**Next steps:** read seed ideas live from the Markdown boards, in-app score editing,
+multiple workflows per idea, optional in-app API-key AI mode, and cloud sync.
 
 ---
 

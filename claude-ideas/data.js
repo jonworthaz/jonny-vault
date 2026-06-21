@@ -63,6 +63,9 @@ const DECISIONS = [
 const EXPERIMENT_TYPES = ['Interview', 'Survey', 'Landing page', 'Prototype', 'Smoke test', 'Tech spike', 'Other'];
 const EXPERIMENT_STATUS = ['Planned', 'Running', 'Done', 'Abandoned'];
 
+/* Brainstorm prompt chips — quick ways to expand an idea. */
+const BRAINSTORM_PROMPTS = ['Variants', 'Derivatives', 'Adjacent markets', 'Who else has this problem?', 'What would 10× it?', 'Riskiest assumption'];
+
 /* Seed ideas — mirrored from boards 09 (product) and 10 (tooling). */
 const SEED_IDEAS = [
   {

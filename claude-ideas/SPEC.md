@@ -92,7 +92,9 @@ the only requirement (both are served from the same site).
     { "id", "title", "type", "status", "hypothesis", "metric", "learning", "createdAt" }
   ],
   "statusHistory": [ { "status", "ts" } ],   // every pipeline transition, for analytics
+  "inbox": false,                   // true = sits in the Dropbox, pre-progression
   "review": "free text",
+  "brainstorm": [ { "id", "text", "ts" } ],   // variants / derivatives / adjacent ideas
   "research": [ { "id", "ts", "text", "url" } ],   // timestamped log
   "analysis": "free text",
   "development": "free text",
@@ -160,6 +162,31 @@ The framework data (seven functions, five laws, the weighted criteria, decisions
 experiment vocabulary) lives in `data.js` (`MEDVI_OS`, `DECISIONS`,
 `EXPERIMENT_TYPES`, `EXPERIMENT_STATUS`), derived from the vault's `02-operating-system.md`.
 
+### 5b. Idea Dropbox & AI agent layer
+
+**Dropbox** — a pre-board inbox. Quick ideas carry `inbox: true` and are excluded from
+the board/pipeline/analytics until **promoted** (`inbox: false`). Capture is
+zero-friction: a textarea, drag-drop of **text or image files** (images stored as
+data-URL "doodle" attachments), a `?drop=<text>` URL param, and an agent **dispatch**
+channel.
+
+**Dispatch** — the app fetches [`dropbox.json`](./dropbox.json) on load and ingests any
+`dispatch[]` entries not seen before (dedup tracked in `localStorage`
+`claudeideas.dispatched.v1`). An agent (or the user via Claude) appends
+`{ id, text, ts }` entries — *"dispatch idea: X → idea board"*.
+
+**AI analysis (agent-driven)** — the app contains no LLM by design; the **agent is the
+analysis engine** and works through the same JSON (full protocol in
+[`AGENT.md`](./AGENT.md)). It scores the Medvi-OS gate, brainstorms, proposes
+experiments, records a decision and writes back a `{ "ideas": [...] }` document. The app:
+- generates copy-paste prompts (per idea / whole dropbox) as a manual bridge,
+- **upserts ideas by `id` on Import** (so re-runs update in place; new ones add),
+- auto-assigns ids to any sub-items the agent omits,
+- surfaces the agent's `aiAnalysis` verdict in the drawer and the brief.
+
+This is what makes the board fillable **end-to-end without human intervention**: dispatch
+→ analyse → gate decision → promote, all as file/JSON operations.
+
 ### 5a. Stage-gate, experiments & analytics (NPD layer)
 
 Added after a review of *"Designing a Local-First Ideas & NPD Management System"*. Rather
@@ -206,8 +233,10 @@ No params ⇒ the builder runs as the standalone tool (its own `forge.workflow.v
 |---|---|
 | `index.html` | App shell: sidebar nav, main view container, idea drawer, modal, toast |
 | `styles.css` | Dark theme (shared CSS variables), sidebar, cards, drawer, modal, responsive |
-| `data.js` | `STATUSES`, `STATUS_META`, `MEDVI_OS` framework, `SEED_IDEAS` (mirrors boards 09/10) |
-| `app.js` | Store load/save/normalize · router (`setView`/`render`) · dashboard · board (search/filter/cards) · Medvi OS tab · embedded Forge tab · **Research & Launch drawer** · attachments + lock · Forge handoff (`openForge`) · **product-brief generator** · export/import |
+| `data.js` | `STATUSES`, `STATUS_META`, `MEDVI_OS` (weighted gate), `DECISIONS`, `EXPERIMENT_*`, `BRAINSTORM_PROMPTS`, `SEED_IDEAS` |
+| `app.js` | Store load/save/normalize/upsert · router · dashboard · **dropbox + dispatch ingest** · board · Medvi gate scoring + decisions · brainstorm · experiments/learnings · **AI prompt bridge** · Forge handoff · brief generator · export/import |
+| `dropbox.json` | Agent **dispatch** inbox (`{ dispatch: [...] }`) |
+| `AGENT.md` | Agent operating procedure — fill the board end-to-end |
 | `start-*.{command,bat}` | Local launchers — serve the **parent** folder (so sibling tools resolve) and open `/claude-ideas/` |
 
 ### `workflow-builder/` (Forge) — relevant additions
