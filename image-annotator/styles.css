@@ -196,6 +196,58 @@ html, body {
 }
 .zoom-btn:hover { background: #2b3645; }
 
+/* ---- Undo/redo floating buttons (top-left of the image) ---- */
+.edit-controls {
+  position: absolute;
+  left: 14px; top: 14px;
+  display: flex;
+  gap: 6px;
+  background: rgba(20,26,34,.9);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- Vertical line-thickness slider (right edge of the image) ---- */
+.thickness-control {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20,26,34,.9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 8px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+.thickness-control .tc-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+}
+.thickness-control .tc-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 18px;
+  text-align: center;
+}
+.v-range {
+  writing-mode: vertical-lr;      /* modern vertical range (Chrome/FF/Safari) */
+  direction: rtl;                 /* low at bottom, high at top */
+  width: 10px;
+  height: 150px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* ---- Crop overlay (stage level, so the zoom transform never touches it) ---- */
 .crop-overlay { position: absolute; inset: 0; cursor: crosshair; z-index: 40; touch-action: none; }
 .crop-rect {
