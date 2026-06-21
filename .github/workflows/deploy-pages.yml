@@ -1,14 +1,16 @@
-name: Deploy MarkUp tool to GitHub Pages
+name: Deploy tools to GitHub Pages
 
-# Publishes the image-annotator/ folder as the site root, so the tool is served
-# at https://<owner>.github.io/<repo>/ — where the Copy-to-clipboard feature
-# works reliably (https is a trusted origin).
+# Publishes the static tools to GitHub Pages:
+#   • image-annotator/  → the site root  (https://<owner>.github.io/<repo>/)
+#   • workflow-builder/  → /workflow-builder/
+# Serving over https keeps clipboard / download features working reliably.
 
 on:
   push:
     branches: [main]
     paths:
       - "image-annotator/**"
+      - "workflow-builder/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -37,10 +39,16 @@ jobs:
         with:
           enablement: true
 
-      - name: Upload the tool as the site
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/workflow-builder
+          cp -r image-annotator/. _site/
+          cp -r workflow-builder/. _site/workflow-builder/
+
+      - name: Upload the site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: image-annotator
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

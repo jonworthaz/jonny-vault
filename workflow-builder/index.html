@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forge — Claude Code Workflow Builder</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⚒</span>
+      <div class="brand-text">
+        <strong>Forge</strong>
+        <small>Claude Code workflow builder</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <input type="text" id="projectName" class="job-title" placeholder="Project name (e.g. acme-web)" />
+    </div>
+    <div class="topbar-buttons">
+      <button id="paletteToggle" class="tool palette-toggle-btn" title="Show palette" aria-label="Show palette">☰</button>
+      <button id="newBtn" class="tool" title="Start a new, empty workflow">✦ New</button>
+      <button id="importBtn" class="tool" title="Open a saved workflow.json">📂 Open</button>
+      <input type="file" id="importInput" accept="application/json,.json" hidden />
+      <span id="saveState" class="save-state" title="Workflows autosave to this browser">Saved</span>
+      <button id="panelToggle" class="panel-toggle" title="Show Tars" aria-label="Show Tars">🤖 Tars</button>
+      <button id="exportBtn" class="tool tool-primary" title="Generate Claude Code config">⤓ Generate</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <!-- Palette -->
+    <aside class="palette">
+      <input type="search" id="paletteSearch" class="palette-search" placeholder="Search palette…" />
+
+      <div class="pal-group">
+        <span class="group-label">Templates — predefined builds</span>
+        <div class="pal-list" id="palTemplates"></div>
+      </div>
+
+      <div class="pal-group">
+        <span class="group-label">Stages <small>(drag to canvas)</small></span>
+        <div class="pal-list" id="palStages"></div>
+      </div>
+
+      <div class="pal-group">
+        <span class="group-label">Agents <small>(drag onto a stage)</small></span>
+        <div class="pal-list chips" id="palAgents"></div>
+        <button class="add-custom" data-kind="agent">＋ Custom agent</button>
+      </div>
+
+      <div class="pal-group">
+        <span class="group-label">Skills</span>
+        <div class="pal-list chips" id="palSkills"></div>
+        <button class="add-custom" data-kind="skill">＋ Custom skill</button>
+      </div>
+
+      <div class="pal-group">
+        <span class="group-label">Tools</span>
+        <div class="pal-list chips" id="palTools"></div>
+      </div>
+
+      <div class="pal-group">
+        <span class="group-label">MCP servers</span>
+        <div class="pal-list chips" id="palMcps"></div>
+        <button class="add-custom" data-kind="mcp">＋ Custom MCP</button>
+      </div>
+    </aside>
+
+    <!-- Canvas -->
+    <main class="canvas" id="canvas">
+      <div class="canvas-head">
+        <textarea id="projectGoal" class="goal" rows="2"
+          placeholder="What are you trying to do? (Tars reads this to recommend a workflow — e.g. “add a feature”, “fix a bug”, “research X”, “refactor Y”, “ship a PR”)"></textarea>
+      </div>
+
+      <div class="lane" id="lane">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-card">
+            <div class="empty-ico">⚒</div>
+            <h2>Build a workflow</h2>
+            <p>Pick a <strong>template</strong> on the left, or <strong>drag stages</strong> onto
+               this canvas, then drag <strong>agents, skills, tools and MCPs</strong> onto each stage.
+               Reorder stages by dragging the&nbsp;⠿ handle.</p>
+            <p class="muted">On a phone? <strong>Tap</strong> a palette item to add it to the selected stage.</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="addStageBtn" class="add-stage" title="Add a stage">＋ Add stage</button>
+    </main>
+
+    <!-- Tars assistant -->
+    <aside class="tars">
+      <div class="panel-head">
+        <h3>🤖 Tars</h3>
+        <small>workflow assistant</small>
+        <button id="panelClose" class="panel-close" title="Close" aria-label="Close">✕</button>
+      </div>
+      <p class="panel-hint">Recommendations update as you build. Click one to apply it.</p>
+      <div class="tars-list" id="tarsList"></div>
+    </aside>
+  </div>
+
+  <!-- Export / generate modal -->
+  <div class="modal-backdrop" id="exportModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Generate Claude Code config</h3>
+        <button id="exportClose" class="panel-close" title="Close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-tabs" id="exportTabs"></div>
+      <div class="modal-body">
+        <p class="export-note" id="exportNote"></p>
+        <pre class="export-code"><code id="exportContent"></code></pre>
+      </div>
+      <div class="modal-foot">
+        <button id="copyArtifact" class="tool">⧉ Copy</button>
+        <button id="downloadArtifact" class="tool">💾 Download this file</button>
+        <button id="downloadBundle" class="tool tool-primary">📦 Download setup bundle</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
