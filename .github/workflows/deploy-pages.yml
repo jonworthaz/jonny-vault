@@ -1,14 +1,17 @@
-name: Deploy MarkUp tool to GitHub Pages
+name: Deploy site to GitHub Pages
 
-# Publishes the image-annotator/ folder as the site root, so the tool is served
-# at https://<owner>.github.io/<repo>/ — where the Copy-to-clipboard feature
-# works reliably (https is a trusted origin).
+# Publishes the in-browser apps to GitHub Pages as a single site:
+#   /            -> image-annotator (MarkUp tool, kept at root so its
+#                   Copy-to-clipboard feature has a trusted https origin)
+#   /idea-board/ -> the Idea Board dashboard
+# Both are static, zero-dependency, and served straight from the repo.
 
 on:
   push:
     branches: [main]
     paths:
       - "image-annotator/**"
+      - "idea-board/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -32,15 +35,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          # image-annotator at the site root
+          cp -r image-annotator/. _site/
+          # idea board dashboard at /idea-board/
+          mkdir -p _site/idea-board
+          cp -r idea-board/. _site/idea-board/
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Upload the tool as the site
+      - name: Upload the assembled site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: image-annotator
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
