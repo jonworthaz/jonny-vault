@@ -903,6 +903,38 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
+  // Export the marked items as a CSV spreadsheet (opens in Excel / Google Sheets).
+  function exportCsv() {
+    const markers = state.annotations.filter((a) => a.type === "number").sort((a, b) => a.n - b.n);
+    if (!markers.length) { toast("Add some numbered items first"); return; }
+    const total = markers.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+
+    const rows = [
+      ["Job / vehicle reference", jobName()],
+      ["Date", new Date().toLocaleDateString()],
+      [],
+      ["#", "Item / part", "Notes", "Estimated cost (GBP)"],
+    ];
+    for (const m of markers) {
+      rows.push([m.n, m.label || "", (m.note || "").replace(/\r?\n/g, " "), m.cost ? (parseFloat(m.cost) || 0).toFixed(2) : ""]);
+    }
+    rows.push([]);
+    rows.push(["", "", "Total", total.toFixed(2)]);
+
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+    // Prepend a UTF-8 BOM so Excel reads accents/symbols correctly.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    downloadURL(url, uniqueFileName("csv").replace(/\.csv$/, "-items.csv"));
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  // Quote a CSV cell when it contains a comma, quote or newline.
+  function csvCell(value) {
+    const v = String(value ?? "");
+    return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  }
+
   // ====================================================================
   //  Small utilities
   // ====================================================================
@@ -1002,6 +1034,7 @@
     $("saveAsBtn").addEventListener("click", saveImageAs);
     $("saveBtn").addEventListener("click", saveImage);
     $("exportReportBtn").addEventListener("click", exportReport);
+    $("exportCsvBtn").addEventListener("click", exportCsv);
 
     // zoom controls
     $("zoomIn").addEventListener("click", () => zoomByButton(1.25));
