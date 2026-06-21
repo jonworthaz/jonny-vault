@@ -48,6 +48,7 @@ use the launcher above (or **Save image**, which downloads the same picture).
 | **Text box** | Click and type a note in a styled box — choose **box colour, text colour and corner radius** (default: white box, black text). Tick **Add arrow** to drag a leader line from the thing you're pointing at to where the box sits |
 | **Number** | Drop auto-incrementing numbered markers (①②③…) that sync to the side panel |
 | **Select** | Click an annotation to move it, recolour it, or delete it |
+| **Pan** | Hand tool — drag to move the image around when zoomed in (or hold **Space** with any tool). Not the default. |
 
 ### Colour & line
 - Seven quick **swatches** plus a **custom colour picker** for any colour you like.
@@ -78,13 +79,18 @@ panel keeps a running **estimated total**.
 - **Crop** — drag a region, hit *Apply*; the image + annotations are baked into
   a new cropped picture you can keep annotating.
 - **Save image** — downloads a flattened **PNG** with all markups burned in.
+  Every save gets a **unique file name** (no overwrites), and if you've typed a
+  **vehicle/job reference** in the top bar it's used in the file name —
+  e.g. `ab12-cde-front-end-20260620-103045-01.png`.
+- **Save as…** — choose the **file name and location** yourself via the
+  browser's native save dialog (Chrome/Edge); elsewhere it asks for a name.
 - **Export report (HTML)** — downloads a tidy report: the annotated image plus a
   table of every numbered item, its notes and costs, and the total.
 
 ### Shortcuts
-`V` select · `C` circle · `1` one-click circle · `R` box · `H` highlight ·
-`A` arrow · `P` draw · `T` text box · `N` number · `Ctrl/Cmd+Z` undo ·
-`Ctrl/Cmd+Shift+Z` / `Ctrl+Y` redo · `Delete` remove selected.
+`V` select · `G` / hold `Space` pan · `C` circle · `1` one-click circle ·
+`R` box · `H` highlight · `A` arrow · `P` draw · `T` text box · `N` number ·
+`Ctrl/Cmd+Z` undo · `Ctrl/Cmd+Shift+Z` / `Ctrl+Y` redo · `Delete` remove selected.
 
 ## Files
 - `index.html` — markup / layout
