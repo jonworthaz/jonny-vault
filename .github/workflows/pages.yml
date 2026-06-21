@@ -1,8 +1,9 @@
 name: Deploy MarkUp tools (Pages)
 
 # Runs on the repository's DEFAULT branch (the only ref GitHub Pages allows to
-# deploy via Actions). Checks out `main` and publishes both tools:
-#   /                     -> v1 single-image annotator (image-annotator/)
+# deploy via Actions). Checks out `main` and publishes:
+#   /                     -> landing page (landing/)
+#   /markup/              -> v1 single-image annotator (image-annotator/)
 #   /damage-assessment/   -> v2 multi-photo damage assessment (damage-assessment/)
 
 on:
@@ -32,7 +33,9 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r image-annotator/. _site/
+          cp -r landing/. _site/
+          mkdir -p _site/markup
+          cp -r image-annotator/. _site/markup/
           mkdir -p _site/damage-assessment
           cp -r damage-assessment/. _site/damage-assessment/
 
