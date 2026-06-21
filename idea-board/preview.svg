@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="380" viewBox="0 0 880 380" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <rect width="880" height="380" rx="14" fill="#0f1115"/>
+  <!-- top bar -->
+  <rect x="0" y="0" width="880" height="62" fill="#171a21"/>
+  <line x1="0" y1="62" x2="880" y2="62" stroke="#2a2f3a"/>
+  <text x="24" y="30" font-size="22">💡</text>
+  <text x="52" y="28" fill="#e7e9ee" font-size="15" font-weight="700">Idea Board</text>
+  <text x="52" y="45" fill="#9aa3b2" font-size="11">Raw ideas, fleshed out enough to judge</text>
+  <rect x="560" y="18" width="180" height="28" rx="14" fill="#1e222b" stroke="#2a2f3a"/>
+  <text x="576" y="36" fill="#9aa3b2" font-size="12">Search ideas, tags…</text>
+  <rect x="752" y="18" width="48" height="28" rx="14" fill="#ffd24a"/>
+  <text x="762" y="36" fill="#1a1400" font-size="12" font-weight="700">All</text>
+  <rect x="806" y="18" width="52" height="28" rx="14" fill="#1e222b" stroke="#2a2f3a"/>
+  <text x="816" y="36" fill="#ffd24a" font-size="12">💡 Raw</text>
+
+  <!-- stats -->
+  <rect x="24" y="84" width="74" height="24" rx="12" fill="#171a21" stroke="#2a2f3a"/>
+  <text x="36" y="100" fill="#9aa3b2" font-size="12">1 idea</text>
+  <rect x="106" y="84" width="92" height="24" rx="12" fill="#171a21"/>
+  <text x="118" y="100" fill="#ffd24a" font-size="12">💡 Raw: 1</text>
+
+  <!-- card -->
+  <rect x="24" y="128" width="270" height="210" rx="14" fill="#1a1d25" stroke="#6ea8fe"/>
+  <text x="42" y="156" fill="#9aa3b2" font-size="13">#01</text>
+  <rect x="200" y="142" width="78" height="22" rx="11" fill="rgba(255,210,74,0.16)"/>
+  <text x="212" y="157" fill="#ffd24a" font-size="12" font-weight="700">💡 Raw</text>
+  <text x="42" y="190" fill="#e7e9ee" font-size="19" font-weight="700">3D Layered Images</text>
+  <text x="42" y="214" fill="#9aa3b2" font-size="12.5">Images with depth that appear to</text>
+  <text x="42" y="231" fill="#9aa3b2" font-size="12.5">move as you walk past.</text>
+  <rect x="42" y="246" width="56" height="20" rx="6" fill="rgba(110,168,254,0.12)" stroke="rgba(110,168,254,0.3)"/>
+  <text x="52" y="260" fill="#6ea8fe" font-size="11">images</text>
+  <rect x="104" y="246" width="34" height="20" rx="6" fill="rgba(110,168,254,0.12)" stroke="rgba(110,168,254,0.3)"/>
+  <text x="113" y="260" fill="#6ea8fe" font-size="11">3d</text>
+  <text x="42" y="300" fill="#9aa3b2" font-size="12">5 build approaches</text>
+  <text x="42" y="324" fill="#ffd24a" font-size="13" font-weight="700">View details →</text>
+
+  <!-- ghost cards -->
+  <rect x="312" y="128" width="270" height="210" rx="14" fill="#171a21" stroke="#2a2f3a" stroke-dasharray="5 5"/>
+  <text x="447" y="240" fill="#4a515f" font-size="34" text-anchor="middle">+</text>
+  <text x="447" y="266" fill="#4a515f" font-size="12" text-anchor="middle">next idea</text>
+  <rect x="600" y="128" width="256" height="210" rx="14" fill="#171a21" stroke="#2a2f3a" stroke-dasharray="5 5"/>
+</svg>
