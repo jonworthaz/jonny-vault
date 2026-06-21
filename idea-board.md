@@ -3,6 +3,11 @@
 *A running capture of raw ideas. No filtering at this stage — get it down, flesh
 it out enough to judge later, promote the good ones into their own doc.*
 
+> 📊 **Interactive dashboard:** open [`idea-board/index.html`](./idea-board/index.html)
+> in a browser for a searchable, filterable card view of these ideas. Add or edit
+> ideas in [`idea-board/ideas.js`](./idea-board/ideas.js). This markdown file is
+> the plain-text mirror.
+
 | # | Idea | One-liner | Status |
 |---|---|---|---|
 | 01 | [3D Layered Images](#01--3d-layered-images) | Images with depth that appear to move as you walk past | 💡 Raw |

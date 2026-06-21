@@ -34,6 +34,13 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
 
+## Also in here
+
+- **[Idea Board](./idea-board.md)** — a running capture of raw ideas, with an
+  interactive [dashboard](./idea-board/index.html) (open in a browser).
+- **[Image Annotator](./image-annotator/README.md)** — a zero-dependency
+  in-browser tool for marking up photos.
+
 ## The one-line thesis
 
 > Own the customer and the recurring charge. Automate or outsource everything else.

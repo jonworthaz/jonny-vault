@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Idea Board — Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">💡</span>
+      <div class="brand-text">
+        <strong>Idea Board</strong>
+        <small>Raw ideas, fleshed out enough to judge</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <input type="search" id="search" class="search" placeholder="Search ideas, tags, text…" />
+      <div class="filters" id="statusFilters"></div>
+    </div>
+  </header>
+
+  <main class="board">
+    <div class="stats" id="stats"></div>
+    <section class="grid" id="grid"></section>
+    <p class="empty" id="empty" hidden>No ideas match your filter.</p>
+  </main>
+
+  <footer class="foot">
+    <span>Add or edit ideas in <code>ideas.js</code>. Open this file in any browser — nothing is uploaded.</span>
+  </footer>
+
+  <!-- Card detail modal -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <article class="modal-card" id="modalCard" role="dialog" aria-modal="true"></article>
+  </div>
+
+  <script src="ideas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
