@@ -1,0 +1,4 @@
+{
+  "_comment": "Claude dispatch inbox. Append entries to 'dispatch'; Claude Ideas ingests new ones (deduped by id) into the Dropbox on load. See AGENT.md.",
+  "dispatch": []
+}
