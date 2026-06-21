@@ -39,11 +39,11 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 ## The tools
 
 Self-contained, zero-dependency web tools that live alongside the playbook
-(also deployed to GitHub Pages — `/` opens Claude Ideas):
+(also deployed to GitHub Pages — the site root is a tools hub):
 
 | Tool | What it is |
 |---|---|
-| [**Claude Ideas**](./claude-ideas/) | Standalone idea → launch system: idea board, research & launch, Medvi OS, workflow. The front door |
+| [**Claude Ideas**](./claude-ideas/) | Standalone idea → launch system: idea board, research & launch, Medvi OS gate, workflows |
 | [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
 | [**MarkUp**](./image-annotator/) | Image annotation & markup |
 

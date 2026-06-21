@@ -26,7 +26,7 @@ html, body {
 }
 /* page is a vertical stack that exactly fills the viewport — nothing off-screen */
 body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
-.topbar { flex: 0 0 auto; }
+.topbar, .vehicle-bar { flex: 0 0 auto; }
 
 /* ---- Top bar ---- */
 .topbar {
@@ -54,11 +54,58 @@ body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 }
 .job-title:focus { outline: none; border-color: var(--accent-2); }
 
+.vehicle-toggle {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.vehicle-toggle:hover { background: #2b3645; }
+.vehicle-toggle[aria-expanded="true"] { border-color: var(--accent); color: #fff; }
+
+/* ---- Vehicle details bar ---- */
+.vehicle-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+}
+.vehicle-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.vehicle-fields .vf {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.vehicle-fields .vf input {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 150px;
+}
+.vehicle-fields .vf input:focus { outline: none; border-color: var(--accent-2); }
+
 /* ---- Layout ---- */
 .app {
   display: grid;
   grid-template-columns: 248px 1fr 320px;
-  flex: 1 1 auto;
+  flex: 1 1 auto;   /* fills the remaining height under the top/vehicle bars */
   min-height: 0;
 }
 
@@ -345,7 +392,120 @@ body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
 .panel-foot { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
 .total-row { display: flex; justify-content: space-between; align-items: baseline; }
-.total-row strong { font-size: 18px; color: var(--ok); }
+.total-row strong { font-size: 16px; color: var(--text); }
+.total-row.grand strong { font-size: 20px; color: var(--ok); }
+.currency-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.currency-select {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.currency-select:focus { outline: none; border-color: var(--accent-2); }
+
+/* ---- Active-photo name bar (top-centre of the stage) ---- */
+.photo-namebar {
+  position: absolute;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20,26,34,.92);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  backdrop-filter: blur(4px);
+}
+.photo-namebar .pn-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.photo-name {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 13px;
+  min-width: 160px;
+}
+.photo-name:focus { outline: none; border-color: var(--accent-2); }
+
+/* ---- Filmstrip of all photos ---- */
+.filmstrip {
+  position: absolute;
+  left: 14px; bottom: 14px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  background: rgba(20,26,34,.92);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  backdrop-filter: blur(4px);
+}
+.filmstrip-thumbs { display: flex; gap: 8px; overflow-x: auto; max-width: 60vw; }
+.film-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px; height: 48px;
+  border-radius: 8px;
+  border: 2px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+}
+.film-thumb.active { border-color: var(--accent); }
+.film-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.film-thumb .ft-count {
+  position: absolute;
+  top: 2px; right: 2px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.film-thumb .ft-del {
+  position: absolute;
+  bottom: 2px; right: 2px;
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.film-thumb:hover .ft-del { opacity: 1; }
+.add-photo-btn {
+  flex: 0 0 auto;
+  background: var(--panel-2);
+  border: 1px dashed var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.add-photo-btn:hover { background: #2b3645; border-color: var(--accent); }
+
+@media (max-width: 820px) {
+  .vehicle-fields .vf input { min-width: 120px; }
+  .filmstrip-thumbs { max-width: 50vw; }
+  .photo-namebar { top: 8px; }
+  .vehicle-toggle { padding: 7px 9px; font-size: 12px; }
+}
 
 .floating-text-input {
   position: absolute;
@@ -496,4 +656,97 @@ body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 /* coarse pointers (touch) — give the canvas/controls room to breathe */
 @media (pointer: coarse) {
   .tool { padding-top: 9px; padding-bottom: 9px; }
+}
+
+/* ============================================================
+   HIGH-VISIBILITY / LARGE LAYOUT
+   For low-resolution laptops and low-vision users: bigger text,
+   bigger controls, higher contrast, clear keyboard focus rings.
+   Scoped to body.hv so it only affects this build. Same features.
+   ============================================================ */
+body.hv {
+  --text: #ffffff;
+  --muted: #c4ced8;
+  --line: #3c4856;
+  font-size: 17px;
+}
+
+/* top bar + vehicle + reference */
+body.hv .topbar { height: 66px; }
+body.hv .logo { font-size: 32px; }
+body.hv .brand-text strong { font-size: 19px; }
+body.hv .brand-text small { font-size: 13px; }
+body.hv .job-title { font-size: 17px; padding: 12px 14px; }
+body.hv .vehicle-toggle { font-size: 15px; padding: 11px 14px; }
+body.hv .vehicle-fields .vf span { font-size: 14px; color: #c4ced8; }
+body.hv .vehicle-fields .vf input { font-size: 17px; padding: 10px 12px; min-width: 150px; }
+
+/* photo name bar */
+body.hv .photo-namebar .pn-label { font-size: 13px; }
+body.hv .photo-name { font-size: 18px; padding: 10px 12px; }
+
+/* toolbar buttons */
+body.hv .group-label { font-size: 13px; color: #aeb9c5; }
+body.hv .tool {
+  font-size: 15px;
+  padding: 13px 12px;
+  gap: 10px;
+  border-width: 2px;
+}
+body.hv .tool .ico { font-size: 21px; width: 24px; }
+body.hv .tool-primary { font-size: 16px; }
+body.hv .swatch { width: 32px; height: 32px; border-width: 3px; }
+body.hv .range-row, body.hv .picker-row, body.hv .check-row { font-size: 15px; }
+body.hv .check-row input { width: 20px; height: 20px; }
+body.hv input[type="color"] { width: 46px; height: 32px; }
+
+/* wider side columns so the bigger text fits on desktop */
+@media (min-width: 821px) {
+  body.hv .app { grid-template-columns: 292px 1fr 384px; }
+}
+
+/* items / costs panel */
+body.hv .panel-head h3 { font-size: 20px; }
+body.hv .panel-head small { font-size: 14px; }
+body.hv .panel-hint { font-size: 14px; }
+body.hv .marker-badge { width: 34px; height: 34px; font-size: 16px; }
+body.hv .marker-fields input,
+body.hv .marker-fields textarea { font-size: 16px; padding: 10px 12px; }
+body.hv .marker-cost-row span { font-size: 17px; }
+body.hv .marker-del { font-size: 20px; }
+body.hv .total-row span { font-size: 16px; }
+body.hv .total-row strong { font-size: 26px; }
+body.hv .panel-foot .tool { font-size: 15px; padding: 14px; justify-content: center; }
+
+/* on-canvas controls (zoom / undo-redo / thickness) */
+body.hv .zoom-btn { width: 54px; height: 54px; font-size: 28px; }
+body.hv .thickness-control { padding: 16px 12px; }
+body.hv .thickness-control .tc-label { font-size: 12px; }
+body.hv .thickness-control .tc-val { font-size: 18px; }
+body.hv .v-range { width: 18px; height: 200px; }
+
+/* filmstrip */
+body.hv .film-thumb { width: 92px; height: 68px; border-width: 3px; }
+body.hv .film-thumb .ft-count { font-size: 13px; }
+body.hv .film-thumb .ft-del { font-size: 18px; }
+body.hv .filmstrip-thumbs { max-width: 64vw; }
+
+/* clear keyboard focus rings everywhere (accessibility) */
+body.hv button:focus-visible,
+body.hv a:focus-visible,
+body.hv input:focus-visible,
+body.hv textarea:focus-visible,
+body.hv select:focus-visible,
+body.hv .tool:focus-visible,
+body.hv .swatch:focus-visible {
+  outline: 3px solid #ffd400;
+  outline-offset: 2px;
+}
+
+/* mobile: keep controls big and don't over-shrink the toolbar */
+@media (max-width: 820px) {
+  body.hv .toolbar { max-height: 132px; }
+  body.hv .tool { font-size: 12px; min-width: 58px; }
+  body.hv .tool .ico { font-size: 20px; }
+  body.hv .zoom-btn { width: 50px; height: 50px; }
 }

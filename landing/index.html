@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarkUp Tools — Image Markup &amp; Vehicle Damage Assessment</title>
+  <style>
+    :root{
+      --bg:#0f1419; --panel:#1a212b; --panel2:#222c38; --line:#2c3744;
+      --text:#e6edf3; --muted:#8b97a5; --accent:#ff5a3c; --accent2:#3b82f6; --ok:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.5; padding:32px 18px 60px;
+    }
+    .wrap{max-width:980px;margin:0 auto}
+    header{text-align:center;margin-bottom:36px}
+    .logo{font-size:40px;color:var(--accent)}
+    h1{margin:8px 0 6px;font-size:30px}
+    .sub{color:var(--muted);font-size:16px;max-width:620px;margin:0 auto}
+    .cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:8px}
+    @media(max-width:900px){.cards{grid-template-columns:1fr}}
+    .card{
+      background:var(--panel);border:1px solid var(--line);border-radius:16px;
+      padding:24px;display:flex;flex-direction:column;
+    }
+    .card.feature{border-color:#3a2a24}
+    .pill{
+      align-self:flex-start;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+      color:var(--muted);background:var(--panel2);border:1px solid var(--line);
+      padding:4px 10px;border-radius:999px;margin-bottom:12px
+    }
+    .card h2{margin:0 0 4px;font-size:21px}
+    .card .tag{color:var(--muted);font-size:13px;margin-bottom:14px}
+    .card ul{margin:0 0 18px;padding-left:18px}
+    .card li{margin:5px 0;font-size:14px}
+    .card li b{color:#fff}
+    .spacer{flex:1}
+    .btn{
+      display:inline-block;text-align:center;text-decoration:none;
+      background:var(--accent);color:#fff;font-weight:600;font-size:15px;
+      padding:12px 16px;border-radius:10px;transition:background .12s
+    }
+    .btn:hover{background:#ff6f55}
+    .btn.alt{background:var(--accent2)}
+    .btn.alt:hover{background:#5a9bff}
+    .best{font-size:13px;color:var(--ok);margin-bottom:14px}
+    .compare{
+      margin-top:36px;background:var(--panel);border:1px solid var(--line);
+      border-radius:16px;overflow:hidden
+    }
+    .compare h3{margin:0;padding:16px 20px;border-bottom:1px solid var(--line);font-size:16px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:11px 16px;text-align:left;font-size:14px;border-bottom:1px solid var(--line)}
+    th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+    td:first-child{color:var(--muted)}
+    tr:last-child td{border-bottom:none}
+    .yes{color:var(--ok)} .no{color:var(--muted)}
+    footer{text-align:center;color:var(--muted);font-size:13px;margin-top:34px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">◎</div>
+      <h1>MarkUp Tools</h1>
+      <p class="sub">Two browser-based tools for marking up photos — nothing to install, everything stays on your device. Pick the one that fits the job.</p>
+    </header>
+
+    <div class="cards">
+      <!-- v1 -->
+      <div class="card">
+        <span class="pill">Tool 1 · Quick</span>
+        <h2>MarkUp</h2>
+        <div class="tag">Single-image annotation</div>
+        <div class="best">Best for: marking up one photo, fast.</div>
+        <ul>
+          <li>Upload <b>one image</b> and annotate it</li>
+          <li>Circle, box, highlight, arrow, freehand, text boxes, numbered markers</li>
+          <li>Numbered items list with part name, note &amp; cost (single running total)</li>
+          <li>Crop, zoom/pinch, pan, undo/redo</li>
+          <li>Save / Save as / Copy image, plus <b>CSV</b> and <b>HTML report</b></li>
+        </ul>
+        <div class="spacer"></div>
+        <a class="btn" href="./markup/">Open MarkUp →</a>
+      </div>
+
+      <!-- v2 -->
+      <div class="card feature">
+        <span class="pill">Tool 2 · Full report</span>
+        <h2>Damage Assessment</h2>
+        <div class="tag">Multi-photo vehicle damage builder</div>
+        <div class="best">Best for: a complete vehicle damage report.</div>
+        <ul>
+          <li><b>Many photos</b> in one job — each named (Car front, Bonnet, Tyres…)</li>
+          <li><b>Vehicle details</b>: registration, make, model, year, colour</li>
+          <li>Optional <b>auto-numbering on every tool</b>, not just the number tool</li>
+          <li>Currency <b>MYR (RM)</b> or <b>USD</b></li>
+          <li>One <b>full report</b> across all photos — <b>PDF</b> &amp; <b>spreadsheet</b>, with per-photo subtotals and a <b>grand total</b></li>
+          <li>All the same drawing, crop, zoom &amp; markup tools</li>
+        </ul>
+        <div class="spacer"></div>
+        <a class="btn alt" href="./damage-assessment/">Open Damage Assessment →</a>
+      </div>
+
+      <!-- v3 -->
+      <div class="card">
+        <span class="pill">Tool 3 · Accessible</span>
+        <h2>Damage Assessment · Large</h2>
+        <div class="tag">High-visibility version</div>
+        <div class="best">Best for: low-res laptops &amp; easier-to-see text.</div>
+        <ul>
+          <li><b>Exactly the same</b> as Damage Assessment</li>
+          <li><b>Bigger text and buttons</b> throughout</li>
+          <li><b>Higher contrast</b> and clear keyboard focus outlines</li>
+          <li>Tuned to fit <b>smaller / lower-resolution screens</b></li>
+        </ul>
+        <div class="spacer"></div>
+        <a class="btn" href="./damage-assessment-large/">Open Large version →</a>
+      </div>
+    </div>
+
+    <!-- difference table -->
+    <div class="compare">
+      <h3>What's the difference?</h3>
+      <table>
+        <thead>
+          <tr><th>&nbsp;</th><th>MarkUp</th><th>Damage Assessment</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Number of photos</td><td>One at a time</td><td class="yes">Many — build a whole job</td></tr>
+          <tr><td>Name each photo</td><td class="no">—</td><td class="yes">Yes (e.g. Car front, Tyres)</td></tr>
+          <tr><td>Vehicle details (reg / make / model)</td><td class="no">—</td><td class="yes">Yes</td></tr>
+          <tr><td>Auto-number every tool</td><td class="no">—</td><td class="yes">Optional toggle</td></tr>
+          <tr><td>Currency</td><td>—</td><td class="yes">MYR / USD</td></tr>
+          <tr><td>Costs &amp; total</td><td>One image total</td><td class="yes">Per-photo subtotals + grand total</td></tr>
+          <tr><td>Report covers</td><td>The one image</td><td class="yes">All photos in one PDF / spreadsheet</td></tr>
+          <tr><td>Markup tools, crop, zoom, save</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      In short: use <b>MarkUp</b> for a quick one-photo markup, and <b>Damage Assessment</b>
+      to build a full multi-photo vehicle report with costs and a grand total.
+      Prefer bigger text on a small screen? Use <b>Damage Assessment · Large</b> — same tool, high-visibility.
+    </footer>
+  </div>
+</body>
+</html>

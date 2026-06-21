@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MarkUp — Image Annotation Tool</title>
+  <title>Damage Assessment — Multi-photo vehicle damage builder</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,22 +11,34 @@
     <div class="brand">
       <span class="logo">◎</span>
       <div class="brand-text">
-        <strong>MarkUp</strong>
-        <small>Image annotation &amp; markup</small>
+        <strong>Damage Assessment</strong>
+        <small>Multi-photo vehicle damage builder</small>
       </div>
     </div>
     <div class="topbar-actions">
-      <input type="text" id="jobTitle" class="job-title" placeholder="Job / vehicle reference (e.g. AB12 CDE — Front end)" />
+      <input type="text" id="jobTitle" class="job-title" placeholder="Registration / reference (e.g. AB12 CDE)" />
     </div>
+    <button id="vehicleToggle" class="vehicle-toggle" title="Vehicle details" aria-expanded="true">🚗 Vehicle details</button>
     <button id="panelToggle" class="panel-toggle" title="Show marked items" aria-label="Show marked items">☰ Items</button>
   </header>
+
+  <!-- Vehicle details (assessment-wide). Collapsible; lives just under the top bar. -->
+  <section class="vehicle-bar" id="vehicleBar">
+    <div class="vehicle-fields">
+      <label class="vf"><span>Registration / reference</span><input type="text" id="vehReg" placeholder="AB12 CDE" /></label>
+      <label class="vf"><span>Make / brand</span><input type="text" id="vehMake" placeholder="e.g. Ford" /></label>
+      <label class="vf"><span>Model</span><input type="text" id="vehModel" placeholder="e.g. Focus" /></label>
+      <label class="vf"><span>Year</span><input type="text" id="vehYear" placeholder="e.g. 2019" /></label>
+      <label class="vf"><span>Colour</span><input type="text" id="vehColour" placeholder="e.g. Silver" /></label>
+    </div>
+  </section>
 
   <div class="app">
     <!-- Toolbar -->
     <aside class="toolbar">
       <div class="tool-group">
-        <span class="group-label">File</span>
-        <button id="uploadBtn" class="tool" title="Upload an image">⬆ Upload</button>
+        <span class="group-label">Photos</span>
+        <button id="uploadBtn" class="tool" title="Add a photo">⬆ Add photo</button>
         <input type="file" id="fileInput" accept="image/*" hidden />
       </div>
 
@@ -42,6 +54,13 @@
         <button class="tool tool-select" data-tool="pen" title="Freehand draw (P)"><span class="ico">✎</span>Draw</button>
         <button class="tool tool-select" data-tool="text" title="Text note (T)"><span class="ico">T</span>Text</button>
         <button class="tool tool-select" data-tool="number" title="Numbered marker (N)"><span class="ico">①</span>Number</button>
+      </div>
+
+      <div class="tool-group">
+        <span class="group-label">Auto-number</span>
+        <label class="check-row">
+          <input type="checkbox" id="autoNumber" checked /> Auto-number every mark
+        </label>
       </div>
 
       <div class="tool-group">
@@ -93,13 +112,22 @@
     <main class="stage" id="stage">
       <div class="empty-state" id="emptyState">
         <div class="empty-card">
-          <div class="empty-ico">🖼️</div>
-          <h2>Upload an image to begin</h2>
-          <p>Drag &amp; drop an image here, or click <strong>Upload</strong>.<br />
-             Then circle problems, highlight areas, add notes and numbers.</p>
-          <button id="uploadBtn2" class="tool tool-primary">⬆ Upload image</button>
+          <div class="empty-ico">🚗</div>
+          <h2>Add a photo to start the assessment</h2>
+          <p>Drag &amp; drop a photo here, or click <strong>Add photo</strong>.<br />
+             Mark up the damage, then add more photos — each keeps its own
+             notes and costs. Export a combined PDF report or spreadsheet
+             with a grand total.</p>
+          <button id="uploadBtn2" class="tool tool-primary">⬆ Add photo</button>
         </div>
       </div>
+
+      <!-- name field for the active photo -->
+      <div class="photo-namebar" id="photoNamebar" hidden>
+        <label class="pn-label" for="photoName">Photo name</label>
+        <input type="text" id="photoName" class="photo-name" placeholder="e.g. Car front" />
+      </div>
+
       <div class="canvas-wrap" id="canvasWrap" hidden>
         <canvas id="canvas"></canvas>
       </div>
@@ -132,6 +160,12 @@
         <input type="range" id="lineWidth" class="v-range" min="1" max="40" value="5" aria-label="Line thickness" />
         <span class="tc-val" id="lineWidthVal">5</span>
       </div>
+
+      <!-- filmstrip of all photos -->
+      <div class="filmstrip" id="filmstrip" hidden>
+        <div class="filmstrip-thumbs" id="filmstripThumbs"></div>
+        <button id="addPhotoStrip" class="add-photo-btn" title="Add another photo">+ Add photo</button>
+      </div>
     </main>
 
     <!-- Notes / parts panel -->
@@ -141,15 +175,27 @@
         <small id="markerCount">0 items</small>
         <button id="panelClose" class="panel-close" title="Close" aria-label="Close">✕</button>
       </div>
-      <p class="panel-hint">Each numbered marker appears here. Add a part name, note and estimated cost — ideal for showing a customer what needs changing.</p>
+      <p class="panel-hint">Numbered marks for the current photo appear here. Add a part name, note and estimated cost. Turn on <strong>Auto-number every mark</strong> to number every annotation automatically.</p>
       <ol class="marker-list" id="markerList"></ol>
       <div class="panel-foot">
+        <label class="currency-row">
+          <span>Currency</span>
+          <select id="currency" class="currency-select">
+            <option value="MYR">Malaysian Ringgit (RM)</option>
+            <option value="USD">US Dollar ($)</option>
+          </select>
+        </label>
         <div class="total-row">
-          <span>Estimated total</span>
-          <strong id="totalCost">£0.00</strong>
+          <span>This photo</span>
+          <strong id="photoTotal">RM0.00</strong>
         </div>
-        <button id="exportReportBtn" class="tool" title="Download a markup report (image + notes)">📄 Export report (HTML)</button>
-        <button id="exportCsvBtn" class="tool" title="Export the marked items as a spreadsheet (CSV — opens in Excel / Google Sheets)">📊 Export spreadsheet (CSV)</button>
+        <div class="total-row grand">
+          <span>Grand total (all photos)</span>
+          <strong id="totalCost">RM0.00</strong>
+        </div>
+        <button id="exportPdfBtn" class="tool tool-primary" title="Build a combined PDF report (print → Save as PDF)">📄 Export PDF report</button>
+        <button id="exportCsvBtn" class="tool" title="Export all photos and items as a spreadsheet (CSV — opens in Excel / Google Sheets)">📊 Export spreadsheet (CSV)</button>
+        <button id="exportXlsBtn" class="tool" title="Export an Excel spreadsheet that also embeds each photo's annotated image">🖼 Export Excel (with images)</button>
       </div>
     </aside>
   </div>

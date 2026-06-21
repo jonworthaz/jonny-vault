@@ -1,9 +1,16 @@
-/* MarkUp — image annotation & markup tool
+/* Damage Assessment — multi-photo vehicle damage-assessment builder.
  * Zero dependencies. All rendering on an HTML5 canvas.
  *
  * Annotation model: every mark is a plain object pushed onto `state.annotations`.
  * The canvas is fully re-rendered from that array on every change, which gives
  * undo/redo, selection, and "bake into image" (crop/save) for free.
+ *
+ * Multi-photo model: each photo owns its own working set (annotations, history,
+ * numbering, selection and view). The module-level `state` + `view` are the
+ * ACTIVE photo's working set. commitCurrentPhoto() copies state -> photos[i];
+ * loadPhoto(i) commits the current photo then restores another. The drawing /
+ * pointer / zoom engine still operates purely on `state.*` / `view`, so it is
+ * unchanged from the single-image tool.
  */
 (() => {
   "use strict";
@@ -14,7 +21,13 @@
   const TEXT_FONT = (fs) => `600 ${fs}px -apple-system, "Segoe UI", Roboto, sans-serif`;
   const LINE_H = 1.25; // text line-height multiple
 
+  const CURRENCIES = {
+    MYR: { symbol: "RM", code: "MYR" },
+    USD: { symbol: "$", code: "USD" },
+  };
+
   // ---- State -------------------------------------------------------------
+  // `state` is the ACTIVE photo's working set.
   const state = {
     image: null,           // HTMLImageElement (the base picture)
     annotations: [],       // current marks
@@ -34,6 +47,16 @@
     redoStack: [],
     cropping: false,
   };
+
+  // ---- Multi-photo store -------------------------------------------------
+  const photos = [];        // array of photo records
+  let activeIndex = -1;     // index into photos[] of the current photo
+  let photoSeq = 0;         // monotonically-increasing id for photos
+  let nameSeq = 0;          // counter for default "Photo N" names
+
+  // App-wide (not per-photo) settings.
+  let currency = "MYR";
+  let autoNumber = true;   // default ON — every mark gets the next number
 
   // ---- DOM ---------------------------------------------------------------
   const $ = (id) => document.getElementById(id);
@@ -110,17 +133,84 @@
     afterChange();
   }
   function afterChange() {
-    // keep numbering counter ahead of existing markers
+    // keep numbering counter ahead of existing numbered marks
     const maxN = state.annotations
-      .filter((a) => a.type === "number")
+      .filter((a) => a.n != null)
       .reduce((m, a) => Math.max(m, a.n), 0);
     state.nextNumber = maxN + 1;
     render();
     renderMarkers();
+    renderFilmstrip();
   }
 
   // ====================================================================
-  //  Image loading
+  //  Multi-photo: commit / load / create
+  // ====================================================================
+  // Fields copied between `state` and a photo record.
+  const PHOTO_STATE_KEYS = [
+    "image", "annotations", "selectedId", "nextId", "nextNumber", "undoStack", "redoStack",
+  ];
+
+  function newPhotoRecord(img) {
+    nameSeq += 1;
+    return {
+      id: ++photoSeq,
+      name: `Photo ${nameSeq}`,
+      image: img,
+      annotations: [],
+      selectedId: null,
+      nextId: 1,
+      nextNumber: 1,
+      undoStack: [],
+      redoStack: [],
+      view: { scale: 1, tx: 0, ty: 0 },
+    };
+  }
+
+  // Copy the live working set back into photos[activeIndex].
+  function commitCurrentPhoto() {
+    if (activeIndex < 0) return;
+    const p = photos[activeIndex];
+    for (const k of PHOTO_STATE_KEYS) p[k] = state[k];
+    p.view = { scale: view.scale, tx: view.tx, ty: view.ty };
+  }
+
+  // Restore photos[i] into the live working set, then render everything.
+  function loadPhoto(i) {
+    if (i < 0 || i >= photos.length) return;
+    if (i !== activeIndex) commitCurrentPhoto();
+    activeIndex = i;
+    const p = photos[i];
+    for (const k of PHOTO_STATE_KEYS) state[k] = p[k];
+    state.cropping = false;
+
+    // size the canvas to this photo
+    canvas.width = p.image.naturalWidth;
+    canvas.height = p.image.naturalHeight;
+
+    // restore view (or fit if this photo was never positioned)
+    view.scale = p.view.scale; view.tx = p.view.tx; view.ty = p.view.ty;
+
+    showWorkspace();
+    $("photoName").value = p.name;
+    render();
+    if (!p.view.scale || p.view.scale <= 0) fitView(); else applyView();
+    renderMarkers();
+    renderFilmstrip();
+  }
+
+  function showWorkspace() {
+    emptyState.hidden = true;
+    canvasWrap.hidden = false;
+    $("zoomControls").hidden = false;
+    $("editControls").hidden = false;
+    $("thicknessControl").hidden = false;
+    $("photoNamebar").hidden = false;
+    $("filmstrip").hidden = false;
+  }
+
+  // ====================================================================
+  //  Image loading — each upload CREATES A NEW PHOTO and switches to it.
   // ====================================================================
   function loadImageFromFile(file) {
     if (!file || !file.type.startsWith("image/")) return;
@@ -133,17 +223,15 @@
     reader.readAsDataURL(file);
   }
 
+  // Create a new photo from the image and switch to it.
   function setBaseImage(img) {
-    state.image = img;
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    emptyState.hidden = true;
-    canvasWrap.hidden = false;
-    $("zoomControls").hidden = false;
-    $("editControls").hidden = false;
-    $("thicknessControl").hidden = false;
-    render();
-    fitView();
+    if (activeIndex >= 0) commitCurrentPhoto();
+    const rec = newPhotoRecord(img);
+    photos.push(rec);
+    // mark view as "needs fit" so loadPhoto frames it
+    rec.view.scale = 0;
+    loadPhoto(photos.length - 1);
+    toast(`Added ${rec.name}`);
   }
 
   // ====================================================================
@@ -235,7 +323,35 @@
         break;
       }
     }
+    // Auto-number badge: any non-number annotation that carries `n` gets a small
+    // numbered badge at its bounding-box top-left (reusing the number style).
+    if (a.type !== "number" && a.n != null) drawBadge(c, a);
     c.restore();
+  }
+
+  // Small numbered badge at the top-left corner of an annotation's bounds.
+  function drawBadge(c, a) {
+    const b = boundsOf(a);
+    if (!b) return;
+    const r = badgeRadius(a);
+    const bx = b.x, by = b.y;
+    c.save();
+    c.beginPath();
+    c.arc(bx, by, r, 0, Math.PI * 2);
+    c.fillStyle = a.color || "#ff5a3c";
+    c.fill();
+    c.lineWidth = 2;
+    c.strokeStyle = "rgba(255,255,255,.9)";
+    c.stroke();
+    c.fillStyle = pickTextColor(a.color || "#ff5a3c");
+    c.font = `700 ${Math.round(r * 1.05)}px -apple-system, Segoe UI, Roboto, sans-serif`;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(String(a.n), bx, by + 1);
+    c.restore();
+  }
+  function badgeRadius(a) {
+    return Math.max(12, Math.round((a.lineWidth || 5) * 2));
   }
 
   function drawArrow(c, x1, y1, x2, y2, color, lw) {
@@ -361,6 +477,16 @@
     }
   }
 
+  // When auto-number is on, attach a number + item fields to a freshly-created
+  // non-number annotation.
+  function maybeAutoNumber(a) {
+    if (!autoNumber || a.type === "number" || a.n != null) return;
+    a.n = state.nextNumber++;
+    a.label = a.label || "";
+    a.note = a.note || "";
+    a.cost = a.cost || "";
+  }
+
   // ====================================================================
   //  Pointer interaction
   // ====================================================================
@@ -444,11 +570,13 @@
       // one-click circle: drop a fixed-size circle centred on the click
       const r = state.circleSize / 2;
       pushHistory();
-      state.annotations.push({
+      const a = {
         id: state.nextId++, type: "circle",
         x: x - r, y: y - r, w: r * 2, h: r * 2,
         color: state.color, lineWidth: state.lineWidth,
-      });
+      };
+      maybeAutoNumber(a);
+      state.annotations.push(a);
       afterChange();
       return;
     }
@@ -557,6 +685,7 @@
     const trivial = draft.type === "pen" ? draft.points.length < 2 : (b && b.w < 3 && b.h < 3);
     if (!trivial) {
       pushHistory();
+      maybeAutoNumber(draft);
       state.annotations.push(draft);
     }
     draft = null;
@@ -578,7 +707,7 @@
       input.onkeydown = null;
       if (val) {
         pushHistory();
-        state.annotations.push({
+        const a = {
           id: state.nextId++, type: "text", x, y, text: val,
           fontSize: Math.max(14, state.lineWidth * 5),
           textColor: state.boxText,
@@ -586,7 +715,10 @@
           radius: state.boxRadius,
           arrow: !!arrowTo,
           arrowTo: arrowTo || null,
-        });
+          color: state.color,
+        };
+        maybeAutoNumber(a);
+        state.annotations.push(a);
         afterChange();
       }
     };
@@ -600,30 +732,43 @@
   // ====================================================================
   //  Markers / parts panel
   // ====================================================================
+  // Items are any annotation that carries a number (`n != null`), keyed by the
+  // current photo. With auto-number off, only the Number tool produces these.
+  function currentItems() {
+    return state.annotations.filter((a) => a.n != null).sort((a, b) => a.n - b.n);
+  }
+
+  // A short label for the kind of mark, shown beside auto-numbered items.
+  function typeLabel(t) {
+    return ({
+      circle: "Circle", rect: "Box", highlight: "Highlight",
+      arrow: "Arrow", pen: "Drawing", text: "Text", number: "Mark",
+    })[t] || "Mark";
+  }
+
   function renderMarkers() {
-    const markers = state.annotations.filter((a) => a.type === "number").sort((a, b) => a.n - b.n);
+    const markers = currentItems();
     $("markerCount").textContent = `${markers.length} item${markers.length === 1 ? "" : "s"}`;
     markerList.innerHTML = "";
 
     if (!markers.length) {
       const li = document.createElement("li");
       li.className = "panel-empty";
-      li.textContent = "Use the Number tool, then click on the image to drop numbered markers here.";
+      li.textContent = "Use the Number tool (or turn on Auto-number) to list items here with parts, notes and costs.";
       markerList.appendChild(li);
     }
 
-    let total = 0;
     for (const m of markers) {
-      const cost = parseFloat(m.cost) || 0;
-      total += cost;
       const li = document.createElement("li");
       li.className = "marker-card" + (m.id === state.selectedId ? " selected" : "");
+      const kind = m.type === "number" ? "" : `<span class="marker-kind">${typeLabel(m.type)}</span>`;
       li.innerHTML = `
         <div class="marker-badge" style="background:${m.color};color:${pickTextColor(m.color)}">${m.n}</div>
         <div class="marker-fields">
+          ${kind}
           <input type="text" data-f="label" placeholder="Part / item name" value="${esc(m.label)}" />
           <textarea data-f="note" rows="2" placeholder="What's wrong / what to do">${esc(m.note)}</textarea>
-          <div class="marker-cost-row"><span>£</span><input type="text" inputmode="decimal" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
+          <div class="marker-cost-row"><span>${esc(curSymbol())}</span><input type="text" inputmode="decimal" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
         </div>
         <button class="marker-del" title="Delete marker">✕</button>`;
 
@@ -631,7 +776,7 @@
         el.addEventListener("input", () => {
           if (el.dataset.f === "cost") el.value = sanitizeCost(el.value);
           m[el.dataset.f] = el.value;
-          updateTotal();
+          updateTotals();
         });
       });
       li.querySelector(".marker-badge").addEventListener("click", () => {
@@ -640,22 +785,103 @@
       li.querySelector(".marker-del").addEventListener("click", () => {
         pushHistory();
         state.annotations = state.annotations.filter((a) => a.id !== m.id);
+        if (state.selectedId === m.id) state.selectedId = null;
         afterChange();
       });
       markerList.appendChild(li);
     }
-    $("totalCost").textContent = formatGBP(total);
+    updateTotals();
   }
 
-  function updateTotal() {
-    const total = state.annotations
-      .filter((a) => a.type === "number")
+  // Sum the costs of a photo's numbered items.
+  function photoSubtotal(p) {
+    return (p.annotations || []).filter((a) => a.n != null)
       .reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
-    $("totalCost").textContent = formatGBP(total);
+  }
+  function currentPhotoTotal() {
+    return state.annotations.filter((a) => a.n != null)
+      .reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+  }
+  // Grand total across all photos (the active photo is read from live state).
+  function grandTotal() {
+    let total = 0;
+    for (let i = 0; i < photos.length; i++) {
+      total += i === activeIndex ? currentPhotoTotal() : photoSubtotal(photos[i]);
+    }
+    return total;
+  }
+
+  function updateTotals() {
+    $("photoTotal").textContent = formatMoney(currentPhotoTotal());
+    $("totalCost").textContent = formatMoney(grandTotal());
   }
 
   // ====================================================================
-  //  Crop
+  //  Filmstrip
+  // ====================================================================
+  function renderFilmstrip() {
+    const wrap = $("filmstripThumbs");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    photos.forEach((p, i) => {
+      const itemCount = i === activeIndex
+        ? currentItems().length
+        : (p.annotations || []).filter((a) => a.n != null).length;
+      const thumb = document.createElement("div");
+      thumb.className = "film-thumb" + (i === activeIndex ? " active" : "");
+      thumb.title = p.name;
+      const thumbSrc = p.image ? p.image.src : "";
+      thumb.innerHTML = `
+        <img src="${esc(thumbSrc)}" alt="${esc(p.name)}" />
+        ${itemCount ? `<span class="ft-count">${itemCount}</span>` : ""}
+        <button class="ft-del" title="Remove ${esc(p.name)}">✕</button>`;
+      thumb.addEventListener("click", (e) => {
+        if (e.target.closest(".ft-del")) return;
+        if (i !== activeIndex) loadPhoto(i);
+      });
+      thumb.querySelector(".ft-del").addEventListener("click", (e) => {
+        e.stopPropagation();
+        removePhoto(i);
+      });
+      wrap.appendChild(thumb);
+    });
+  }
+
+  // Remove a photo from the assessment.
+  function removePhoto(i) {
+    if (i < 0 || i >= photos.length) return;
+    if (!confirm(`Remove "${photos[i].name}" and its annotations?`)) return;
+    // make sure the live working set is saved before mutating the array
+    if (activeIndex >= 0 && activeIndex !== i) commitCurrentPhoto();
+    photos.splice(i, 1);
+
+    if (!photos.length) {
+      // back to the empty state
+      activeIndex = -1;
+      state.image = null;
+      state.annotations = [];
+      state.selectedId = null;
+      state.undoStack = [];
+      state.redoStack = [];
+      emptyState.hidden = false;
+      canvasWrap.hidden = true;
+      $("zoomControls").hidden = true;
+      $("editControls").hidden = true;
+      $("thicknessControl").hidden = true;
+      $("photoNamebar").hidden = true;
+      $("filmstrip").hidden = true;
+      renderMarkers();
+      renderFilmstrip();
+      return;
+    }
+    // pick a neighbouring photo to show
+    const next = Math.min(i, photos.length - 1);
+    activeIndex = -1;          // force loadPhoto to restore cleanly
+    loadPhoto(next);
+  }
+
+  // ====================================================================
+  //  Crop  (applies to the current photo)
   // ====================================================================
   const cropOverlay = $("cropOverlay");
   const cropRect = $("cropRect");
@@ -728,11 +954,18 @@
 
     const newImg = new Image();
     newImg.onload = () => {
+      // Replace the current photo's image in place; marks are now baked in.
       pushHistory();
-      state.annotations = [];   // marks are now baked into the cropped picture
+      state.annotations = [];
       state.selectedId = null;
-      setBaseImage(newImg);
+      state.image = newImg;
+      canvas.width = newImg.naturalWidth;
+      canvas.height = newImg.naturalHeight;
+      commitCurrentPhoto();
+      render();
+      fitView();
       renderMarkers();
+      renderFilmstrip();
       endCrop();
     };
     newImg.src = tmp.toDataURL("image/png");
@@ -747,11 +980,29 @@
     return canvas.toDataURL(type, quality);
   }
 
+  // Render any photo record (current or stored) to an offscreen canvas with its
+  // annotations baked in, and return a PNG data URL. Used by the PDF report so
+  // every photo's marks are flattened, not just the active one.
+  function flattenPhoto(p, live) {
+    if (live) return flattenedDataURL("image/png");
+    const off = document.createElement("canvas");
+    off.width = p.image.naturalWidth;
+    off.height = p.image.naturalHeight;
+    const oc = off.getContext("2d");
+    oc.drawImage(p.image, 0, 0, off.width, off.height);
+    for (const a of (p.annotations || [])) drawAnnotationOn(oc, a);
+    return off.toDataURL("image/png");
+  }
+
+  // drawAnnotation uses the module `ctx` for text measuring; provide a wrapper
+  // that draws onto an arbitrary context (measurement still uses `ctx`).
+  function drawAnnotationOn(c, a) { drawAnnotation(c, a); }
+
   // Build a unique file name. Includes the vehicle/job reference when given,
   // a timestamp, and a per-session counter so two saves can never collide.
   let saveSeq = 0;
   function uniqueFileName(ext) {
-    const ref = jobName() ? safeName(jobName()) : "markup";
+    const ref = jobName() ? safeName(jobName()) : "damage-assessment";
     const d = new Date();
     const p = (n) => String(n).padStart(2, "0");
     const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
@@ -867,70 +1118,212 @@
     }, 2400);
   }
 
-  function exportReport() {
-    if (!state.image) return;
-    const img = flattenedDataURL("image/png");
-    const markers = state.annotations.filter((a) => a.type === "number").sort((a, b) => a.n - b.n);
-    const total = markers.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
-    const rows = markers.map((m) => `
-      <tr>
-        <td class="n">${m.n}</td>
-        <td>${esc(m.label) || "<em>—</em>"}</td>
-        <td>${esc(m.note).replace(/\n/g, "<br>") || "<em>—</em>"}</td>
-        <td class="c">${m.cost ? formatGBP(parseFloat(m.cost)) : "—"}</td>
-      </tr>`).join("");
+  // ---- Combined PDF report (print-ready HTML -> window.print) -------------
+  function exportPdfReport() {
+    if (!photos.length) { toast("Add a photo first"); return; }
+    commitCurrentPhoto(); // make sure the live photo's edits are saved
+
+    let grand = 0;
+    const sections = photos.map((p, i) => {
+      const items = (p.annotations || []).filter((a) => a.n != null).sort((a, b) => a.n - b.n);
+      const subtotal = items.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+      grand += subtotal;
+      const imgSrc = flattenPhoto(p, i === activeIndex);
+      const rows = items.map((m) => `
+        <tr>
+          <td class="n">${m.n}</td>
+          <td>${esc(m.label) || "<em>—</em>"}</td>
+          <td>${esc(m.note).replace(/\n/g, "<br>") || "<em>—</em>"}</td>
+          <td class="c">${m.cost ? formatMoney(parseFloat(m.cost)) : "—"}</td>
+        </tr>`).join("");
+      return `
+        <section class="photo-section">
+          <h2>${i + 1}. ${esc(p.name) || "Photo"}</h2>
+          <img src="${imgSrc}" alt="${esc(p.name)}" />
+          <table>
+            <thead><tr><th>#</th><th>Item / part</th><th>Notes</th><th class="c">Est. cost</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="4"><em>No numbered items for this photo.</em></td></tr>'}</tbody>
+            <tfoot><tr><td colspan="3">Subtotal — ${esc(p.name)}</td><td class="c">${formatMoney(subtotal)}</td></tr></tfoot>
+          </table>
+        </section>`;
+    }).join("");
 
     const html = `<!doctype html><html><head><meta charset="utf-8">
-<title>Markup report — ${esc(jobName())}</title>
+<title>Damage assessment — ${esc(jobName()) || "Report"}</title>
 <style>
-  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;max-width:880px;margin:32px auto;padding:0 20px}
-  h1{margin:0 0 4px}.meta{color:#666;margin-bottom:20px}
-  img{max-width:100%;border:1px solid #ddd;border-radius:8px}
-  table{width:100%;border-collapse:collapse;margin-top:20px}
-  th,td{border:1px solid #ddd;padding:10px;text-align:left;vertical-align:top;font-size:14px}
-  th{background:#f4f4f4}.n{width:36px;text-align:center;font-weight:700}.c{text-align:right;white-space:nowrap}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;max-width:900px;margin:0 auto;padding:28px 24px}
+  header.rpt{border-bottom:3px solid #ff5a3c;padding-bottom:14px;margin-bottom:24px}
+  header.rpt h1{margin:0 0 4px;font-size:24px}
+  header.rpt .meta{color:#666;font-size:14px}
+  header.rpt .grand{margin-top:12px;font-size:18px;font-weight:700}
+  header.rpt .grand span{color:#ff5a3c}
+  header.rpt .veh-meta{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:#444}
+  header.rpt .veh-meta b{color:#222}
+  .photo-section{margin:0 0 34px;page-break-inside:avoid}
+  .photo-section h2{font-size:18px;margin:0 0 10px;padding:6px 0;border-bottom:1px solid #eee}
+  .photo-section img{max-width:100%;max-height:88mm;width:auto;object-fit:contain;border:1px solid #ddd;border-radius:8px;display:block;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #ddd;padding:9px 10px;text-align:left;vertical-align:top;font-size:13px}
+  th{background:#f4f4f4}
+  .n{width:34px;text-align:center;font-weight:700}
+  .c{text-align:right;white-space:nowrap}
   tfoot td{font-weight:700;background:#fafafa}
+  .grand-total{margin-top:8px;border-top:3px solid #ff5a3c;padding-top:14px;display:flex;justify-content:space-between;align-items:baseline;font-size:20px;font-weight:700}
+  .grand-total .val{color:#16a34a}
+  footer.rpt{margin-top:26px;color:#999;font-size:12px;text-align:center}
+  @media print{ body{padding:0} a[href]:after{content:""} }
 </style></head><body>
-  <h1>Markup report</h1>
-  <div class="meta">${esc(jobName()) || "Untitled job"} &middot; ${new Date().toLocaleDateString()}</div>
-  <img src="${img}" alt="Annotated image" />
-  <table>
-    <thead><tr><th>#</th><th>Item</th><th>Notes</th><th class="c">Est. cost</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="4"><em>No numbered items.</em></td></tr>'}</tbody>
-    <tfoot><tr><td colspan="3">Estimated total</td><td class="c">${formatGBP(total)}</td></tr></tfoot>
-  </table>
+  <header class="rpt">
+    <h1>Vehicle damage assessment</h1>
+    <div class="meta"><strong>${esc(vehicleSummary() || jobName()) || "Untitled job"}</strong> &middot; ${new Date().toLocaleDateString()} &middot; ${photos.length} photo${photos.length === 1 ? "" : "s"}</div>
+    ${vehicleRowsHtml()}
+    <div class="grand">Grand total: <span>${formatMoney(grand)}</span></div>
+  </header>
+  ${sections}
+  <div class="grand-total"><span>Grand total (all photos)</span><span class="val">${formatMoney(grand)}</span></div>
+  <footer class="rpt">Generated by Damage Assessment &middot; ${esc(curCode())}</footer>
 </body></html>`;
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    downloadURL(url, uniqueFileName("html").replace(/\.html$/, "-report.html"));
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    // Open in a new window and trigger the print dialog (user picks "Save as PDF").
+    const w = window.open("", "_blank");
+    if (!w) {
+      // Pop-up blocked — fall back to downloading the HTML report.
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      downloadURL(url, uniqueFileName("html").replace(/\.html$/, "-report.html"));
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("Pop-up blocked — downloaded the HTML report instead (open it and print to PDF)");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Wait for images to decode before printing.
+    w.onload = () => setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 350);
   }
 
-  // Export the marked items as a CSV spreadsheet (opens in Excel / Google Sheets).
-  function exportCsv() {
-    const markers = state.annotations.filter((a) => a.type === "number").sort((a, b) => a.n - b.n);
-    if (!markers.length) { toast("Add some numbered items first"); return; }
-    const total = markers.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+  // Render the vehicle details as a small definition list for the PDF header.
+  function vehicleRowsHtml() {
+    const v = vehicleDetails();
+    const fields = [
+      ["Registration", v.reg],
+      ["Make", v.make],
+      ["Model", v.model],
+      ["Year", v.year],
+      ["Colour", v.colour],
+    ].filter(([, val]) => val);
+    if (!fields.length) return "";
+    return `<div class="veh-meta">${fields
+      .map(([k, val]) => `<span><b>${esc(k)}:</b> ${esc(val)}</span>`)
+      .join("")}</div>`;
+  }
 
+  // Export ALL photos and items as one CSV spreadsheet, grouped by photo with
+  // per-photo subtotals and a grand total.
+  function exportCsv() {
+    if (!photos.length) { toast("Add a photo first"); return; }
+    commitCurrentPhoto();
+
+    const v = vehicleDetails();
     const rows = [
       ["Job / vehicle reference", jobName()],
+      ["Registration", v.reg],
+      ["Make", v.make],
+      ["Model", v.model],
+      ["Year", v.year],
+      ["Colour", v.colour],
       ["Date", new Date().toLocaleDateString()],
+      ["Currency", curCode()],
       [],
-      ["#", "Item / part", "Notes", "Estimated cost (GBP)"],
+      ["Photo", "#", "Item / part", "Notes", `Estimated cost (${curCode()})`],
     ];
-    for (const m of markers) {
-      rows.push([m.n, m.label || "", (m.note || "").replace(/\r?\n/g, " "), m.cost ? (parseFloat(m.cost) || 0).toFixed(2) : ""]);
-    }
-    rows.push([]);
-    rows.push(["", "", "Total", total.toFixed(2)]);
+
+    let grand = 0;
+    let any = false;
+    photos.forEach((p) => {
+      const items = (p.annotations || []).filter((a) => a.n != null).sort((a, b) => a.n - b.n);
+      let subtotal = 0;
+      for (const m of items) {
+        any = true;
+        const cost = parseFloat(m.cost) || 0;
+        subtotal += cost;
+        rows.push([p.name, m.n, m.label || "", (m.note || "").replace(/\r?\n/g, " "), m.cost ? cost.toFixed(2) : ""]);
+      }
+      if (!items.length) {
+        rows.push([p.name, "", "(no numbered items)", "", ""]);
+      }
+      rows.push(["", "", "", `Subtotal — ${p.name}`, subtotal.toFixed(2)]);
+      rows.push([]);
+      grand += subtotal;
+    });
+    rows.push(["", "", "", "GRAND TOTAL", grand.toFixed(2)]);
+
+    if (!any) toast("Tip: add numbered items to see costs in the spreadsheet");
 
     const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
     // Prepend a UTF-8 BOM so Excel reads accents/symbols correctly.
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    downloadURL(url, uniqueFileName("csv").replace(/\.csv$/, "-items.csv"));
+    downloadURL(url, uniqueFileName("csv").replace(/\.csv$/, "-assessment.csv"));
     setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  // Export an Excel-compatible spreadsheet (.xls, HTML workbook) that ALSO
+  // embeds each photo's annotated image — opens in Excel / LibreOffice Calc.
+  function exportXls() {
+    if (!photos.length) { toast("Add a photo first"); return; }
+    commitCurrentPhoto();
+
+    const v = vehicleDetails();
+    const head = [
+      ["Vehicle damage assessment", ""],
+      ["Reference", jobName()],
+      ["Registration", v.reg], ["Make", v.make], ["Model", v.model],
+      ["Year", v.year], ["Colour", v.colour],
+      ["Date", new Date().toLocaleDateString()], ["Currency", curCode()],
+    ]
+      .filter(([k, val]) => k === "Vehicle damage assessment" || val)
+      .map(([k, val]) => `<tr><td style="font-weight:bold">${esc(k)}</td><td>${esc(val)}</td><td></td><td></td></tr>`)
+      .join("");
+
+    let grand = 0;
+    const blocks = photos.map((p, i) => {
+      const items = (p.annotations || []).filter((a) => a.n != null).sort((a, b) => a.n - b.n);
+      const subtotal = items.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+      grand += subtotal;
+      const imgSrc = flattenPhoto(p, i === activeIndex);
+      const itemRows = items.map((m) =>
+        `<tr><td>${m.n}</td><td>${esc(m.label)}</td><td>${esc((m.note || "").replace(/\n/g, " "))}</td><td>${m.cost ? (parseFloat(m.cost) || 0).toFixed(2) : ""}</td></tr>`
+      ).join("");
+      return `
+        <tr><td colspan="4" style="font-weight:bold;background:#f0f0f0">${i + 1}. ${esc(p.name) || "Photo"}</td></tr>
+        <tr><td colspan="4"><img src="${imgSrc}" width="520" /></td></tr>
+        <tr style="font-weight:bold;background:#f4f4f4"><td>#</td><td>Item / part</td><td>Notes</td><td>Cost (${esc(curCode())})</td></tr>
+        ${itemRows || '<tr><td></td><td colspan="3">(no numbered items)</td></tr>'}
+        <tr style="font-weight:bold"><td colspan="3">Subtotal — ${esc(p.name)}</td><td>${subtotal.toFixed(2)}</td></tr>
+        <tr><td colspan="4"></td></tr>`;
+    }).join("");
+
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>Damage assessment</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+</head><body>
+<table border="1" cellspacing="0" cellpadding="4" style="font-family:Arial,sans-serif;font-size:12px">
+${head}
+<tr><td colspan="4"></td></tr>
+${blocks}
+<tr style="font-weight:bold;font-size:14px"><td colspan="3">GRAND TOTAL (all photos)</td><td>${grand.toFixed(2)}</td></tr>
+</table>
+</body></html>`;
+
+    const blob = new Blob(["﻿" + html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    downloadURL(url, uniqueFileName("xls").replace(/\.xls$/, "-assessment.xls"));
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Excel file (with images) exported");
   }
 
   // Quote a CSV cell when it contains a comma, quote or newline.
@@ -948,9 +1341,31 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
   function jobName() { return $("jobTitle").value.trim(); }
+  // Assessment-wide vehicle details (collapsible bar under the top bar).
+  function vehicleDetails() {
+    const get = (id) => ($(id) ? $(id).value.trim() : "");
+    return {
+      reg: get("vehReg") || jobName(),
+      make: get("vehMake"),
+      model: get("vehModel"),
+      year: get("vehYear"),
+      colour: get("vehColour"),
+    };
+  }
+  // One-line human summary of the vehicle, omitting blank fields.
+  function vehicleSummary() {
+    const v = vehicleDetails();
+    const parts = [v.year, v.make, v.model, v.colour ? `(${v.colour})` : ""].filter(Boolean);
+    const desc = parts.join(" ");
+    if (v.reg && desc) return `${v.reg} — ${desc}`;
+    return v.reg || desc || "";
+  }
   function safeName(s) { return (s || "image").replace(/[^a-z0-9\-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "image"; }
   function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
-  function formatGBP(n) { return "£" + (n || 0).toFixed(2); }
+
+  function curSymbol() { return CURRENCIES[currency].symbol; }
+  function curCode() { return CURRENCIES[currency].code; }
+  function formatMoney(n) { return curSymbol() + (n || 0).toFixed(2); }
 
   // Keep only digits and a single decimal point (cost fields are numbers only).
   function sanitizeCost(s) {
@@ -959,6 +1374,7 @@
     if (d !== -1) v = v.slice(0, d + 1) + v.slice(d + 1).replace(/\./g, "");
     return v;
   }
+
   function roundRect(c, x, y, w, h, r) {
     c.beginPath();
     c.moveTo(x + r, y);
@@ -974,7 +1390,7 @@
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
   }
   function pickTextColor(hex) {
-    const h = hex.replace("#", "");
+    const h = (hex || "#ff5a3c").replace("#", "");
     const n = parseInt(h.length === 3 ? h.split("").map((x) => x + x).join("") : h, 16);
     const lum = 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
     return lum > 150 ? "#111111" : "#ffffff";
@@ -1023,7 +1439,13 @@
   function wireUp() {
     $("uploadBtn").addEventListener("click", () => fileInput.click());
     $("uploadBtn2").addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", (e) => { if (e.target.files[0]) loadImageFromFile(e.target.files[0]); });
+    $("addPhotoStrip").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      // allow adding several photos at once
+      const files = [...(e.target.files || [])];
+      files.forEach((f) => loadImageFromFile(f));
+      e.target.value = ""; // let the same file be re-picked later
+    });
 
     document.querySelectorAll(".tool-select").forEach((b) =>
       b.addEventListener("click", () => selectTool(b.dataset.tool)));
@@ -1035,7 +1457,7 @@
     $("deleteBtn").addEventListener("click", deleteSelected);
     $("clearBtn").addEventListener("click", () => {
       if (!state.annotations.length) return;
-      if (confirm("Remove all annotations? The image is kept.")) {
+      if (confirm("Remove all annotations on this photo? The photo is kept.")) {
         pushHistory(); state.annotations = []; state.selectedId = null; afterChange();
       }
     });
@@ -1045,8 +1467,53 @@
     $("copyBtn").addEventListener("click", copyImage);
     $("saveAsBtn").addEventListener("click", saveImageAs);
     $("saveBtn").addEventListener("click", saveImage);
-    $("exportReportBtn").addEventListener("click", exportReport);
+    $("exportPdfBtn").addEventListener("click", exportPdfReport);
     $("exportCsvBtn").addEventListener("click", exportCsv);
+    $("exportXlsBtn").addEventListener("click", exportXls);
+
+    // photo name field
+    $("photoName").addEventListener("input", (e) => {
+      if (activeIndex < 0) return;
+      photos[activeIndex].name = e.target.value || `Photo ${activeIndex + 1}`;
+      renderFilmstrip();
+    });
+    // keep a sensible default if left blank on blur
+    $("photoName").addEventListener("blur", (e) => {
+      if (activeIndex < 0) return;
+      if (!e.target.value.trim()) {
+        photos[activeIndex].name = `Photo ${activeIndex + 1}`;
+        e.target.value = photos[activeIndex].name;
+        renderFilmstrip();
+      }
+    });
+
+    // currency selector
+    $("currency").addEventListener("change", (e) => {
+      currency = CURRENCIES[e.target.value] ? e.target.value : "MYR";
+      renderMarkers();
+    });
+
+    // auto-number toggle
+    $("autoNumber").addEventListener("change", (e) => { autoNumber = e.target.checked; });
+
+    // vehicle-details bar (collapsible)
+    $("vehicleToggle").addEventListener("click", () => {
+      const bar = $("vehicleBar");
+      const btn = $("vehicleToggle");
+      const open = bar.hidden;
+      bar.hidden = !open;
+      btn.setAttribute("aria-expanded", String(open));
+      document.body.classList.toggle("vehicle-open", open);
+    });
+    // vehicle details are shown by default (boxes for make/brand, model, etc.)
+    document.body.classList.add("vehicle-open");
+    // keep the registration field and the top-bar reference in sync
+    $("vehReg").addEventListener("input", (e) => {
+      if (!jobName() || jobName() === lastSyncedReg) {
+        $("jobTitle").value = e.target.value;
+      }
+      lastSyncedReg = e.target.value;
+    });
 
     // zoom controls
     $("zoomIn").addEventListener("click", () => zoomByButton(1.25));
@@ -1101,17 +1568,17 @@
     });
     $("boxArrow").addEventListener("change", (e) => { state.boxArrow = e.target.checked; });
 
-    // drag & drop onto stage
+    // drag & drop onto stage — adds a new photo
     ["dragenter", "dragover"].forEach((ev) =>
       stage.addEventListener(ev, (e) => { e.preventDefault(); stage.classList.add("drag-over"); }));
     ["dragleave", "drop"].forEach((ev) =>
       stage.addEventListener(ev, (e) => { e.preventDefault(); stage.classList.remove("drag-over"); }));
     stage.addEventListener("drop", (e) => {
-      const f = e.dataTransfer.files[0];
-      if (f) loadImageFromFile(f);
+      const files = [...(e.dataTransfer.files || [])].filter((f) => f.type.startsWith("image/"));
+      files.forEach((f) => loadImageFromFile(f));
     });
 
-    // paste image from clipboard
+    // paste image from clipboard — adds a new photo
     window.addEventListener("paste", (e) => {
       const items = e.clipboardData?.items || [];
       for (const it of items) {
@@ -1126,7 +1593,7 @@
 
     // keyboard shortcuts
     window.addEventListener("keydown", (e) => {
-      const typing = /input|textarea/i.test(document.activeElement?.tagName) && document.activeElement.id !== "jobTitle";
+      const typing = /input|textarea|select/i.test(document.activeElement?.tagName) && document.activeElement.id !== "jobTitle";
       if (typing) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
@@ -1149,6 +1616,7 @@
     });
   }
   let spacePanPrevTool = null;
+  let lastSyncedReg = "";
 
   function deleteSelected() {
     if (state.selectedId == null) return;

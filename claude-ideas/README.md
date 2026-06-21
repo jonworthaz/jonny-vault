@@ -24,8 +24,10 @@ These serve the **parent folder** (so Claude Ideas can reach the sibling tools) 
 open at `http://localhost:8020/claude-ideas/index.html`.
 
 ### Hosted
-Deploys to GitHub Pages — Claude Ideas is the site root (`/` redirects to it), with
-`/workflow-builder/` and `/image-annotator/` alongside.
+Deployed to GitHub Pages (branch deployment) at **`/claude-ideas/`**, with
+`/workflow-builder/` and the other tools alongside. The site **root (`/`) is a tools
+hub** that links here. Deep-link straight to a tab with `?view=` —
+e.g. `/claude-ideas/?view=ideas` opens the Idea Board.
 
 ## The tabs
 

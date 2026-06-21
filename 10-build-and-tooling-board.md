@@ -105,8 +105,9 @@ can be *applied to* the real Claude Home if wanted.
   run, and added export/import so the data is portable.
 
 **v1 — built.** A zero-dependency static SPA in [`claude-ideas/`](./claude-ideas/),
-deployed as the site's front door (root redirects to it; Forge and MarkUp sit
-alongside). Sidebar tabs — Dashboard · Idea Board · Medvi OS · Workflow Builder ·
+deployed to GitHub Pages at `/claude-ideas/` (the site root is a tools hub that links
+to it; Forge and the MarkUp tools sit alongside). Sidebar tabs — Dashboard · Idea
+Board · Medvi OS · Learnings · Workflow Builder ·
 About. Ideas share one local store with Forge, so a workflow edited from an idea
 writes straight back. See its [README](./claude-ideas/README.md) and
 [SPEC.md](./claude-ideas/SPEC.md).
