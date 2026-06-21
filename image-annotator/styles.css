@@ -24,6 +24,9 @@ html, body {
   color: var(--text);
   overflow: hidden;
 }
+/* page is a vertical stack that exactly fills the viewport — nothing off-screen */
+body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.topbar { flex: 0 0 auto; }
 
 /* ---- Top bar ---- */
 .topbar {
@@ -55,7 +58,8 @@ html, body {
 .app {
   display: grid;
   grid-template-columns: 248px 1fr 320px;
-  height: calc(100vh - 56px);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* ---- Toolbar ---- */
@@ -66,7 +70,7 @@ html, body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 .tool-group { display: flex; flex-direction: column; gap: 6px; }
 .group-label {
