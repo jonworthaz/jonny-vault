@@ -1,0 +1,751 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a212b;
+  --panel-2: #222c38;
+  --line: #2c3744;
+  --text: #e6edf3;
+  --muted: #8b97a5;
+  --accent: #ff5a3c;
+  --accent-2: #3b82f6;
+  --ok: #22c55e;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+/* the [hidden] attribute must always win over display rules below */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ---- Top bar ---- */
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { font-size: 24px; color: var(--accent); }
+.brand-text strong { display: block; line-height: 1.1; }
+.brand-text small { color: var(--muted); font-size: 11px; }
+.topbar-actions { flex: 1; max-width: 520px; margin-left: 24px; }
+.job-title {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 14px;
+}
+.job-title:focus { outline: none; border-color: var(--accent-2); }
+
+.vehicle-toggle {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.vehicle-toggle:hover { background: #2b3645; }
+.vehicle-toggle[aria-expanded="true"] { border-color: var(--accent); color: #fff; }
+
+/* ---- Vehicle details bar ---- */
+.vehicle-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+}
+.vehicle-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.vehicle-fields .vf {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.vehicle-fields .vf input {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 150px;
+}
+.vehicle-fields .vf input:focus { outline: none; border-color: var(--accent-2); }
+
+/* ---- Layout ---- */
+.app {
+  display: grid;
+  grid-template-columns: 248px 1fr 320px;
+  height: calc(100vh - 56px);
+  min-height: 0;
+}
+/* when the vehicle bar is open, shrink the app so nothing is clipped */
+body.vehicle-open .app { height: auto; min-height: calc(100vh - 56px); }
+
+/* ---- Toolbar ---- */
+.toolbar {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 14px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.tool-group { display: flex; flex-direction: column; gap: 6px; }
+.group-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.tool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, border-color .12s;
+}
+.tool:hover { background: #2b3645; }
+.tool .ico { width: 18px; text-align: center; font-size: 15px; }
+.tool-select.active {
+  border-color: var(--accent);
+  background: #34221d;
+  color: #fff;
+}
+.tool-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  justify-content: center;
+}
+.tool-primary:hover { background: #ff6f55; }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatch {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--bg); }
+.range-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.range-row input { width: 100%; accent-color: var(--accent); }
+.range-row b { color: var(--text); font-weight: 600; }
+
+.picker-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.picker-row input[type="color"] {
+  width: 38px; height: 26px; padding: 0;
+  border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer;
+}
+.picker-pair { display: flex; gap: 10px; }
+.picker-pair .picker-row { flex: 1; }
+.check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.check-row input { accent-color: var(--accent); }
+
+/* ---- Stage ---- */
+.stage {
+  position: relative;
+  overflow: hidden;            /* zoom/pan is handled via a CSS transform, not scrollbars */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(45deg, #12181f 25%, transparent 25%),
+    linear-gradient(-45deg, #12181f 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #12181f 75%),
+    linear-gradient(-45deg, transparent 75%, #12181f 75%);
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+  background-color: #0c1116;
+  padding: 0;
+  touch-action: none;          /* we manage pinch/pan ourselves */
+}
+.stage.drag-over { outline: 3px dashed var(--accent); outline-offset: -12px; }
+
+.empty-state { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 24px; }
+.empty-card {
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 40px 48px;
+  border-radius: 16px;
+  max-width: 420px;
+}
+.empty-ico { font-size: 48px; }
+.empty-card h2 { margin: 12px 0 8px; }
+.empty-card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+.empty-card .tool { display: inline-flex; margin-top: 16px; }
+
+.canvas-wrap {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  box-shadow: 0 10px 40px rgba(0,0,0,.5);
+  line-height: 0;
+  will-change: transform;
+}
+#canvas { display: block; cursor: crosshair; touch-action: none; }
+
+/* ---- Zoom controls ---- */
+.zoom-controls {
+  position: absolute;
+  right: 14px; bottom: 14px;
+  display: flex;
+  gap: 6px;
+  background: rgba(20,26,34,.9);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+.zoom-btn {
+  width: 38px; height: 38px;
+  font-size: 20px; line-height: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.zoom-btn:hover { background: #2b3645; }
+
+/* ---- Undo/redo floating buttons (top-left of the image) ---- */
+.edit-controls {
+  position: absolute;
+  left: 14px; top: 14px;
+  display: flex;
+  gap: 6px;
+  background: rgba(20,26,34,.9);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- Vertical line-thickness slider (right edge of the image) ---- */
+.thickness-control {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20,26,34,.9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 8px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+.thickness-control .tc-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+}
+.thickness-control .tc-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 18px;
+  text-align: center;
+}
+.v-range {
+  writing-mode: vertical-lr;      /* modern vertical range (Chrome/FF/Safari) */
+  direction: rtl;                 /* low at bottom, high at top */
+  width: 10px;
+  height: 150px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---- Crop overlay (stage level, so the zoom transform never touches it) ---- */
+.crop-overlay { position: absolute; inset: 0; cursor: crosshair; z-index: 40; touch-action: none; }
+.crop-rect {
+  position: absolute;
+  border: 2px dashed #fff;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.55);
+  display: none;
+}
+.crop-actions {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 8px;
+  background: var(--panel);
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+/* ---- Panel ---- */
+.panel {
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head { display: flex; align-items: baseline; gap: 8px; }
+.panel-head h3 { margin: 0; font-size: 15px; }
+.panel-head small { color: var(--muted); margin-left: auto; }
+.panel-close { display: none; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.panel-close:hover { color: var(--text); }
+
+/* mobile-only top-bar button to open the items drawer */
+.panel-toggle {
+  display: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.panel-hint { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 8px 0 14px; }
+
+.marker-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.marker-card {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+.marker-card.selected { border-color: var(--accent); }
+.marker-badge {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+}
+.marker-fields { display: flex; flex-direction: column; gap: 6px; }
+.marker-fields input, .marker-fields textarea {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 100%;
+  resize: vertical;
+}
+.marker-fields input:focus, .marker-fields textarea:focus { outline: none; border-color: var(--accent-2); }
+.marker-cost-row { display: flex; align-items: center; gap: 4px; }
+.marker-cost-row span { color: var(--muted); font-size: 13px; }
+.marker-cost-row input { width: 90px; }
+.marker-del {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 16px; padding: 2px;
+}
+.marker-del:hover { color: var(--accent); }
+.panel-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+
+.panel-foot { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.total-row { display: flex; justify-content: space-between; align-items: baseline; }
+.total-row strong { font-size: 16px; color: var(--text); }
+.total-row.grand strong { font-size: 20px; color: var(--ok); }
+.currency-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.currency-select {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.currency-select:focus { outline: none; border-color: var(--accent-2); }
+
+/* ---- Active-photo name bar (top-centre of the stage) ---- */
+.photo-namebar {
+  position: absolute;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20,26,34,.92);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  backdrop-filter: blur(4px);
+}
+.photo-namebar .pn-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.photo-name {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 13px;
+  min-width: 160px;
+}
+.photo-name:focus { outline: none; border-color: var(--accent-2); }
+
+/* ---- Filmstrip of all photos ---- */
+.filmstrip {
+  position: absolute;
+  left: 14px; bottom: 14px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  background: rgba(20,26,34,.92);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  backdrop-filter: blur(4px);
+}
+.filmstrip-thumbs { display: flex; gap: 8px; overflow-x: auto; max-width: 60vw; }
+.film-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px; height: 48px;
+  border-radius: 8px;
+  border: 2px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+}
+.film-thumb.active { border-color: var(--accent); }
+.film-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.film-thumb .ft-count {
+  position: absolute;
+  top: 2px; right: 2px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.film-thumb .ft-del {
+  position: absolute;
+  bottom: 2px; right: 2px;
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.film-thumb:hover .ft-del { opacity: 1; }
+.add-photo-btn {
+  flex: 0 0 auto;
+  background: var(--panel-2);
+  border: 1px dashed var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.add-photo-btn:hover { background: #2b3645; border-color: var(--accent); }
+
+@media (max-width: 820px) {
+  .vehicle-fields .vf input { min-width: 120px; }
+  .filmstrip-thumbs { max-width: 50vw; }
+  .photo-namebar { top: 8px; }
+  .vehicle-toggle { padding: 7px 9px; font-size: 12px; }
+}
+
+.floating-text-input {
+  position: absolute;
+  z-index: 50;
+  background: rgba(0,0,0,.85);
+  border: 1px solid var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 16px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #111;
+  color: #fff;
+  border: 1px solid var(--line);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity .18s, transform .18s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
+   Desktop: lay the sidebar buttons out in 2 columns so the whole
+   toolbar fits on screen without scrolling.
+   ============================================================ */
+@media (min-width: 821px) {
+  .tool-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    align-items: stretch;
+  }
+  /* full-width items span both columns */
+  .group-label,
+  .swatches,
+  .range-row,
+  .picker-row,
+  .picker-pair,
+  .check-row,
+  #uploadBtn { grid-column: 1 / -1; }
+
+  .tool {
+    min-width: 0;           /* allow buttons to shrink into the grid cells */
+    padding: 8px 8px;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+  .tool .ico { flex: 0 0 auto; }
+}
+
+/* ============================================================
+   Mobile / touch layout
+   ============================================================ */
+@media (max-width: 820px) {
+  .topbar { height: 52px; padding: 0 10px; gap: 8px; }
+  .brand-text { display: none; }
+  .topbar-actions { margin-left: 8px; max-width: none; }
+  .job-title { font-size: 13px; padding: 7px 10px; }
+  .panel-toggle { display: inline-block; }
+
+  /* stage on top, toolbar as a scrollable strip at the bottom */
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    height: calc(100vh - 52px);
+    height: calc(100dvh - 52px);
+  }
+
+  .stage { grid-row: 1; }
+
+  /* Toolbar wraps onto multiple rows (no horizontal scrolling, so no buttons
+     get hidden off-screen); scrolls vertically if it needs more than ~2 rows. */
+  .toolbar {
+    grid-row: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: center;
+    gap: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 112px;   /* ~2 rows, so the image gets most of the screen */
+    border-right: none;
+    border-top: 1px solid var(--line);
+    padding: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tool-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border-right: none;
+    flex: 0 0 auto;
+  }
+  .group-label { display: none; }          /* labels hidden to keep rows compact */
+  .tool {
+    flex-direction: column;
+    gap: 2px;
+    padding: 7px 8px;
+    font-size: 10px;
+    min-width: 50px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tool .ico { font-size: 18px; width: auto; }
+  .tool-primary { font-size: 11px; }
+  .swatch { width: 30px; height: 30px; }   /* bigger touch targets */
+  .range-row, .picker-row, .check-row { min-width: 120px; font-size: 11px; }
+  .picker-pair { flex-direction: row; gap: 8px; }
+  .zoom-btn { width: 44px; height: 44px; }  /* easier to tap */
+
+  /* items list becomes a slide-in drawer */
+  .panel {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100%;
+    width: min(420px, 88vw);
+    z-index: 150;
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    box-shadow: -8px 0 30px rgba(0,0,0,.5);
+  }
+  body.panel-open .panel { transform: translateX(0); }
+  .panel-close { display: block; }
+
+  /* dim backdrop behind the open drawer */
+  body.panel-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 140;
+  }
+}
+
+/* coarse pointers (touch) — give the canvas/controls room to breathe */
+@media (pointer: coarse) {
+  .tool { padding-top: 9px; padding-bottom: 9px; }
+}
+
+/* ============================================================
+   HIGH-VISIBILITY / LARGE LAYOUT
+   For low-resolution laptops and low-vision users: bigger text,
+   bigger controls, higher contrast, clear keyboard focus rings.
+   Scoped to body.hv so it only affects this build. Same features.
+   ============================================================ */
+body.hv {
+  --text: #ffffff;
+  --muted: #c4ced8;
+  --line: #3c4856;
+  font-size: 17px;
+}
+
+/* top bar + vehicle + reference */
+body.hv .topbar { height: 66px; }
+body.hv .logo { font-size: 32px; }
+body.hv .brand-text strong { font-size: 19px; }
+body.hv .brand-text small { font-size: 13px; }
+body.hv .job-title { font-size: 17px; padding: 12px 14px; }
+body.hv .vehicle-toggle { font-size: 15px; padding: 11px 14px; }
+body.hv .vehicle-fields .vf span { font-size: 14px; color: #c4ced8; }
+body.hv .vehicle-fields .vf input { font-size: 17px; padding: 10px 12px; min-width: 150px; }
+
+/* photo name bar */
+body.hv .photo-namebar .pn-label { font-size: 13px; }
+body.hv .photo-name { font-size: 18px; padding: 10px 12px; }
+
+/* toolbar buttons */
+body.hv .group-label { font-size: 13px; color: #aeb9c5; }
+body.hv .tool {
+  font-size: 15px;
+  padding: 13px 12px;
+  gap: 10px;
+  border-width: 2px;
+}
+body.hv .tool .ico { font-size: 21px; width: 24px; }
+body.hv .tool-primary { font-size: 16px; }
+body.hv .swatch { width: 32px; height: 32px; border-width: 3px; }
+body.hv .range-row, body.hv .picker-row, body.hv .check-row { font-size: 15px; }
+body.hv .check-row input { width: 20px; height: 20px; }
+body.hv input[type="color"] { width: 46px; height: 32px; }
+
+/* wider side columns so the bigger text fits on desktop */
+@media (min-width: 821px) {
+  body.hv .app { grid-template-columns: 292px 1fr 384px; }
+}
+
+/* items / costs panel */
+body.hv .panel-head h3 { font-size: 20px; }
+body.hv .panel-head small { font-size: 14px; }
+body.hv .panel-hint { font-size: 14px; }
+body.hv .marker-badge { width: 34px; height: 34px; font-size: 16px; }
+body.hv .marker-fields input,
+body.hv .marker-fields textarea { font-size: 16px; padding: 10px 12px; }
+body.hv .marker-cost-row span { font-size: 17px; }
+body.hv .marker-del { font-size: 20px; }
+body.hv .total-row span { font-size: 16px; }
+body.hv .total-row strong { font-size: 26px; }
+body.hv .panel-foot .tool { font-size: 15px; padding: 14px; justify-content: center; }
+
+/* on-canvas controls (zoom / undo-redo / thickness) */
+body.hv .zoom-btn { width: 54px; height: 54px; font-size: 28px; }
+body.hv .thickness-control { padding: 16px 12px; }
+body.hv .thickness-control .tc-label { font-size: 12px; }
+body.hv .thickness-control .tc-val { font-size: 18px; }
+body.hv .v-range { width: 18px; height: 200px; }
+
+/* filmstrip */
+body.hv .film-thumb { width: 92px; height: 68px; border-width: 3px; }
+body.hv .film-thumb .ft-count { font-size: 13px; }
+body.hv .film-thumb .ft-del { font-size: 18px; }
+body.hv .filmstrip-thumbs { max-width: 64vw; }
+
+/* clear keyboard focus rings everywhere (accessibility) */
+body.hv button:focus-visible,
+body.hv a:focus-visible,
+body.hv input:focus-visible,
+body.hv textarea:focus-visible,
+body.hv select:focus-visible,
+body.hv .tool:focus-visible,
+body.hv .swatch:focus-visible {
+  outline: 3px solid #ffd400;
+  outline-offset: 2px;
+}
+
+/* mobile: keep controls big and don't over-shrink the toolbar */
+@media (max-width: 820px) {
+  body.hv .toolbar { max-height: 132px; }
+  body.hv .tool { font-size: 12px; min-width: 58px; }
+  body.hv .tool .ico { font-size: 20px; }
+  body.hv .zoom-btn { width: 50px; height: 50px; }
+}
