@@ -56,7 +56,7 @@
 
   // App-wide (not per-photo) settings.
   let currency = "MYR";
-  let autoNumber = false;
+  let autoNumber = true;   // default ON — every mark gets the next number
 
   // ---- DOM ---------------------------------------------------------------
   const $ = (id) => document.getElementById(id);
@@ -768,12 +768,16 @@
           ${kind}
           <input type="text" data-f="label" placeholder="Part / item name" value="${esc(m.label)}" />
           <textarea data-f="note" rows="2" placeholder="What's wrong / what to do">${esc(m.note)}</textarea>
-          <div class="marker-cost-row"><span>${esc(curSymbol())}</span><input type="number" step="0.01" min="0" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
+          <div class="marker-cost-row"><span>${esc(curSymbol())}</span><input type="text" inputmode="decimal" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
         </div>
         <button class="marker-del" title="Delete marker">✕</button>`;
 
       li.querySelectorAll("[data-f]").forEach((el) => {
-        el.addEventListener("input", () => { m[el.dataset.f] = el.value; updateTotals(); });
+        el.addEventListener("input", () => {
+          if (el.dataset.f === "cost") el.value = sanitizeCost(el.value);
+          m[el.dataset.f] = el.value;
+          updateTotals();
+        });
       });
       li.querySelector(".marker-badge").addEventListener("click", () => {
         state.selectedId = m.id; render(); renderMarkers();
@@ -1265,6 +1269,63 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
+  // Export an Excel-compatible spreadsheet (.xls, HTML workbook) that ALSO
+  // embeds each photo's annotated image — opens in Excel / LibreOffice Calc.
+  function exportXls() {
+    if (!photos.length) { toast("Add a photo first"); return; }
+    commitCurrentPhoto();
+
+    const v = vehicleDetails();
+    const head = [
+      ["Vehicle damage assessment", ""],
+      ["Reference", jobName()],
+      ["Registration", v.reg], ["Make", v.make], ["Model", v.model],
+      ["Year", v.year], ["Colour", v.colour],
+      ["Date", new Date().toLocaleDateString()], ["Currency", curCode()],
+    ]
+      .filter(([k, val]) => k === "Vehicle damage assessment" || val)
+      .map(([k, val]) => `<tr><td style="font-weight:bold">${esc(k)}</td><td>${esc(val)}</td><td></td><td></td></tr>`)
+      .join("");
+
+    let grand = 0;
+    const blocks = photos.map((p, i) => {
+      const items = (p.annotations || []).filter((a) => a.n != null).sort((a, b) => a.n - b.n);
+      const subtotal = items.reduce((s, a) => s + (parseFloat(a.cost) || 0), 0);
+      grand += subtotal;
+      const imgSrc = flattenPhoto(p, i === activeIndex);
+      const itemRows = items.map((m) =>
+        `<tr><td>${m.n}</td><td>${esc(m.label)}</td><td>${esc((m.note || "").replace(/\n/g, " "))}</td><td>${m.cost ? (parseFloat(m.cost) || 0).toFixed(2) : ""}</td></tr>`
+      ).join("");
+      return `
+        <tr><td colspan="4" style="font-weight:bold;background:#f0f0f0">${i + 1}. ${esc(p.name) || "Photo"}</td></tr>
+        <tr><td colspan="4"><img src="${imgSrc}" width="520" /></td></tr>
+        <tr style="font-weight:bold;background:#f4f4f4"><td>#</td><td>Item / part</td><td>Notes</td><td>Cost (${esc(curCode())})</td></tr>
+        ${itemRows || '<tr><td></td><td colspan="3">(no numbered items)</td></tr>'}
+        <tr style="font-weight:bold"><td colspan="3">Subtotal — ${esc(p.name)}</td><td>${subtotal.toFixed(2)}</td></tr>
+        <tr><td colspan="4"></td></tr>`;
+    }).join("");
+
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>Damage assessment</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+</head><body>
+<table border="1" cellspacing="0" cellpadding="4" style="font-family:Arial,sans-serif;font-size:12px">
+${head}
+<tr><td colspan="4"></td></tr>
+${blocks}
+<tr style="font-weight:bold;font-size:14px"><td colspan="3">GRAND TOTAL (all photos)</td><td>${grand.toFixed(2)}</td></tr>
+</table>
+</body></html>`;
+
+    const blob = new Blob(["﻿" + html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    downloadURL(url, uniqueFileName("xls").replace(/\.xls$/, "-assessment.xls"));
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Excel file (with images) exported");
+  }
+
   // Quote a CSV cell when it contains a comma, quote or newline.
   function csvCell(value) {
     const v = String(value ?? "");
@@ -1305,6 +1366,14 @@
   function curSymbol() { return CURRENCIES[currency].symbol; }
   function curCode() { return CURRENCIES[currency].code; }
   function formatMoney(n) { return curSymbol() + (n || 0).toFixed(2); }
+
+  // Keep only digits and a single decimal point (cost fields are numbers only).
+  function sanitizeCost(s) {
+    let v = String(s).replace(/[^0-9.]/g, "");
+    const d = v.indexOf(".");
+    if (d !== -1) v = v.slice(0, d + 1) + v.slice(d + 1).replace(/\./g, "");
+    return v;
+  }
 
   function roundRect(c, x, y, w, h, r) {
     c.beginPath();
@@ -1400,6 +1469,7 @@
     $("saveBtn").addEventListener("click", saveImage);
     $("exportPdfBtn").addEventListener("click", exportPdfReport);
     $("exportCsvBtn").addEventListener("click", exportCsv);
+    $("exportXlsBtn").addEventListener("click", exportXls);
 
     // photo name field
     $("photoName").addEventListener("input", (e) => {
