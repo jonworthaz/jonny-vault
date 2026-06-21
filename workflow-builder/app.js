@@ -88,8 +88,8 @@ const TEMPLATES = [
 
 const KIND_LABEL = { agent: 'agent', skill: 'skill', tool: 'tool', mcp: 'mcp' };
 const STORE_KEY = 'forge.workflow.v1';
-const IDEAS_KEY = 'claudehome.ideas.v1';   // shared store with Claude Home
-let LINK = null;        // { ideaId, wfId } when launched from Claude Home
+const IDEAS_KEY = 'claudeideas.ideas.v1';   // shared store with Claude Ideas
+let LINK = null;        // { ideaId, wfId } when launched from Claude Ideas
 let READONLY = false;   // true when the linked workflow is locked
 
 /* ------------------------------------------------------------------ *
@@ -124,7 +124,7 @@ function loadFromStore() {
   } catch (e) {}
 }
 
-/* ---- Claude Home linked mode ---- */
+/* ---- Claude Ideas linked mode ---- */
 function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function loadIdeasStore() { try { return JSON.parse(localStorage.getItem(IDEAS_KEY)) || null; } catch (e) { return null; } }
 function findLinkedWf(db) {
@@ -156,7 +156,7 @@ function renderBanner(idea) {
   b.className = 'link-banner' + (READONLY ? ' locked' : '');
   b.innerHTML = `<span>${READONLY ? '🔒 ' : ''}Workflow for idea: <strong>${escHtml(idea.title)}</strong>${READONLY ? ' — locked (read-only)' : ''}</span>` +
     `<span class="lb-actions">${READONLY ? '<button id="lbUnlock" class="tool">🔓 Unlock</button>' : ''}` +
-    `<a class="tool" href="../claude-home/index.html?idea=${encodeURIComponent(idea.id)}">← Back to Claude Home</a></span>`;
+    `<a class="tool" href="../claude-ideas/index.html?idea=${encodeURIComponent(idea.id)}">← Back to Claude Ideas</a></span>`;
   document.body.insertBefore(b, document.querySelector('.app'));
   const u = document.getElementById('lbUnlock');
   if (u) u.addEventListener('click', () => {

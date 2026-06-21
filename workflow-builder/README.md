@@ -98,12 +98,12 @@ and suggests improvements you can apply in one click:
 - Flags **per-stage gaps** — empty stages, an Implement stage missing `Edit`/`Bash`,
   a Review stage missing the `code-review` skill, a `github` MCP with no Ship stage.
 
-## Claude Home integration (linked mode)
+## Claude Ideas integration (linked mode)
 
-When opened from [Claude Home](../claude-home/) with
+When opened from [Claude Ideas](../claude-ideas/) with
 `?ideaId=…&wfId=…`, Forge enters **linked mode**: it loads that idea's workflow,
 shows a banner naming the idea, and writes every change straight back into the idea
-(shared local store `claudehome.ideas.v1`). If the idea's workflow is **locked**,
+(shared local store `claudeideas.ideas.v1`). If the idea's workflow is **locked**,
 Forge opens it **read-only** with an **Unlock** button. Without those params it
 behaves as the standalone tool described above.
 

@@ -1,11 +1,11 @@
 @echo off
-rem Claude Home launcher (Windows) - double-click to run.
-rem Serves the parent folder so Claude Home can reach the sibling tools.
+rem Claude Ideas launcher (Windows) - double-click to run.
+rem Serves the parent folder so Claude Ideas can reach the sibling tools.
 cd /d "%~dp0.."
 set PORT=8020
-echo Starting Claude Home...  ->  http://localhost:%PORT%/claude-home/index.html
+echo Starting Claude Ideas...  ->  http://localhost:%PORT%/claude-ideas/index.html
 echo (Leave this window open while you use it. Close it when you're done.)
-start "" "http://localhost:%PORT%/claude-home/index.html"
+start "" "http://localhost:%PORT%/claude-ideas/index.html"
 
 where python >nul 2>nul
 if %errorlevel%==0 (

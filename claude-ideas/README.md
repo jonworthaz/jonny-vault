@@ -1,4 +1,4 @@
-# Claude Home
+# Claude Ideas
 
 The core system that takes an idea from a one-line capture all the way to a
 **product brief** and a **buildable workflow** — a zero-dependency static web app.
@@ -6,6 +6,11 @@ The core system that takes an idea from a one-line capture all the way to a
 It's the front door to the vault's tools: an **Idea Board**, an **Idea Research &
 Launch** system, the **Medvi OS** framework, and the **Workflow Builder** (Forge),
 all in one sidebar.
+
+> **Naming:** the desktop version of Claude Code already ships a feature called
+> *Claude Home*, so this is a **separate, standalone system named "Claude Ideas"**.
+> For a full feature/architecture write-up — including how to apply this system to the
+> real Claude Home — see [`SPEC.md`](./SPEC.md).
 
 > The concept lives in the vault's [Build & Tooling idea board](../10-build-and-tooling-board.md) (entry #02).
 
@@ -15,11 +20,11 @@ all in one sidebar.
 - **macOS / Linux** → **`start-mac-linux.command`**
 - **Windows** → **`start-windows.bat`**
 
-These serve the **parent folder** (so Claude Home can reach the sibling tools) and
-open at `http://localhost:8020/claude-home/index.html`.
+These serve the **parent folder** (so Claude Ideas can reach the sibling tools) and
+open at `http://localhost:8020/claude-ideas/index.html`.
 
 ### Hosted
-Deploys to GitHub Pages — Claude Home is the site root (`/` redirects to it), with
+Deploys to GitHub Pages — Claude Ideas is the site root (`/` redirects to it), with
 `/workflow-builder/` and `/image-annotator/` alongside.
 
 ## The tabs
@@ -53,8 +58,8 @@ Click any idea to open its drawer — the place to take it from raw idea to laun
 
 ## How it connects to Forge
 
-Ideas and workflows share one local store (`claudehome.ideas.v1`). When you edit an
-idea's workflow, Claude Home opens Forge in **linked mode**
+Ideas and workflows share one local store (`claudeideas.ideas.v1`). When you edit an
+idea's workflow, Claude Ideas opens Forge in **linked mode**
 (`workflow-builder/index.html?ideaId=…&wfId=…`); Forge loads that workflow, and every
 change writes straight back into the idea. Lock the workflow and Forge respects it —
 a banner shows it's read-only with an **Unlock** button.

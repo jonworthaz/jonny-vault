@@ -67,7 +67,7 @@ tool, lives in [`workflow-builder/`](./workflow-builder/):
 generation, importing the *actually installed* agents/skills/MCPs to populate the
 palette, and a shareable URL encoding of a workflow.
 
-### 🟢 #02 — Claude Home: idea → launch core system
+### 🟢 #02 — Claude Ideas: idea → launch system *(separate from the desktop Claude Home)*
 *The idea board as a real system — store every idea, then research, analyse and
 develop it into a product, with the Medvi OS and a full workflow applied.*
 
@@ -81,6 +81,12 @@ system** to be reviewed, researched, analysed and developed into products; ideas
 be **set to the Medvi OS**, amended and deleted, and have **workflows, files and
 agents applied** to take them through full product development — with the workflow
 editable in the generator and **lockable/unlockable**.
+
+**Naming:** the desktop version of Claude Code already ships a feature called
+*Claude Home*, so this build ships as a **separate standalone system named
+"Claude Ideas"** to avoid a clash. The full feature/architecture write-up —
+[`claude-ideas/SPEC.md`](./claude-ideas/SPEC.md) — is written so the same system
+can be *applied to* the real Claude Home if wanted.
 
 **Review & improvements made (before building):**
 - **Added a lifecycle, not just a list.** A status pipeline
@@ -98,11 +104,12 @@ editable in the generator and **lockable/unlockable**.
 - **Seeded it with the existing boards** (09 + 10) so every idea is visible on first
   run, and added export/import so the data is portable.
 
-**v1 — built.** A zero-dependency static SPA in [`claude-home/`](./claude-home/),
+**v1 — built.** A zero-dependency static SPA in [`claude-ideas/`](./claude-ideas/),
 deployed as the site's front door (root redirects to it; Forge and MarkUp sit
 alongside). Sidebar tabs — Dashboard · Idea Board · Medvi OS · Workflow Builder ·
 About. Ideas share one local store with Forge, so a workflow edited from an idea
-writes straight back. See its [README](./claude-home/README.md).
+writes straight back. See its [README](./claude-ideas/README.md) and
+[SPEC.md](./claude-ideas/SPEC.md).
 
 **Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
 score editing, multiple workflows per idea, and cloud sync behind a backend.

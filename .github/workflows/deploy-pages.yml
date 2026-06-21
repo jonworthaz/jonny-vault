@@ -1,9 +1,9 @@
 name: Deploy tools to GitHub Pages
 
-# Publishes the static tools to GitHub Pages as siblings, with Claude Home as the
+# Publishes the static tools to GitHub Pages as siblings, with Claude Ideas as the
 # front door:
-#   • /                  → redirects to /claude-home/
-#   • /claude-home/      → Claude Home (idea → launch core system)
+#   • /                  → redirects to /claude-ideas/
+#   • /claude-ideas/      → Claude Ideas (idea → launch core system)
 #   • /workflow-builder/ → Forge (visual workflow builder)
 #   • /image-annotator/  → MarkUp (image annotation)
 # Serving over https keeps clipboard / download features working reliably.
@@ -12,7 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "claude-home/**"
+      - "claude-ideas/**"
       - "image-annotator/**"
       - "workflow-builder/**"
       - ".github/workflows/deploy-pages.yml"
@@ -45,12 +45,12 @@ jobs:
 
       - name: Assemble the site
         run: |
-          mkdir -p _site/claude-home _site/workflow-builder _site/image-annotator
-          cp -r claude-home/.      _site/claude-home/
+          mkdir -p _site/claude-ideas _site/workflow-builder _site/image-annotator
+          cp -r claude-ideas/.      _site/claude-ideas/
           cp -r workflow-builder/. _site/workflow-builder/
           cp -r image-annotator/.  _site/image-annotator/
-          # root redirect → Claude Home (the front door)
-          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./claude-home/">\n<title>Claude Home</title><a href="./claude-home/">Go to Claude Home</a>\n' > _site/index.html
+          # root redirect → Claude Ideas (the front door)
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./claude-ideas/">\n<title>Claude Ideas</title><a href="./claude-ideas/">Go to Claude Ideas</a>\n' > _site/index.html
 
       - name: Upload the site
         uses: actions/upload-pages-artifact@v3

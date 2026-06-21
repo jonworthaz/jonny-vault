@@ -136,7 +136,28 @@ Status legend: 🟢 promote to sprint · 🟡 watch / needs validation · 🔴 p
 - Violates law #1 (recurring by nature) from [02](./02-operating-system.md).
   Could only ever be a top-of-funnel lead magnet, never the business.
 
----
+### 🟡 #10 — VSC: sectioned sprouting kit with metered spray
+*Vertical seed cultivation — a sprouting/microgreens tray with a **section per seed**
+and **specific sprouting sprays**, metered to **prevent over-saturation** so each seed
+grows accurately and evenly.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 3 | 4 | 4 | 3 | ⚠️ only as a refill subscription | ✅ |
+
+- **The job:** even, accurate home sprouting — per-seed compartments stop cross-mixing;
+  a metered spray stops the classic failure mode (over-watering / mould from saturation).
+- **Recurring angle:** the hardware is one-off (fails law #1), **but** seed pods +
+  sprouting-spray **refills on subscription** are genuinely recurring and high-repeat.
+  That's where any real business is.
+- **Watch / the tension:** this is a **physical product** — inventory, fulfilment,
+  shipping, geo-bound — which cuts against the vault's *digital, geo-agnostic, ~95%-
+  margin* thesis and the [guardrails](./07-guardrails.md). Margin is thinner and you
+  can't out-pay affiliates the way a digital product can (law #2).
+- **How it could still fit:** lead with the **digital + consumable** layer — an app
+  that schedules/guides growing and auto-ships refills — so you still *own billing and
+  the recurring relationship* even though delivery is physical. Validate refill repeat-
+  rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
 ## Shortlist into the sprint
 

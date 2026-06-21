@@ -1,11 +1,11 @@
 #!/bin/bash
-# Claude Home launcher (macOS / Linux) — double-click to run.
-# Serves the *parent* folder so Claude Home can reach the sibling tools
-# (workflow-builder, image-annotator). Opens at /claude-home/.
+# Claude Ideas launcher (macOS / Linux) — double-click to run.
+# Serves the *parent* folder so Claude Ideas can reach the sibling tools
+# (workflow-builder, image-annotator). Opens at /claude-ideas/.
 cd "$(dirname "$0")/.." || exit 1
 PORT=8020
-URL="http://localhost:$PORT/claude-home/index.html"
-echo "Starting Claude Home…  ->  $URL"
+URL="http://localhost:$PORT/claude-ideas/index.html"
+echo "Starting Claude Ideas…  ->  $URL"
 echo "(Leave this window open while you use it. Close it when you're done.)"
 
 ( sleep 1; (command -v open >/dev/null 2>&1 && open "$URL") || (command -v xdg-open >/dev/null 2>&1 && xdg-open "$URL") ) &

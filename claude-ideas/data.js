@@ -1,4 +1,4 @@
-/* Claude Home — seed data & frameworks
+/* Claude Ideas — seed data & frameworks
  * Loaded before app.js. Provides the Medvi OS framework and the initial idea set
  * (mirrored from the vault's idea boards 09 + 10 so every idea is visible on first run).
  */
@@ -101,10 +101,17 @@ const SEED_IDEAS = [
     gates: { compounds: true, screenshot: true }, medviOS: false,
   },
   {
-    title: 'Claude Home — idea-to-launch core system',
+    title: 'Claude Ideas — idea-to-launch core system',
     summary: 'This app: idea board + research/launch system + Medvi OS + workflow integration.',
     source: '10-build-and-tooling-board.md · #02', tags: ['tooling', 'core', 'built'], status: 'Building',
     criteria: { Leverage: 5, Reusability: 5, 'Build cost': 3, Compounds: 5 },
     gates: { compounds: true, screenshot: true }, medviOS: false,
+  },
+  {
+    title: 'VSC — sectioned sprouting kit with metered spray',
+    summary: 'Vertical seed cultivation: a section per seed + specific sprouting sprays, metered to prevent over-saturation for even, accurate growing. Recurring play = seed/spray refill subscription.',
+    source: '09-idea-board.md · #10', tags: ['product', 'physical', 'watch'], status: 'Captured',
+    criteria: { Demand: 3, Intent: 3, Headroom: 4, Quality: 4, 'Affiliate fit': 3 },
+    gates: { compounds: false, screenshot: true }, medviOS: false,
   },
 ];

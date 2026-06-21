@@ -363,7 +363,7 @@ html, body {
   font-size: 13px; z-index: 60; box-shadow: 0 6px 24px rgba(0,0,0,.4);
 }
 
-/* ---- Claude Home linked mode ---- */
+/* ---- Claude Ideas linked mode ---- */
 .link-banner {
   height: 40px; display: flex; align-items: center; justify-content: space-between;
   gap: 12px; padding: 0 16px; font-size: 13px;
