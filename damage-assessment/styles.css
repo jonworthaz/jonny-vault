@@ -24,6 +24,9 @@ html, body {
   color: var(--text);
   overflow: hidden;
 }
+/* page is a vertical stack that exactly fills the viewport — nothing off-screen */
+body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.topbar, .vehicle-bar { flex: 0 0 auto; }
 
 /* ---- Top bar ---- */
 .topbar {
@@ -102,11 +105,9 @@ html, body {
 .app {
   display: grid;
   grid-template-columns: 248px 1fr 320px;
-  height: calc(100vh - 56px);
+  flex: 1 1 auto;   /* fills the remaining height under the top/vehicle bars */
   min-height: 0;
 }
-/* when the vehicle bar is open, shrink the app so nothing is clipped */
-body.vehicle-open .app { height: auto; min-height: calc(100vh - 56px); }
 
 /* ---- Toolbar ---- */
 .toolbar {
@@ -116,7 +117,7 @@ body.vehicle-open .app { height: auto; min-height: calc(100vh - 56px); }
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 .tool-group { display: flex; flex-direction: column; gap: 6px; }
 .group-label {

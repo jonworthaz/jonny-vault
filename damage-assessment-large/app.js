@@ -1162,7 +1162,7 @@
   header.rpt .veh-meta b{color:#222}
   .photo-section{margin:0 0 34px;page-break-inside:avoid}
   .photo-section h2{font-size:18px;margin:0 0 10px;padding:6px 0;border-bottom:1px solid #eee}
-  .photo-section img{max-width:100%;border:1px solid #ddd;border-radius:8px;display:block;margin-bottom:12px}
+  .photo-section img{max-width:100%;max-height:88mm;width:auto;object-fit:contain;border:1px solid #ddd;border-radius:8px;display:block;margin-bottom:12px}
   table{width:100%;border-collapse:collapse}
   th,td{border:1px solid #ddd;padding:9px 10px;text-align:left;vertical-align:top;font-size:13px}
   th{background:#f4f4f4}
