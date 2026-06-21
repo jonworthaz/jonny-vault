@@ -111,6 +111,19 @@ About. Ideas share one local store with Forge, so a workflow edited from an idea
 writes straight back. See its [README](./claude-ideas/README.md) and
 [SPEC.md](./claude-ideas/SPEC.md).
 
+**v2 — NPD stage-gate (built).** After reviewing the design doc *"Designing a
+Local-First Ideas & NPD Management System"*, the NPD core was folded in — but kept
+opinionated and lean rather than copying the doc wholesale:
+- **Weighted Medvi-OS gate scoring** (0–5 × weights → a gate score) with recorded
+  **Go / Hold / Recycle / Kill** decisions, rationale and an audit history; decisions
+  advance / recycle / park the idea.
+- **Experiments & learnings** per idea, rolled up into a searchable **Learnings** tab.
+- **Pipeline analytics** on the dashboard — gate kill rate, average days per stage,
+  stale-item flags (from logged status transitions).
+- **Deliberately skipped** (over-build for a solo founder): separate Concept/Project
+  entities, a rules engine, knowledge graph/embeddings, plugins, and a desktop/SQLite
+  rebuild. The full review + rationale is in the chat and [SPEC.md §5a](./claude-ideas/SPEC.md).
+
 **Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
 score editing, multiple workflows per idea, and cloud sync behind a backend.
 

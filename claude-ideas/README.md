@@ -31,9 +31,10 @@ Deploys to GitHub Pages — Claude Ideas is the site root (`/` redirects to it),
 
 | Tab | What it does |
 |---|---|
-| **Dashboard** | Quick summary — totals, pipeline counts by status, recently updated ideas |
-| **Idea Board** | Every idea, stored and visible. Cards show a summary, status, score, tags. Search, filter by status/tag, add new |
-| **Medvi OS** | The transferable operating system (seven functions, five laws) you develop ideas against |
+| **Dashboard** | Quick summary — totals, pipeline counts, **pipeline health** (gate kill rate, avg days/stage, stale items), recently updated |
+| **Idea Board** | Every idea, stored and visible. Cards show a summary, status, gate score, latest decision, tags. Search, filter by status/tag, add new |
+| **Medvi OS** | The transferable operating system (seven functions, five laws) — and the **weighted gate scorecard** ideas are scored against |
+| **Learnings** | A searchable repository of every experiment and learning across all ideas |
 | **Workflow Builder** | Forge, embedded — build reusable Claude Code workflows |
 | **About** | How the system flows |
 
@@ -41,19 +42,24 @@ Deploys to GitHub Pages — Claude Ideas is the site root (`/` redirects to it),
 
 Click any idea to open its drawer — the place to take it from raw idea to launch:
 
-- **Status pipeline** — `Captured → Researching → Analysed → Validated → Building → Launched` (plus `Parked`).
+- **Status pipeline** — `Captured → Researching → Analysed → Validated → Building → Launched` (plus `Parked`). Transitions are logged for analytics.
 - **Quick summary, Review, Analysis, Development** — structured free-text fields.
 - **Research log** — timestamped notes with optional links.
-- **Set to the Medvi OS** — a toggle that scores the idea against the eight-point
-  Medvi checklist (recurring? high margin? AI-buildable? rides a wave? own
-  acquisition + billing? retains? survives a screenshot?) and surfaces the gaps.
+- **Medvi OS gate (stage-gate scoring)** — set an idea to the Medvi OS and score it
+  **0–5 on weighted criteria** (recurring, margin, retains, screenshot — the heavy
+  hitters — plus own-acquisition/billing, wave, AI-buildable). You get a **weighted
+  gate score** and a verdict, then record a **Go / Hold / Recycle / Kill** decision
+  with rationale. Decisions advance, hold, recycle or park the idea, and every review
+  is kept as an **audit history**.
+- **Experiments & learnings** — track hypotheses, type, status, success metric and
+  outcome per idea. They roll up into the **Learnings** tab.
 - **Workflows · files · agents** — attach a full product-development workflow
   (opens in the builder, **Forge**, and writes back live), plus files and agents.
   Each workflow can be **🔒 locked / 🔓 unlocked** — a locked workflow opens
   read-only in the builder until you unlock it.
 - **Generate product brief** — exports a structured Markdown brief from everything
-  captured (summary, Medvi OS fit, scores, research, analysis, development plan,
-  workflow pipeline, files/agents).
+  captured (gate scorecard + decisions, scores, research, analysis, development plan,
+  experiments/learnings, workflow pipeline, files/agents).
 - **Delete / amend** — full control over the idea.
 
 ## How it connects to Forge

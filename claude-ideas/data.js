@@ -37,18 +37,31 @@ const MEDVI_OS = {
     { n: 4, title: 'Outsource what is capital-intensive or regulated', body: 'Own no inventory/warehouses/licences a partner will rent. Stay liquid and fast.' },
     { n: 5, title: 'Ride a wave; don\'t make one', body: 'Capture existing demand (a visible, growing tailwind) — creating demand is expensive.' },
   ],
-  /* The checklist an idea must pass to be "Medvi-OS aligned". */
+  /* The Medvi OS *is* the gate scorecard. Each criterion is scored 0–5 and weighted;
+   * the weighted total is the gate score. Weights reflect the five laws' priority. */
   checklist: [
-    { key: 'recurring',   label: 'Recurring by nature (bills monthly/annually)?' },
-    { key: 'margin',      label: 'High margin (can out-pay affiliates)?' },
-    { key: 'aiBuildable', label: 'AI-buildable / runnable by a 2-person team?' },
-    { key: 'wave',        label: 'Rides an existing demand wave?' },
-    { key: 'ownAcq',      label: 'We own acquisition (affiliate-friendly)?' },
-    { key: 'ownBilling',  label: 'We own billing + the retention relationship?' },
-    { key: 'retains',     label: 'Genuinely good enough to retain (output quality)?' },
-    { key: 'screenshot',  label: 'Would survive a screenshot (honest, compliant)?' },
+    { key: 'recurring',   label: 'Recurring by nature (bills monthly/annually)?', weight: 2 },
+    { key: 'margin',      label: 'High margin (can out-pay affiliates)?', weight: 2 },
+    { key: 'retains',     label: 'Genuinely good enough to retain (output quality)?', weight: 2 },
+    { key: 'screenshot',  label: 'Would survive a screenshot (honest, compliant)?', weight: 2 },
+    { key: 'ownAcq',      label: 'We own acquisition (affiliate-friendly)?', weight: 1.5 },
+    { key: 'ownBilling',  label: 'We own billing + the retention relationship?', weight: 1.5 },
+    { key: 'wave',        label: 'Rides an existing demand wave?', weight: 1 },
+    { key: 'aiBuildable', label: 'AI-buildable / runnable by a 2-person team?', weight: 1 },
   ],
 };
+
+/* Gate decisions (classic stage-gate) + colours. */
+const DECISIONS = [
+  { key: 'Go',      color: '#22c55e', hint: 'Pass the gate — advance to the next stage.' },
+  { key: 'Hold',    color: '#eab308', hint: 'Promising but not ready — stay in this stage.' },
+  { key: 'Recycle', color: '#3b82f6', hint: 'Send back a stage to rework before re-reviewing.' },
+  { key: 'Kill',    color: '#ef4444', hint: 'Stop — park it with the reasoning recorded.' },
+];
+
+/* Experiment / validation vocabulary. */
+const EXPERIMENT_TYPES = ['Interview', 'Survey', 'Landing page', 'Prototype', 'Smoke test', 'Tech spike', 'Other'];
+const EXPERIMENT_STATUS = ['Planned', 'Running', 'Done', 'Abandoned'];
 
 /* Seed ideas — mirrored from boards 09 (product) and 10 (tooling). */
 const SEED_IDEAS = [

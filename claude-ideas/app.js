@@ -35,16 +35,24 @@ function normalizeIdea(raw) {
   const a = Object.assign({
     id: uid(), title: 'Untitled idea', summary: '', source: 'manual', tags: [],
     status: 'Captured', criteria: {}, gates: { compounds: false, screenshot: true },
-    medviOS: false, medviChecks: {}, medviNotes: '',
+    medviOS: false, medviChecks: {}, gateScores: {}, medviNotes: '',
     review: '', research: [], analysis: '', development: '',
+    gateReviews: [], experiments: [], statusHistory: [],
     attachments: { workflows: [], files: [], agents: [] },
     createdAt: now(), updatedAt: now(),
   }, raw || {});
   a.attachments = Object.assign({ workflows: [], files: [], agents: [] }, a.attachments);
   a.gates = Object.assign({ compounds: false, screenshot: true }, a.gates);
   a.medviChecks = a.medviChecks || {};
-  a.research = a.research || [];
+  a.gateScores = a.gateScores || {};
+  a.research = a.research || []; a.gateReviews = a.gateReviews || []; a.experiments = a.experiments || [];
   if (!a.id) a.id = uid();
+  // back-fill: derive 0–5 gate scores from any old boolean checklist (true → 4)
+  if (!Object.keys(a.gateScores).length && Object.keys(a.medviChecks).length) {
+    Object.keys(a.medviChecks).forEach((k) => { if (a.medviChecks[k]) a.gateScores[k] = 4; });
+  }
+  // seed status history so analytics have a starting point
+  if (!a.statusHistory || !a.statusHistory.length) a.statusHistory = [{ status: a.status, ts: a.createdAt || now() }];
   return a;
 }
 function loadStore() {
@@ -59,12 +67,68 @@ function saveStore() {
 function debouncedSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveStore, 300); }
 function getIdea(id) { return DB.ideas.find((i) => i.id === id); }
 
+/* ------------------------------------------------------------------ model helpers */
+const DAY = 86400000;
+const STALE_DAYS = 14;
+
+/* Move an idea to a new status, logging the transition for analytics. */
+function setStatus(idea, s) {
+  if (!s || idea.status === s) return;
+  idea.status = s;
+  idea.statusHistory.push({ status: s, ts: now() });
+}
+
+/* Weighted Medvi-OS gate score (0–100) over the criteria actually scored. */
+function gateScore(idea) {
+  let num = 0, den = 0;
+  MEDVI_OS.checklist.forEach((c) => {
+    const v = idea.gateScores[c.key];
+    if (typeof v === 'number') { num += v * c.weight; den += 5 * c.weight; }
+  });
+  return den ? Math.round((num / den) * 100) : null;
+}
+function gateVerdict(pct) {
+  if (pct == null) return 'not scored';
+  if (pct >= 80) return 'strong — Go candidate ✅';
+  if (pct >= 60) return 'promising — close the gaps';
+  if (pct >= 40) return 'weak — needs work';
+  return 'poor — likely Kill';
+}
+function latestReview(idea) { return idea.gateReviews && idea.gateReviews[0]; }
+
+/* Days the idea has sat in its current status. */
+function daysInStage(idea) {
+  const h = idea.statusHistory || [];
+  const last = h.length ? h[h.length - 1].ts : (idea.createdAt || now());
+  return Math.floor((now() - last) / DAY);
+}
+function isStale(idea) {
+  return idea.status !== 'Launched' && idea.status !== 'Parked' && daysInStage(idea) >= STALE_DAYS;
+}
+
+/* Average days spent in each completed stage transition, across all ideas. */
+function avgDaysInStage() {
+  const acc = {}; // status -> {total, n}
+  DB.ideas.forEach((idea) => {
+    const h = idea.statusHistory || [];
+    for (let k = 0; k < h.length - 1; k++) {
+      const dur = (h[k + 1].ts - h[k].ts) / DAY;
+      const s = h[k].status;
+      (acc[s] = acc[s] || { total: 0, n: 0 });
+      acc[s].total += dur; acc[s].n += 1;
+    }
+  });
+  const out = {};
+  Object.keys(acc).forEach((s) => out[s] = acc[s].total / acc[s].n);
+  return out;
+}
+
 /* ------------------------------------------------------------------ routing */
 function setView(v) {
   currentView = v;
   document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   $('sidebar').classList.remove('open');
-  const titles = { dashboard: 'Dashboard', ideas: 'Idea Board', medvi: 'Medvi OS', workflows: 'Workflow Builder', about: 'About Claude Ideas' };
+  const titles = { dashboard: 'Dashboard', ideas: 'Idea Board', medvi: 'Medvi OS', learnings: 'Learnings', workflows: 'Workflow Builder', about: 'About Claude Ideas' };
   $('viewTitle').textContent = titles[v] || v;
   render();
 }
@@ -73,6 +137,7 @@ function render() {
   if (currentView === 'dashboard') c.innerHTML = viewDashboard();
   else if (currentView === 'ideas') { renderBoardControls(top); c.innerHTML = viewIdeas(); bindBoard(); }
   else if (currentView === 'medvi') c.innerHTML = viewMedvi();
+  else if (currentView === 'learnings') { c.innerHTML = viewLearnings(); bindLearnings(); }
   else if (currentView === 'workflows') { top.innerHTML = `<a class="btn" href="${FORGE_URL}" target="_blank" rel="noopener">↗ Open full builder</a>`; c.innerHTML = viewWorkflows(); }
   else if (currentView === 'about') c.innerHTML = viewAbout();
 }
@@ -96,6 +161,40 @@ function viewDashboard() {
   h += `<div class="section-title">Pipeline</div><div class="pipeline">`;
   STATUSES.forEach((s) => { h += `<div class="pipe-cell"><span class="dot" style="background:${statusColor(s)}"></span>${s} <b>${counts[s]}</b></div>`; });
   h += `</div>`;
+
+  // ---- NPD analytics ----
+  const decided = ideas.filter((i) => i.gateReviews.length).length;
+  const killed = ideas.filter((i) => i.status === 'Parked').length;
+  const reviewed = ideas.filter((i) => i.gateReviews.length).length;
+  const killCount = ideas.reduce((n, i) => n + i.gateReviews.filter((r) => r.decision === 'Kill').length, 0);
+  const goCount = ideas.reduce((n, i) => n + i.gateReviews.filter((r) => r.decision === 'Go').length, 0);
+  const totalGateOutcomes = goCount + killCount || 1;
+  const killRate = Math.round((killCount / totalGateOutcomes) * 100);
+  const stale = ideas.filter(isStale);
+  const avgStage = avgDaysInStage();
+  const avgEntries = Object.values(avgStage);
+  const avgCycle = avgEntries.length ? Math.round(avgEntries.reduce((a, b) => a + b, 0) / avgEntries.length) : null;
+
+  h += `<div class="section-title">Pipeline health</div><div class="stat-row">
+    <div class="stat"><div class="num">${decided}</div><div class="lbl">Gated (have a review)</div></div>
+    <div class="stat"><div class="num">${killRate}%</div><div class="lbl">Kill rate at gates</div></div>
+    <div class="stat"><div class="num">${avgCycle != null ? avgCycle + 'd' : '—'}</div><div class="lbl">Avg days / stage</div></div>
+    <div class="stat"><div class="num">${stale.length}</div><div class="lbl">Stale (≥${STALE_DAYS}d)</div></div>
+  </div>`;
+
+  if (Object.keys(avgStage).length) {
+    h += `<div class="pipeline">`;
+    STATUSES.filter((s) => avgStage[s] != null).forEach((s) => {
+      h += `<div class="pipe-cell"><span class="dot" style="background:${statusColor(s)}"></span>${s} <b>${Math.round(avgStage[s])}d</b></div>`;
+    });
+    h += `</div>`;
+  }
+
+  if (stale.length) {
+    h += `<div class="section-title">Needs attention — stale</div><div class="idea-grid">`;
+    h += stale.sort((a, b) => daysInStage(b) - daysInStage(a)).slice(0, 6).map(ideaCard).join('');
+    h += `</div>`;
+  }
 
   h += `<div class="section-title">Recently updated</div><div class="idea-grid">`;
   h += recent.map(ideaCard).join('') || `<div class="empty-note">No ideas yet.</div>`;
@@ -148,8 +247,10 @@ function refreshGrid() {
 function bindCards() { document.querySelectorAll('.idea-card').forEach((el) => el.addEventListener('click', () => openIdea(el.dataset.id))); }
 
 function ideaCard(i) {
-  const score = avgScore(i);
+  const gs = gateScore(i);
   const wf = i.attachments.workflows.length;
+  const dec = latestReview(i);
+  const exp = i.experiments.length;
   return `<div class="idea-card" data-id="${i.id}" style="border-left-color:${statusColor(i.status)}">
     <div class="ic-top">
       <h3>${esc(i.title)}</h3>
@@ -158,15 +259,19 @@ function ideaCard(i) {
     <div class="summary">${esc(i.summary) || '<em>No summary yet.</em>'}</div>
     <div class="tag-row">
       ${i.medviOS ? '<span class="tag medvi">Medvi OS</span>' : ''}
+      ${dec ? `<span class="tag" style="color:${decisionColor(dec.decision)};border-color:${decisionColor(dec.decision)}">${dec.decision}</span>` : ''}
+      ${isStale(i) ? '<span class="tag" style="color:var(--warn);border-color:var(--warn)">stale</span>' : ''}
       ${i.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}
     </div>
     <div class="ic-foot">
-      ${score != null ? `<span class="score-pill">★ ${score}</span>` : ''}
-      ${wf ? `<span>⚒ ${wf} workflow${wf > 1 ? 's' : ''}</span>` : ''}
+      ${gs != null ? `<span class="score-pill">⚙ ${gs}%</span>` : ''}
+      ${wf ? `<span>⚒ ${wf}</span>` : ''}
+      ${exp ? `<span>🧪 ${exp}</span>` : ''}
       <span style="margin-left:auto">${esc(i.source)}</span>
     </div>
   </div>`;
 }
+function decisionColor(d) { return (DECISIONS.find((x) => x.key === d) || {}).color || 'var(--muted)'; }
 function avgScore(i) {
   const v = Object.values(i.criteria || {}).filter((n) => typeof n === 'number');
   if (!v.length) return null;
@@ -185,7 +290,14 @@ function viewMedvi() {
   h += `<div class="section-title">The five laws</div><div class="os-grid">`;
   h += MEDVI_OS.laws.map((l) => `<div class="os-card"><h4>${l.n}. ${esc(l.title)}</h4><p>${esc(l.body)}</p></div>`).join('');
   h += `</div>`;
-  h += `<div class="section-title">Apply it</div><div class="prose"><p>Open any idea and flip <strong>“Set to Medvi OS”</strong> to score it against this framework and develop it through to a product brief.</p></div>`;
+
+  h += `<div class="section-title">The gate scorecard</div>
+    <div class="prose"><p>The Medvi OS <em>is</em> the gate. Each idea is scored 0–5 on these weighted criteria; the weighted total is its gate score, and you record a Go / Hold / Recycle / Kill decision against it.</p></div>
+    <div class="block"><table class="score-table">
+      <thead><tr><th>Criterion</th><th>Weight</th></tr></thead>
+      <tbody>${MEDVI_OS.checklist.map((c) => `<tr><td>${esc(c.label)}</td><td>×${c.weight}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="prose"><p>Open any idea and flip <strong>“Set to Medvi OS”</strong> to score it, record a gate decision, and develop it through to a product brief.</p></div>`;
   return h;
 }
 
@@ -195,6 +307,60 @@ function viewWorkflows() {
     <div class="frame-wrap"><iframe src="${FORGE_URL}" title="Workflow Builder"></iframe></div>`;
 }
 
+/* ------------------------------------------------------------------ learnings tab */
+let learn = { q: '', status: '', type: '' };
+function allExperiments() {
+  const rows = [];
+  DB.ideas.forEach((i) => i.experiments.forEach((e) => rows.push({ idea: i, e })));
+  return rows.sort((a, b) => (b.e.createdAt || 0) - (a.e.createdAt || 0));
+}
+function filteredExperiments() {
+  const q = learn.q.trim().toLowerCase();
+  return allExperiments().filter(({ idea, e }) =>
+    (!learn.status || e.status === learn.status) &&
+    (!learn.type || e.type === learn.type) &&
+    (!q || (e.title + ' ' + e.hypothesis + ' ' + e.learning + ' ' + idea.title).toLowerCase().includes(q))
+  );
+}
+function viewLearnings() {
+  const rows = filteredExperiments();
+  const done = allExperiments().filter((r) => r.e.status === 'Done').length;
+  return `
+    <div class="stat-row">
+      <div class="stat"><div class="num">${allExperiments().length}</div><div class="lbl">Experiments</div></div>
+      <div class="stat"><div class="num">${done}</div><div class="lbl">Completed</div></div>
+      <div class="stat"><div class="num">${allExperiments().filter((r) => r.e.learning && r.e.learning.trim()).length}</div><div class="lbl">With a learning</div></div>
+    </div>
+    <div class="board-controls">
+      <input class="search-box" id="learnSearch" placeholder="Search experiments &amp; learnings…" value="${esc(learn.q)}" />
+      <select class="filter-select" id="learnStatus"><option value="">All statuses</option>${EXPERIMENT_STATUS.map((s) => `<option ${learn.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <select class="filter-select" id="learnType"><option value="">All types</option>${EXPERIMENT_TYPES.map((t) => `<option ${learn.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    </div>
+    <div class="learn-list">${learnRowsHtml(rows)}</div>`;
+}
+function learnRowsHtml(rows) {
+  return rows.map(({ idea, e }) => `
+    <div class="learn-row" data-open="${idea.id}">
+      <div class="lr-main">
+        <strong>${esc(e.title) || '(untitled experiment)'}</strong>
+        <small>${e.type} · <span style="color:${e.status === 'Done' ? 'var(--ok)' : 'var(--muted)'}">${e.status}</span> · from <em>${esc(idea.title)}</em></small>
+        ${e.hypothesis ? `<div class="lr-hyp">💭 ${esc(e.hypothesis)}</div>` : ''}
+        ${e.learning ? `<div class="lr-learn">💡 ${esc(e.learning)}</div>` : ''}
+      </div>
+    </div>`).join('') || '<div class="empty-note">No experiments yet. Add them from an idea\'s Research &amp; Launch drawer.</div>';
+}
+function refreshLearn() {
+  const list = document.querySelector('.learn-list'); if (!list) return;
+  list.innerHTML = learnRowsHtml(filteredExperiments());
+  document.querySelectorAll('.learn-row').forEach((r) => r.addEventListener('click', () => openIdea(r.dataset.open)));
+}
+function bindLearnings() {
+  $('learnSearch').addEventListener('input', (e) => { learn.q = e.target.value; refreshLearn(); });
+  $('learnStatus').addEventListener('change', (e) => { learn.status = e.target.value; refreshLearn(); });
+  $('learnType').addEventListener('change', (e) => { learn.type = e.target.value; refreshLearn(); });
+  document.querySelectorAll('.learn-row').forEach((r) => r.addEventListener('click', () => openIdea(r.dataset.open)));
+}
+
 /* ------------------------------------------------------------------ about tab */
 function viewAbout() {
   return `<div class="prose">
@@ -202,11 +368,13 @@ function viewAbout() {
     <p>The core system that takes an idea from a one-line capture all the way to a product brief and a buildable workflow.</p>
     <h2>How it flows</h2>
     <ul>
-      <li><strong>Idea Board</strong> — every idea, stored and visible, with quick summaries, status and score. Add, search and filter.</li>
+      <li><strong>Idea Board</strong> — every idea, stored and visible, with quick summaries, status, gate score and tags. Add, search and filter.</li>
       <li><strong>Research &amp; Launch</strong> — click an idea to review, research, analyse and develop it. Move it along the pipeline: ${STATUSES.join(' → ')}.</li>
-      <li><strong>Medvi OS</strong> — set an idea to the Medvi operating system to score it against the five laws and develop it the proven way.</li>
+      <li><strong>Medvi OS gate</strong> — the Medvi operating system <em>is</em> the gate scorecard: score each idea 0–5 on the weighted criteria, then record a <strong>Go / Hold / Recycle / Kill</strong> decision with rationale — kept as an audit history. Decisions move the idea along (or park it).</li>
+      <li><strong>Experiments &amp; learnings</strong> — track hypotheses, types, status and outcomes per idea; the <strong>Learnings</strong> tab is a searchable repository across every idea.</li>
+      <li><strong>Dashboard analytics</strong> — pipeline counts, kill rate at gates, average days per stage, and stale-item flags.</li>
       <li><strong>Workflows · files · agents</strong> — attach a full product-development workflow (editable in the builder, and lockable), plus files and agents.</li>
-      <li><strong>Product brief</strong> — generate a structured brief from everything you've captured.</li>
+      <li><strong>Product brief</strong> — generate a structured brief (gate scorecard, decisions, experiments, workflow) from everything you've captured.</li>
     </ul>
     <p>All data lives in this browser (export/import from the sidebar). Workflows are shared live with the builder.</p>
   </div>`;
@@ -263,14 +431,16 @@ function renderDrawer() {
       <div class="block">
         <div class="os-toggle">
           <label class="switch"><input type="checkbox" id="dr-medvi" ${i.medviOS ? 'checked' : ''} /><span class="slider"></span></label>
-          <div><strong>Set to the Medvi OS</strong><br><small style="color:var(--muted)">Develop this idea against the five laws.</small></div>
+          <div><strong>Set to the Medvi OS</strong> — the gate scorecard<br><small style="color:var(--muted)">Score 0–5 per criterion, then record a Go / Hold / Recycle / Kill decision.</small></div>
         </div>
         <div id="dr-medvi-body" ${i.medviOS ? '' : 'hidden'}>
-          <div class="check-list">
-            ${MEDVI_OS.checklist.map((c) => `<label class="check-row"><input type="checkbox" data-mk="${c.key}" ${i.medviChecks[c.key] ? 'checked' : ''}/> ${esc(c.label)}</label>`).join('')}
-          </div>
+          <div class="scorecard" id="dr-scorecard">${renderScorecard(i)}</div>
           <div class="os-score" id="dr-os-score"></div>
           <div class="field" style="margin-top:10px"><label>Medvi notes</label><textarea id="dr-medvi-notes" rows="2" placeholder="How the OS applies / what to rent vs own.">${esc(i.medviNotes)}</textarea></div>
+          <div class="block-head" style="margin-top:14px"><h4>⚖ Gate decision</h4></div>
+          <div class="decisions" id="dr-decisions">${DECISIONS.map((d) => `<button class="dec-btn" data-dec="${d.key}" style="--dc:${d.color}" title="${esc(d.hint)}">${d.key}</button>`).join('')}</div>
+          <div class="field" style="margin-top:8px"><textarea id="dr-gate-rationale" rows="2" placeholder="Rationale — saved with the decision in the gate history."></textarea></div>
+          <div class="attach-list" id="dr-gate-history">${renderGateHistory(i)}</div>
         </div>
       </div>
 
@@ -284,6 +454,11 @@ function renderDrawer() {
       <div class="field"><label>Analysis</label><textarea id="dr-analysis" rows="3" placeholder="Scoring, competition, risks, pricing headroom…">${esc(i.analysis)}</textarea>${critHtml}</div>
 
       <div class="field"><label>Development → product / opportunity</label><textarea id="dr-development" rows="3" placeholder="What we'd actually build, positioning, GTM.">${esc(i.development)}</textarea></div>
+
+      <div class="block">
+        <div class="block-head"><h4>🧪 Experiments &amp; learnings</h4><button class="btn btn-sm" id="dr-add-exp">＋ Experiment</button></div>
+        <div class="exp-list" id="dr-exp-list">${renderExperiments(i)}</div>
+      </div>
 
       <div class="block">
         <div class="block-head"><h4>⚒ Workflows</h4><button class="btn btn-sm" id="dr-new-wf">＋ New workflow</button></div>
@@ -335,12 +510,57 @@ function renderFilesAgents(i) {
   return (f + a) || '<small style="color:var(--muted)">No files or agents attached.</small>';
 }
 
+function renderScorecard(i) {
+  return MEDVI_OS.checklist.map((c) => `<div class="sc-row">
+    <span class="sc-label">${esc(c.label)} <span class="sc-w">×${c.weight}</span></span>
+    <select class="sc-select" data-sk="${c.key}">
+      <option value="">–</option>
+      ${[0, 1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${i.gateScores[c.key] === n ? 'selected' : ''}>${n}</option>`).join('')}
+    </select>
+  </div>`).join('');
+}
+function renderGateHistory(i) {
+  if (!i.gateReviews.length) return '<small style="color:var(--muted)">No gate reviews yet — score above, then record a decision.</small>';
+  return i.gateReviews.map((r) => `<div class="attach">
+    <span class="a-ico" style="color:${decisionColor(r.decision)}">●</span>
+    <div class="a-main"><strong>${r.decision}</strong> · ${r.score != null ? r.score + '%' : '—'}<small>${fmtDate(r.ts)} · from ${esc(r.stage)}${r.rationale ? ` — ${esc(r.rationale)}` : ''}</small></div>
+  </div>`).join('');
+}
+function renderExperiments(i) {
+  if (!i.experiments.length) return '<small style="color:var(--muted)">No experiments yet. Add one to validate a hypothesis.</small>';
+  return i.experiments.map((e) => `<div class="exp" data-eid="${e.id}">
+    <div class="exp-top">
+      <input class="exp-title" data-ek="title" value="${esc(e.title)}" placeholder="Experiment title" />
+      <select class="exp-meta" data-ek="type">${EXPERIMENT_TYPES.map((t) => `<option ${e.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      <select class="exp-meta" data-ek="status">${EXPERIMENT_STATUS.map((s) => `<option ${e.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <button class="btn btn-sm" data-edel="${e.id}">✕</button>
+    </div>
+    <input class="exp-field" data-ek="hypothesis" value="${esc(e.hypothesis)}" placeholder="Hypothesis: we believe …" />
+    <input class="exp-field" data-ek="metric" value="${esc(e.metric)}" placeholder="Success metric" />
+    <textarea class="exp-field" data-ek="learning" rows="2" placeholder="Outcome / learning">${esc(e.learning)}</textarea>
+  </div>`).join('');
+}
+
 function updateOsScore(i) {
   const el = $('dr-os-score'); if (!el) return;
-  const total = MEDVI_OS.checklist.length;
-  const passed = MEDVI_OS.checklist.filter((c) => i.medviChecks[c.key]).length;
-  const verdict = passed === total ? 'fully aligned ✅' : passed >= total - 2 ? 'mostly aligned' : 'gaps to close';
-  el.textContent = `Medvi OS fit: ${passed}/${total} — ${verdict}`;
+  const pct = gateScore(i);
+  el.textContent = pct == null ? 'Gate score: not scored yet' : `Gate score: ${pct}% — ${gateVerdict(pct)}`;
+}
+
+function recordGate(i, decision) {
+  const rationale = (($('dr-gate-rationale') || {}).value || '').trim();
+  const score = gateScore(i);
+  i.gateReviews.unshift({ id: uid(), ts: now(), score, decision, rationale, stage: i.status, scores: Object.assign({}, i.gateScores) });
+  applyDecision(i, decision);
+  i.updatedAt = now(); debouncedSave(); renderDrawer();
+  toast(`Gate: ${decision}`);
+}
+function applyDecision(i, decision) {
+  const order = STATUSES.filter((s) => s !== 'Parked');
+  const idx = order.indexOf(i.status);
+  if (decision === 'Go' && idx >= 0 && idx < order.length - 1) setStatus(i, order[idx + 1]);
+  else if (decision === 'Kill') setStatus(i, 'Parked');
+  else if (decision === 'Recycle' && idx > 0) setStatus(i, order[idx - 1]);
 }
 
 function bindDrawer(i) {
@@ -356,11 +576,24 @@ function bindDrawer(i) {
   bindText('dr-medvi-notes', (v) => { i.medviNotes = v; touch(); });
 
   // status pipeline
-  $('dr-pipe').querySelectorAll('.pip').forEach((p) => p.addEventListener('click', () => { i.status = p.dataset.status; touch(); renderDrawer(); }));
+  $('dr-pipe').querySelectorAll('.pip').forEach((p) => p.addEventListener('click', () => { setStatus(i, p.dataset.status); touch(); renderDrawer(); }));
 
-  // Medvi toggle + checks
+  // Medvi toggle + weighted scorecard + gate decisions
   $('dr-medvi').addEventListener('change', (e) => { i.medviOS = e.target.checked; touch(); renderDrawer(); });
-  document.querySelectorAll('#dr-medvi-body [data-mk]').forEach((cb) => cb.addEventListener('change', (e) => { i.medviChecks[e.target.dataset.mk] = e.target.checked; touch(); updateOsScore(i); }));
+  document.querySelectorAll('#dr-scorecard [data-sk]').forEach((sel) => sel.addEventListener('change', () => {
+    const k = sel.dataset.sk;
+    if (sel.value === '') delete i.gateScores[k]; else i.gateScores[k] = Number(sel.value);
+    touch(); updateOsScore(i);
+  }));
+  document.querySelectorAll('#dr-decisions .dec-btn').forEach((b) => b.addEventListener('click', () => recordGate(i, b.dataset.dec)));
+
+  // experiments
+  $('dr-add-exp').addEventListener('click', () => { i.experiments.unshift({ id: uid(), title: '', type: 'Interview', status: 'Planned', hypothesis: '', metric: '', learning: '', createdAt: now() }); touch(); renderDrawer(); });
+  $('dr-exp-list').querySelectorAll('[data-eid]').forEach((card) => {
+    const e = i.experiments.find((x) => x.id === card.dataset.eid); if (!e) return;
+    card.querySelectorAll('[data-ek]').forEach((inp) => ['input', 'change'].forEach((ev) => inp.addEventListener(ev, () => { e[inp.dataset.ek] = inp.value; touch(); })));
+  });
+  document.querySelectorAll('[data-edel]').forEach((b) => b.addEventListener('click', () => { i.experiments = i.experiments.filter((x) => x.id !== b.dataset.edel); touch(); renderDrawer(); }));
 
   // research
   $('dr-add-research').addEventListener('click', () => {
@@ -419,12 +652,17 @@ function generateBrief(i) {
   m += `> ${i.summary || '_(no summary)_'}\n\n`;
   m += `**Status:** ${i.status}  ·  **Source:** ${i.source}  ·  **Tags:** ${i.tags.join(', ') || '—'}\n\n`;
   if (i.medviOS) {
-    const passed = MEDVI_OS.checklist.filter((c) => i.medviChecks[c.key]);
-    const failed = MEDVI_OS.checklist.filter((c) => !i.medviChecks[c.key]);
-    m += `## Medvi OS fit (${passed.length}/${MEDVI_OS.checklist.length})\n\n`;
-    MEDVI_OS.checklist.forEach((c) => m += `- [${i.medviChecks[c.key] ? 'x' : ' '}] ${c.label}\n`);
-    if (failed.length) m += `\n**Gaps to close:** ${failed.map((c) => c.label).join('; ')}\n`;
+    const pct = gateScore(i);
+    m += `## Medvi OS gate — ${pct != null ? pct + '%' : 'not scored'} (${gateVerdict(pct)})\n\n`;
+    m += `| Criterion | Weight | Score |\n|---|:--:|:--:|\n`;
+    MEDVI_OS.checklist.forEach((c) => m += `| ${c.label} | ×${c.weight} | ${i.gateScores[c.key] != null ? i.gateScores[c.key] : '–'} |\n`);
+    const gaps = MEDVI_OS.checklist.filter((c) => (i.gateScores[c.key] || 0) < 3);
+    if (gaps.length) m += `\n**Gaps to close (score < 3):** ${gaps.map((c) => c.label).join('; ')}\n`;
     if (i.medviNotes) m += `\n${i.medviNotes}\n`;
+    if (i.gateReviews.length) {
+      m += `\n**Gate decisions:**\n`;
+      i.gateReviews.forEach((r) => m += `- ${r.decision} · ${r.score != null ? r.score + '%' : '—'} _(${fmtDate(r.ts)}, from ${r.stage})_${r.rationale ? ` — ${r.rationale}` : ''}\n`);
+    }
     m += `\n`;
   }
   const crit = Object.entries(i.criteria || {});
@@ -433,6 +671,16 @@ function generateBrief(i) {
   if (i.research.length) m += `## Research\n\n${i.research.map((r) => `- ${r.text}${r.url ? ` — ${r.url}` : ''} _(${fmtDate(r.ts)})_`).join('\n')}\n\n`;
   if (i.analysis) m += `## Analysis\n\n${i.analysis}\n\n`;
   if (i.development) m += `## Development → product / opportunity\n\n${i.development}\n\n`;
+  if (i.experiments.length) {
+    m += `## Experiments & learnings\n\n`;
+    i.experiments.forEach((e) => {
+      m += `- **${e.title || '(untitled)'}** _(${e.type} · ${e.status})_\n`;
+      if (e.hypothesis) m += `  - Hypothesis: ${e.hypothesis}\n`;
+      if (e.metric) m += `  - Success metric: ${e.metric}\n`;
+      if (e.learning) m += `  - Learning: ${e.learning}\n`;
+    });
+    m += `\n`;
+  }
   if (i.attachments.workflows.length) {
     m += `## Development workflow\n\n`;
     i.attachments.workflows.forEach((w) => {
