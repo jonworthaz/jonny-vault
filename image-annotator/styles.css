@@ -54,7 +54,7 @@ html, body {
 /* ---- Layout ---- */
 .app {
   display: grid;
-  grid-template-columns: 200px 1fr 320px;
+  grid-template-columns: 248px 1fr 320px;
   height: calc(100vh - 56px);
 }
 
@@ -371,6 +371,36 @@ html, body {
   pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
+   Desktop: lay the sidebar buttons out in 2 columns so the whole
+   toolbar fits on screen without scrolling.
+   ============================================================ */
+@media (min-width: 821px) {
+  .tool-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    align-items: stretch;
+  }
+  /* full-width items span both columns */
+  .group-label,
+  .swatches,
+  .range-row,
+  .picker-row,
+  .picker-pair,
+  .check-row,
+  #uploadBtn { grid-column: 1 / -1; }
+
+  .tool {
+    min-width: 0;           /* allow buttons to shrink into the grid cells */
+    padding: 8px 8px;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+  .tool .ico { flex: 0 0 auto; }
+}
 
 /* ============================================================
    Mobile / touch layout
