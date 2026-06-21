@@ -20,7 +20,7 @@
     annotations: [],       // current marks
     tool: "circle",
     color: COLORS[0],
-    lineWidth: 4,
+    lineWidth: 5,
     circleSize: 48,        // diameter (px) for one-click circles
     // text-box defaults: white box, black text
     boxBg: "#ffffff",
@@ -140,6 +140,8 @@
     emptyState.hidden = true;
     canvasWrap.hidden = false;
     $("zoomControls").hidden = false;
+    $("editControls").hidden = false;
+    $("thicknessControl").hidden = false;
     render();
     fitView();
   }
@@ -984,6 +986,8 @@
 
     $("undoBtn").addEventListener("click", undo);
     $("redoBtn").addEventListener("click", redo);
+    $("undoFab").addEventListener("click", undo);
+    $("redoFab").addEventListener("click", redo);
     $("deleteBtn").addEventListener("click", deleteSelected);
     $("clearBtn").addEventListener("click", () => {
       if (!state.annotations.length) return;
