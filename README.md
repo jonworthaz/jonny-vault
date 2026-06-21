@@ -33,6 +33,28 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 06 | [Economics & Funnel](./06-economics-and-funnel.md) | Funnel design, unit economics model, targets |
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
+| 09 | [The AI Team](./09-ai-team.md) | Agents & skills — the workforce, and the built-ins we reuse |
+| 10 | [Improvement Prompt](./10-improvement-prompt.md) | Reusable prompt to run another self-improvement pass |
+| 11 | [Landscape & Gaps](./11-landscape-and-gaps.md) | How we compare to other agent systems; what's next |
+| 12 | [Build Plan](./12-build-plan.md) | Phased plan to make the platform successful — owners, gates, risks |
+| — | [engine/](./engine/README.md) | **The build** — loops, **modular control dashboard**, compliance linter, approval gates, per-agent model routing |
+
+## The build (`engine/`)
+
+The plan is now executable. [`engine/`](./engine/README.md) is a runnable,
+AI-run business operating system that implements the playbook above:
+
+- **Self-improving loops** — niche scoring, creative generation, unit-economics
+  analysis, churn analysis, and an experiment memory that feeds back into
+  generation. State persists in `engine/data/state.json` and compounds each run.
+- **Compliance linter** — every generated ad is checked against [doc 07](./07-guardrails.md)
+  before it can be stored; Medvi-style fraud (fake personas, deepfakes, false
+  claims) is blocked by construction.
+- **Approval gates** — the AI only ever *proposes* spend/publish actions; nothing
+  moves money or goes public without a human.
+
+Runs offline with zero dependencies (`node engine/src/cli.ts cycle`), and uses
+the live Claude API automatically when `ANTHROPIC_API_KEY` is set.
 
 ## The one-line thesis
 

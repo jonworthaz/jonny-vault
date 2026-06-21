@@ -1,0 +1,55 @@
+name: Deploy MarkUp tools (Pages)
+
+# Runs on the repository's DEFAULT branch (the only ref GitHub Pages allows to
+# deploy via Actions). Checks out `main` and publishes:
+#   /                          -> landing page (landing/)
+#   /markup/                   -> v1 single-image annotator (image-annotator/)
+#   /damage-assessment/        -> v2 multi-photo damage assessment (damage-assessment/)
+#   /damage-assessment-large/  -> v3 high-visibility version (damage-assessment-large/)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r landing/. _site/
+          mkdir -p _site/markup
+          cp -r image-annotator/. _site/markup/
+          mkdir -p _site/damage-assessment
+          cp -r damage-assessment/. _site/damage-assessment/
+          mkdir -p _site/damage-assessment-large
+          cp -r damage-assessment-large/. _site/damage-assessment-large/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
