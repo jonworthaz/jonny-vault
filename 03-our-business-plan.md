@@ -20,7 +20,8 @@ Why this shape:
 
 We do **not** marry a niche on day one. We run a 2-week demand-validation sprint
 and let data choose. Candidate niches (all recurring, all affiliate-friendly, all
-buildable with current AI APIs):
+buildable with current AI APIs) — the full, scored set lives on the
+[Idea Board (09)](./09-idea-board.md):
 
 | Candidate | The recurring job it does | Why it retains |
 |---|---|---|

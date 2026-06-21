@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Ideas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <span class="logo">◆</span>
+      <div class="brand-text"><strong>Claude Ideas</strong><small>idea → launch</small></div>
+    </div>
+    <nav class="side-nav" id="sideNav">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-ico">▦</span> Dashboard</button>
+      <button class="nav-item" data-view="ideas"><span class="nav-ico">💡</span> Idea Board</button>
+      <button class="nav-item" data-view="medvi"><span class="nav-ico">⚙</span> Medvi OS</button>
+      <button class="nav-item" data-view="learnings"><span class="nav-ico">🧪</span> Learnings</button>
+      <button class="nav-item" data-view="workflows"><span class="nav-ico">⚒</span> Workflow Builder</button>
+      <button class="nav-item" data-view="about"><span class="nav-ico">ⓘ</span> About</button>
+    </nav>
+    <div class="side-foot">
+      <button id="exportData" class="side-btn" title="Export all ideas as JSON">⤓ Export data</button>
+      <button id="importData" class="side-btn" title="Import ideas JSON">⤒ Import data</button>
+      <input type="file" id="importInput" accept="application/json,.json" hidden />
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <button id="menuToggle" class="icon-btn only-mobile" aria-label="Menu">☰</button>
+      <h1 id="viewTitle">Dashboard</h1>
+      <div class="top-actions" id="topActions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+
+  <!-- Idea Research & Launch drawer -->
+  <div class="drawer-backdrop" id="ideaBackdrop" hidden></div>
+  <section class="drawer" id="ideaDrawer" hidden aria-label="Idea research and launch"></section>
+
+  <!-- generic modal (add idea / confirm) -->
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

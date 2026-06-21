@@ -33,6 +33,19 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 06 | [Economics & Funnel](./06-economics-and-funnel.md) | Funnel design, unit economics model, targets |
 | 07 | [Guardrails](./07-guardrails.md) | The lines we don't cross — designing around Medvi's mistakes |
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
+| 09 | [Idea Board](./09-idea-board.md) | Running board of scored product ideas — the on-ramp to the niche sprint |
+| 10 | [Build & Tooling Board](./10-build-and-tooling-board.md) | Internal tooling / Claude Home workflow ideas, scored on leverage |
+
+## The tools
+
+Self-contained, zero-dependency web tools that live alongside the playbook
+(also deployed to GitHub Pages — the site root is a tools hub):
+
+| Tool | What it is |
+|---|---|
+| [**Claude Ideas**](./claude-ideas/) | Standalone idea → launch system: idea board, research & launch, Medvi OS gate, workflows |
+| [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
+| [**MarkUp**](./image-annotator/) | Image annotation & markup |
 
 ## The one-line thesis
 
