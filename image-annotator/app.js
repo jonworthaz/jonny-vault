@@ -10,7 +10,7 @@
 
   // ---- Constants ---------------------------------------------------------
   const COLORS = ["#ff5a3c", "#ffd400", "#22c55e", "#3b82f6", "#a855f7", "#ffffff", "#111111"];
-  const TOOLS = ["select", "circle", "circle1", "rect", "highlight", "arrow", "pen", "text", "number"];
+  const TOOLS = ["select", "pan", "circle", "circle1", "rect", "highlight", "arrow", "pen", "text", "number"];
   const TEXT_FONT = (fs) => `600 ${fs}px -apple-system, "Segoe UI", Roboto, sans-serif`;
   const LINE_H = 1.25; // text line-height multiple
 
@@ -365,6 +365,7 @@
   let draft = null;          // annotation being created
   let drag = null;           // { id, lastX, lastY } for move
   let textArrowDraft = null; // { x1,y1,x2,y2 } leader drag for a text box
+  let panLast = null;        // { x, y } client coords while panning with the Pan tool
   let didChange = false;
 
   // multi-touch
@@ -418,8 +419,15 @@
       return;
     }
 
-    const { x, y } = canvasPos(e);
     const t = state.tool;
+
+    if (t === "pan") {
+      panLast = { x: e.clientX, y: e.clientY };
+      canvas.style.cursor = "grabbing";
+      return;
+    }
+
+    const { x, y } = canvasPos(e);
 
     if (t === "select") {
       const hit = hitTest(x, y);
@@ -477,6 +485,14 @@
     if (activePointers.size >= 2) { handlePinch(); return; }
     if (gestureActive) return; // a finger still down after a pinch — don't draw
 
+    if (panLast) {
+      view.tx += e.clientX - panLast.x;
+      view.ty += e.clientY - panLast.y;
+      panLast = { x: e.clientX, y: e.clientY };
+      applyView();
+      return;
+    }
+
     const { x, y } = canvasPos(e);
 
     if (textArrowDraft) {
@@ -505,6 +521,7 @@
     activePointers.delete(e.pointerId);
     if (activePointers.size < 2) pinch = null;
     if (activePointers.size === 0) gestureActive = false;
+    if (panLast) { panLast = null; canvas.style.cursor = state.tool === "pan" ? "grab" : canvas.style.cursor; }
     cancelDraft();
   });
 
@@ -513,6 +530,8 @@
     if (activePointers.size < 2) pinch = null;
     if (activePointers.size === 0) gestureActive = false;
     if (gestureActive) return; // still lifting fingers from a multi-touch gesture
+
+    if (panLast) { panLast = null; canvas.style.cursor = "grab"; return; }
 
     if (textArrowDraft) {
       const d = textArrowDraft;
@@ -722,10 +741,55 @@
     return canvas.toDataURL(type, quality);
   }
 
+  // Build a unique file name. Includes the vehicle/job reference when given,
+  // a timestamp, and a per-session counter so two saves can never collide.
+  let saveSeq = 0;
+  function uniqueFileName(ext) {
+    const ref = jobName() ? safeName(jobName()) : "markup";
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+    saveSeq += 1;
+    return `${ref}-${stamp}-${p(saveSeq)}.${ext}`;
+  }
+
+  // Quick save: downloads a flattened PNG with an auto unique name.
   function saveImage() {
     if (!state.image) return;
-    const url = flattenedDataURL("image/png");
-    downloadURL(url, `${safeName(jobName())}-markup.png`);
+    downloadURL(flattenedDataURL("image/png"), uniqueFileName("png"));
+  }
+
+  // Save As…: let the user choose the name/location via the native dialog
+  // (Chrome/Edge). Falls back to a name prompt + download elsewhere.
+  async function saveImageAs() {
+    if (!state.image) return;
+    state.selectedId = null;
+    render();
+    const suggestedName = uniqueFileName("png");
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{ description: "PNG image", accept: { "image/png": [".png"] } }],
+        });
+        const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast("Image saved");
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return; // user cancelled the dialog
+        // otherwise fall through to the prompt fallback
+      }
+    }
+
+    const name = prompt("Save image as (file name):", suggestedName);
+    if (name === null) return; // cancelled
+    const trimmed = name.trim();
+    const finalName = !trimmed ? suggestedName : /\.png$/i.test(trimmed) ? trimmed : `${trimmed}.png`;
+    downloadURL(flattenedDataURL("image/png"), finalName);
   }
 
   // Regenerate the flattened image (with all marks baked in) and copy it to the
@@ -833,7 +897,7 @@
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    downloadURL(url, `${safeName(jobName())}-report.html`);
+    downloadURL(url, uniqueFileName("html").replace(/\.html$/, "-report.html"));
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
@@ -907,7 +971,7 @@
   function selectTool(t) {
     state.tool = t;
     document.querySelectorAll(".tool-select").forEach((b) => b.classList.toggle("active", b.dataset.tool === t));
-    canvas.style.cursor = t === "select" ? "move" : t === "text" ? "text" : "crosshair";
+    canvas.style.cursor = t === "pan" ? "grab" : t === "select" ? "move" : t === "text" ? "text" : "crosshair";
   }
 
   function wireUp() {
@@ -931,6 +995,7 @@
     $("cropApply").addEventListener("click", applyCrop);
     $("cropCancel").addEventListener("click", endCrop);
     $("copyBtn").addEventListener("click", copyImage);
+    $("saveAsBtn").addEventListener("click", saveImageAs);
     $("saveBtn").addEventListener("click", saveImage);
     $("exportReportBtn").addEventListener("click", exportReport);
 
@@ -1017,11 +1082,24 @@
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
       if (document.activeElement?.tagName === "INPUT") return;
-      const map = { v: "select", c: "circle", "1": "circle1", r: "rect", h: "highlight", a: "arrow", p: "pen", t: "text", n: "number" };
+      // hold Space to temporarily pan; release to return to the previous tool
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        if (state.tool !== "pan" && !spacePanPrevTool) { spacePanPrevTool = state.tool; selectTool("pan"); }
+        return;
+      }
+      const map = { v: "select", g: "pan", c: "circle", "1": "circle1", r: "rect", h: "highlight", a: "arrow", p: "pen", t: "text", n: "number" };
       if (map[e.key.toLowerCase()]) selectTool(map[e.key.toLowerCase()]);
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); }
     });
+    window.addEventListener("keyup", (e) => {
+      if ((e.code === "Space" || e.key === " ") && spacePanPrevTool) {
+        selectTool(spacePanPrevTool);
+        spacePanPrevTool = null;
+      }
+    });
   }
+  let spacePanPrevTool = null;
 
   function deleteSelected() {
     if (state.selectedId == null) return;

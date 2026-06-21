@@ -340,49 +340,47 @@ html, body {
 
   .stage { grid-row: 1; }
 
+  /* Toolbar wraps onto multiple rows (no horizontal scrolling, so no buttons
+     get hidden off-screen); scrolls vertically if it needs more than ~2 rows. */
   .toolbar {
     grid-row: 2;
     flex-direction: row;
-    align-items: stretch;
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: visible;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: center;
+    gap: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 40vh;
     border-right: none;
     border-top: 1px solid var(--line);
-    padding: 8px 10px;
+    padding: 8px;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
   }
   .tool-group {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    padding-right: 10px;
-    border-right: 1px solid var(--line);
+    padding: 0;
+    border-right: none;
     flex: 0 0 auto;
   }
-  .tool-group:last-child { border-right: none; }
-  .group-label {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    margin: 0 2px 0 0;
-    font-size: 9px;
-  }
+  .group-label { display: none; }          /* labels hidden to keep rows compact */
   .tool {
     flex-direction: column;
     gap: 2px;
-    padding: 6px 8px;
+    padding: 7px 8px;
     font-size: 10px;
-    min-width: 54px;
+    min-width: 50px;
     text-align: center;
     white-space: nowrap;
   }
   .tool .ico { font-size: 18px; width: auto; }
   .tool-primary { font-size: 11px; }
-  .swatches { flex-wrap: nowrap; }
   .swatch { width: 30px; height: 30px; }   /* bigger touch targets */
-  .range-row, .picker-row, .check-row { min-width: 130px; font-size: 11px; }
-  .picker-pair { flex-direction: column; gap: 4px; }
+  .range-row, .picker-row, .check-row { min-width: 120px; font-size: 11px; }
+  .picker-pair { flex-direction: row; gap: 8px; }
   .zoom-btn { width: 44px; height: 44px; }  /* easier to tap */
 
   /* items list becomes a slide-in drawer */
