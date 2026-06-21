@@ -623,12 +623,16 @@
         <div class="marker-fields">
           <input type="text" data-f="label" placeholder="Part / item name" value="${esc(m.label)}" />
           <textarea data-f="note" rows="2" placeholder="What's wrong / what to do">${esc(m.note)}</textarea>
-          <div class="marker-cost-row"><span>£</span><input type="number" step="0.01" min="0" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
+          <div class="marker-cost-row"><span>£</span><input type="text" inputmode="decimal" data-f="cost" placeholder="0.00" value="${esc(m.cost)}" /></div>
         </div>
         <button class="marker-del" title="Delete marker">✕</button>`;
 
       li.querySelectorAll("[data-f]").forEach((el) => {
-        el.addEventListener("input", () => { m[el.dataset.f] = el.value; updateTotal(); });
+        el.addEventListener("input", () => {
+          if (el.dataset.f === "cost") el.value = sanitizeCost(el.value);
+          m[el.dataset.f] = el.value;
+          updateTotal();
+        });
       });
       li.querySelector(".marker-badge").addEventListener("click", () => {
         state.selectedId = m.id; render(); renderMarkers();
@@ -947,6 +951,14 @@
   function safeName(s) { return (s || "image").replace(/[^a-z0-9\-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "image"; }
   function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
   function formatGBP(n) { return "£" + (n || 0).toFixed(2); }
+
+  // Keep only digits and a single decimal point (cost fields are numbers only).
+  function sanitizeCost(s) {
+    let v = String(s).replace(/[^0-9.]/g, "");
+    const d = v.indexOf(".");
+    if (d !== -1) v = v.slice(0, d + 1) + v.slice(d + 1).replace(/\./g, "");
+    return v;
+  }
   function roundRect(c, x, y, w, h, r) {
     c.beginPath();
     c.moveTo(x + r, y);

@@ -596,7 +596,7 @@ body.vehicle-open .app { height: auto; min-height: calc(100vh - 56px); }
     gap: 6px;
     overflow-x: hidden;
     overflow-y: auto;
-    max-height: 40vh;
+    max-height: 112px;   /* ~2 rows, so the image gets most of the screen */
     border-right: none;
     border-top: 1px solid var(--line);
     padding: 8px;
