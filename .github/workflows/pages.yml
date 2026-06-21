@@ -1,8 +1,9 @@
-name: Deploy MarkUp tool (Pages)
+name: Deploy MarkUp tools (Pages)
 
 # Runs on the repository's DEFAULT branch (the only ref GitHub Pages allows to
-# deploy via Actions). It checks out `main` and publishes the image-annotator/
-# folder as the site root, so the tool is served over https.
+# deploy via Actions). Checks out `main` and publishes both tools:
+#   /                     -> v1 single-image annotator (image-annotator/)
+#   /damage-assessment/   -> v2 multi-photo damage assessment (damage-assessment/)
 
 on:
   workflow_dispatch:
@@ -28,13 +29,20 @@ jobs:
         with:
           ref: main
 
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r image-annotator/. _site/
+          mkdir -p _site/damage-assessment
+          cp -r damage-assessment/. _site/damage-assessment/
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload the tool as the site
+      - name: Upload the site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: image-annotator
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
