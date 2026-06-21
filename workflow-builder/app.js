@@ -88,6 +88,9 @@ const TEMPLATES = [
 
 const KIND_LABEL = { agent: 'agent', skill: 'skill', tool: 'tool', mcp: 'mcp' };
 const STORE_KEY = 'forge.workflow.v1';
+const IDEAS_KEY = 'claudehome.ideas.v1';   // shared store with Claude Home
+let LINK = null;        // { ideaId, wfId } when launched from Claude Home
+let READONLY = false;   // true when the linked workflow is locked
 
 /* ------------------------------------------------------------------ *
  *  State
@@ -109,7 +112,8 @@ function scheduleSave() {
   el.textContent = 'Saving…'; el.classList.add('dirty');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+    if (LINK) writeBackLinked();
+    else { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
     el.textContent = 'Saved'; el.classList.remove('dirty');
   }, 350);
 }
@@ -119,6 +123,49 @@ function loadFromStore() {
     if (raw) { const s = JSON.parse(raw); if (s && Array.isArray(s.stages)) state = s; }
   } catch (e) {}
 }
+
+/* ---- Claude Home linked mode ---- */
+function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function loadIdeasStore() { try { return JSON.parse(localStorage.getItem(IDEAS_KEY)) || null; } catch (e) { return null; } }
+function findLinkedWf(db) {
+  const idea = db && db.ideas && db.ideas.find((x) => x.id === LINK.ideaId);
+  const wf = idea && idea.attachments && (idea.attachments.workflows || []).find((w) => w.id === LINK.wfId);
+  return { idea, wf };
+}
+function writeBackLinked() {
+  const db = loadIdeasStore(); if (!db) return;
+  const { idea, wf } = findLinkedWf(db); if (!wf) return;
+  wf.workflow = state; wf.name = state.name || wf.name; idea.updatedAt = Date.now();
+  try { localStorage.setItem(IDEAS_KEY, JSON.stringify(db)); } catch (e) {}
+}
+function initLinked(ideaId, wfId) {
+  LINK = { ideaId, wfId };
+  const db = loadIdeasStore();
+  const { idea, wf } = findLinkedWf(db);
+  if (!wf) { LINK = null; return false; }
+  READONLY = !!wf.locked;
+  state = (wf.workflow && Array.isArray(wf.workflow.stages)) ? wf.workflow : { name: wf.name || '', goal: '', stages: [] };
+  if (!state.name) state.name = wf.name || '';
+  document.body.classList.add('linked');
+  if (READONLY) document.body.classList.add('readonly');
+  renderBanner(idea);
+  return true;
+}
+function renderBanner(idea) {
+  const b = document.createElement('div');
+  b.className = 'link-banner' + (READONLY ? ' locked' : '');
+  b.innerHTML = `<span>${READONLY ? '🔒 ' : ''}Workflow for idea: <strong>${escHtml(idea.title)}</strong>${READONLY ? ' — locked (read-only)' : ''}</span>` +
+    `<span class="lb-actions">${READONLY ? '<button id="lbUnlock" class="tool">🔓 Unlock</button>' : ''}` +
+    `<a class="tool" href="../claude-home/index.html?idea=${encodeURIComponent(idea.id)}">← Back to Claude Home</a></span>`;
+  document.body.insertBefore(b, document.querySelector('.app'));
+  const u = document.getElementById('lbUnlock');
+  if (u) u.addEventListener('click', () => {
+    const db = loadIdeasStore(); const { wf } = findLinkedWf(db);
+    if (wf) { wf.locked = false; try { localStorage.setItem(IDEAS_KEY, JSON.stringify(db)); } catch (e) {} }
+    location.reload();
+  });
+}
+function guard() { if (READONLY) { toast('🔒 This workflow is locked — unlock it to edit'); return true; } return false; }
 
 /* ------------------------------------------------------------------ *
  *  Model helpers
@@ -137,6 +184,7 @@ function makeStage(type, titleOverride) {
 }
 
 function addStage(type, atIndex, titleOverride) {
+  if (guard()) return;
   const stage = makeStage(type, titleOverride);
   if (atIndex == null || atIndex >= state.stages.length) state.stages.push(stage);
   else state.stages.splice(atIndex, 0, stage);
@@ -145,12 +193,14 @@ function addStage(type, atIndex, titleOverride) {
 }
 
 function removeStage(id) {
+  if (guard()) return;
   state.stages = state.stages.filter((s) => s.id !== id);
   if (selectedStageId === id) selectedStageId = null;
   renderLane(); renderTars(); scheduleSave();
 }
 
 function moveStage(id, toIndex) {
+  if (guard()) return;
   const from = state.stages.findIndex((s) => s.id === id);
   if (from < 0) return;
   const [s] = state.stages.splice(from, 1);
@@ -160,6 +210,7 @@ function moveStage(id, toIndex) {
 }
 
 function addElement(stageId, kind, name) {
+  if (guard()) return;
   const stage = state.stages.find((s) => s.id === stageId);
   if (!stage) { toast('Select or add a stage first'); return; }
   if (stage.elements.some((e) => e.kind === kind && e.name === name)) return; // de-dup
@@ -168,6 +219,7 @@ function addElement(stageId, kind, name) {
 }
 
 function moveElement(fromStageId, elemId, toStageId) {
+  if (guard()) return;
   if (fromStageId === toStageId) return;
   const from = state.stages.find((s) => s.id === fromStageId);
   const to = state.stages.find((s) => s.id === toStageId);
@@ -181,6 +233,7 @@ function moveElement(fromStageId, elemId, toStageId) {
 }
 
 function removeElement(stageId, elemId) {
+  if (guard()) return;
   const stage = state.stages.find((s) => s.id === stageId);
   if (!stage) return;
   stage.elements = stage.elements.filter((e) => e.id !== elemId);
@@ -251,6 +304,7 @@ function buildChips(containerId, kind, items) {
 function lastStageId() { return state.stages.length ? state.stages[state.stages.length - 1].id : null; }
 
 function addCustom(kind) {
+  if (guard()) return;
   const name = (prompt(`Name of the custom ${KIND_LABEL[kind]}:`) || '').trim();
   if (!name) return;
   const listKey = kind + 's';
@@ -277,6 +331,8 @@ function renderLane() {
   state.stages.forEach((stage, i) => lane.appendChild(renderStage(stage, i)));
   $('projectName').value = state.name || '';
   $('projectGoal').value = state.goal || '';
+  $('projectName').disabled = READONLY;
+  $('projectGoal').disabled = READONLY;
 }
 
 function renderStage(stage, index) {
@@ -304,7 +360,7 @@ function renderStage(stage, index) {
   const num = document.createElement('span'); num.className = 'stage-badge'; num.textContent = (index + 1) + ' · ' + stage.type;
 
   const title = document.createElement('input');
-  title.className = 'stage-title'; title.value = stage.title;
+  title.className = 'stage-title'; title.value = stage.title; title.disabled = READONLY;
   title.addEventListener('input', () => { stage.title = title.value; scheduleSave(); renderTars(); });
   title.addEventListener('click', (e) => e.stopPropagation());
 
@@ -316,7 +372,7 @@ function renderStage(stage, index) {
 
   // instructions
   const instr = document.createElement('textarea');
-  instr.className = 'stage-instr'; instr.rows = 2; instr.value = stage.instr;
+  instr.className = 'stage-instr'; instr.rows = 2; instr.value = stage.instr; instr.disabled = READONLY;
   instr.placeholder = stageDef(stage.type).hint;
   instr.addEventListener('input', () => { stage.instr = instr.value; scheduleSave(); });
   instr.addEventListener('click', (e) => e.stopPropagation());
@@ -486,6 +542,7 @@ function recommendations() {
 }
 
 function seedDefaults(stageId) {
+  if (guard()) return;
   const stage = state.stages.find((s) => s.id === stageId);
   if (!stage) return;
   const d = stageDef(stage.type).defaults || {};
@@ -511,6 +568,7 @@ function renderTars() {
  *  Templates + project actions
  * ------------------------------------------------------------------ */
 function applyTemplate(id, confirmReplace) {
+  if (guard()) return;
   const t = TEMPLATES.find((x) => x.id === id); if (!t) return;
   if (confirmReplace && state.stages.length && !confirm(`Replace the current ${state.stages.length}-stage workflow with the “${t.name}” template?`)) return;
   state.stages = t.stages.map((s) => makeStage(s.type, s.title));
@@ -520,12 +578,14 @@ function applyTemplate(id, confirmReplace) {
 }
 
 function newWorkflow() {
+  if (guard()) return;
   if (state.stages.length && !confirm('Start a new, empty workflow? This clears the current one.')) return;
   state = { name: '', goal: '', stages: [] }; selectedStageId = null;
   renderLane(); renderTars(); scheduleSave();
 }
 
 function importWorkflow(file) {
+  if (guard()) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
@@ -723,7 +783,10 @@ async function copyText(text) {
  *  Wire-up
  * ------------------------------------------------------------------ */
 function init() {
-  loadFromStore();
+  const params = new URLSearchParams(location.search);
+  const ideaId = params.get('ideaId'), wfId = params.get('wfId');
+  if (ideaId && wfId) { if (!initLinked(ideaId, wfId)) { toast('Linked workflow not found — opened standalone'); loadFromStore(); } }
+  else loadFromStore();
   buildPalette();
   initLaneDnD();
   renderLane();

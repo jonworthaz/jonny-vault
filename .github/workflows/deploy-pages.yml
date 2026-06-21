@@ -1,14 +1,18 @@
 name: Deploy tools to GitHub Pages
 
-# Publishes the static tools to GitHub Pages:
-#   • image-annotator/  → the site root  (https://<owner>.github.io/<repo>/)
-#   • workflow-builder/  → /workflow-builder/
+# Publishes the static tools to GitHub Pages as siblings, with Claude Home as the
+# front door:
+#   • /                  → redirects to /claude-home/
+#   • /claude-home/      → Claude Home (idea → launch core system)
+#   • /workflow-builder/ → Forge (visual workflow builder)
+#   • /image-annotator/  → MarkUp (image annotation)
 # Serving over https keeps clipboard / download features working reliably.
 
 on:
   push:
     branches: [main]
     paths:
+      - "claude-home/**"
       - "image-annotator/**"
       - "workflow-builder/**"
       - ".github/workflows/deploy-pages.yml"
@@ -41,9 +45,12 @@ jobs:
 
       - name: Assemble the site
         run: |
-          mkdir -p _site/workflow-builder
-          cp -r image-annotator/. _site/
+          mkdir -p _site/claude-home _site/workflow-builder _site/image-annotator
+          cp -r claude-home/.      _site/claude-home/
           cp -r workflow-builder/. _site/workflow-builder/
+          cp -r image-annotator/.  _site/image-annotator/
+          # root redirect → Claude Home (the front door)
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./claude-home/">\n<title>Claude Home</title><a href="./claude-home/">Go to Claude Home</a>\n' > _site/index.html
 
       - name: Upload the site
         uses: actions/upload-pages-artifact@v3

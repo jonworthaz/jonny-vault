@@ -67,6 +67,46 @@ tool, lives in [`workflow-builder/`](./workflow-builder/):
 generation, importing the *actually installed* agents/skills/MCPs to populate the
 palette, and a shareable URL encoding of a workflow.
 
+### 🟢 #02 — Claude Home: idea → launch core system
+*The idea board as a real system — store every idea, then research, analyse and
+develop it into a product, with the Medvi OS and a full workflow applied.*
+
+| Leverage | Reusability | Build cost | Compounds? |
+|:--:|:--:|:--:|:--:|
+| 5 | 5 (any idea) | Med (static SPA) | ✅ |
+
+**The idea (as captured):** an idea-board tab in the Claude Home sidebar that stores
+and shows all ideas with a quick summary; ideas open an **Idea Research & Launch
+system** to be reviewed, researched, analysed and developed into products; ideas can
+be **set to the Medvi OS**, amended and deleted, and have **workflows, files and
+agents applied** to take them through full product development — with the workflow
+editable in the generator and **lockable/unlockable**.
+
+**Review & improvements made (before building):**
+- **Added a lifecycle, not just a list.** A status pipeline
+  (`Captured → Researching → Analysed → Validated → Building → Launched`, + `Parked`)
+  so the board *shows momentum*, and a dashboard that summarises it. The original
+  ask was storage + visibility; a pipeline makes "visibility" actually decision-useful.
+- **Turned "set to the Medvi OS" into a scored gate**, not a label — an 8-point
+  checklist drawn straight from [02](./02-operating-system.md) (recurring? margin?
+  AI-buildable? rides a wave? own acquisition + billing? retains? survives a
+  screenshot?) with a fit score and surfaced gaps. That makes the OS *do work*.
+- **Made the output tangible.** A one-click **product brief** generator (mirroring
+  Forge's "generate real config" ethos) so research → an artifact, not just notes.
+- **Made lock/unlock real across tools.** A locked workflow opens *read-only* in
+  Forge (linked mode) with an Unlock control — not just a flag.
+- **Seeded it with the existing boards** (09 + 10) so every idea is visible on first
+  run, and added export/import so the data is portable.
+
+**v1 — built.** A zero-dependency static SPA in [`claude-home/`](./claude-home/),
+deployed as the site's front door (root redirects to it; Forge and MarkUp sit
+alongside). Sidebar tabs — Dashboard · Idea Board · Medvi OS · Workflow Builder ·
+About. Ideas share one local store with Forge, so a workflow edited from an idea
+writes straight back. See its [README](./claude-home/README.md).
+
+**Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
+score editing, multiple workflows per idea, and cloud sync behind a backend.
+
 ---
 
 ## Adding a new entry

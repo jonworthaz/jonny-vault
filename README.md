@@ -36,6 +36,17 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 09 | [Idea Board](./09-idea-board.md) | Running board of scored product ideas — the on-ramp to the niche sprint |
 | 10 | [Build & Tooling Board](./10-build-and-tooling-board.md) | Internal tooling / Claude Home workflow ideas, scored on leverage |
 
+## The tools
+
+Self-contained, zero-dependency web tools that live alongside the playbook
+(also deployed to GitHub Pages — `/` opens Claude Home):
+
+| Tool | What it is |
+|---|---|
+| [**Claude Home**](./claude-home/) | The core system: idea board → research & launch → Medvi OS → workflow. The front door |
+| [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
+| [**MarkUp**](./image-annotator/) | Image annotation & markup |
+
 ## The one-line thesis
 
 > Own the customer and the recurring charge. Automate or outsource everything else.
