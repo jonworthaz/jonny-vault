@@ -2,9 +2,10 @@ name: Deploy MarkUp tools (Pages)
 
 # Runs on the repository's DEFAULT branch (the only ref GitHub Pages allows to
 # deploy via Actions). Checks out `main` and publishes:
-#   /                     -> landing page (landing/)
-#   /markup/              -> v1 single-image annotator (image-annotator/)
-#   /damage-assessment/   -> v2 multi-photo damage assessment (damage-assessment/)
+#   /                          -> landing page (landing/)
+#   /markup/                   -> v1 single-image annotator (image-annotator/)
+#   /damage-assessment/        -> v2 multi-photo damage assessment (damage-assessment/)
+#   /damage-assessment-large/  -> v3 high-visibility version (damage-assessment-large/)
 
 on:
   workflow_dispatch:
@@ -38,6 +39,8 @@ jobs:
           cp -r image-annotator/. _site/markup/
           mkdir -p _site/damage-assessment
           cp -r damage-assessment/. _site/damage-assessment/
+          mkdir -p _site/damage-assessment-large
+          cp -r damage-assessment-large/. _site/damage-assessment-large/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
