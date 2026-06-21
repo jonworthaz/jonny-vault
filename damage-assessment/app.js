@@ -1505,6 +1505,8 @@ ${blocks}
       btn.setAttribute("aria-expanded", String(open));
       document.body.classList.toggle("vehicle-open", open);
     });
+    // vehicle details are shown by default (boxes for make/brand, model, etc.)
+    document.body.classList.add("vehicle-open");
     // keep the registration field and the top-bar reference in sync
     $("vehReg").addEventListener("input", (e) => {
       if (!jobName() || jobName() === lastSyncedReg) {
