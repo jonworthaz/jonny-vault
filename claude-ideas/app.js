@@ -723,9 +723,11 @@ function init() {
   $('importInput').addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('modal').hidden) closeModal(); else if (!$('ideaDrawer').hidden) closeDrawer(); } });
 
-  // deep link: ?idea=<id> opens that idea
+  // deep links: ?view=<tab> opens a tab; ?idea=<id> opens that idea
   const params = new URLSearchParams(location.search);
-  setView('dashboard');
+  const views = ['dashboard', 'ideas', 'medvi', 'learnings', 'workflows', 'about'];
+  const v = params.get('view');
+  setView(views.includes(v) ? v : 'dashboard');
   if (params.get('idea')) { setView('ideas'); openIdea(params.get('idea')); }
 }
 document.addEventListener('DOMContentLoaded', init);
