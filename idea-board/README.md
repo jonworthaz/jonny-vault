@@ -1,6 +1,6 @@
 # Idea Board — Dashboard
 
-An interactive, zero-dependency dashboard for capturing and browsing ideas.
+An interactive, **single-file** dashboard for capturing and browsing ideas.
 Each idea is a **card**; click it to see everything captured about it — the core
 idea, why it's interesting, ways to build it, the cheapest path to a demo, open
 questions, and the next step.
@@ -9,13 +9,16 @@ questions, and the next step.
 
 ## How to open it
 
-It runs entirely in your browser. Nothing is uploaded anywhere.
+It's one self-contained file with zero dependencies — nothing to install, no
+server needed, nothing uploaded anywhere.
 
-- **Easiest:** double-click **`index.html`** — it opens straight in your browser.
-- **Or** double-click a launcher (serves it on `http://localhost`, avoids any
-  `file://` quirks):
-  - **macOS / Linux** → `start-mac-linux.command`
-  - **Windows** → `start-windows.bat`
+- **Just double-click `index.html`** — it opens straight in your browser.
+- The launchers (`start-mac-linux.command` / `start-windows.bat`) are optional
+  and only serve it on `http://localhost` if you prefer that.
+
+> **Viewing it from GitHub:** GitHub shows the HTML *source*, not the rendered
+> page. To see the dashboard, download `index.html` and open it, or enable
+> GitHub Pages for a live link.
 
 ## What it does
 
@@ -28,8 +31,8 @@ It runs entirely in your browser. Nothing is uploaded anywhere.
 
 ## Adding or editing ideas
 
-All content lives in **`ideas.js`** — a plain list you edit by hand. Copy an
-existing entry and change the fields:
+All content lives in the **`IDEAS`** list inside `index.html` (near the bottom,
+in the `<script>` block). Copy an existing entry and change the fields:
 
 ```js
 {
@@ -54,12 +57,5 @@ Save, refresh the page, and the new card appears. Every field except `id`,
 `title`, `status` and `oneLiner` is optional — leave any of them out and that
 section simply won't render.
 
-## Files
-
-| File | Purpose |
-|---|---|
-| `index.html` | The dashboard shell |
-| `ideas.js` | **Your data** — the list of ideas |
-| `app.js` | Rendering, search, filter, detail modal |
-| `styles.css` | Styling |
-| `start-mac-linux.command` / `start-windows.bat` | Optional local-server launchers |
+The root [`idea-board.md`](../idea-board.md) is a plain-text mirror of the same
+content for reading on GitHub.

@@ -1,43 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Idea Board — Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Idea Board — Dashboard</title>
+<style>
+:root{
+  --bg:#0f1115;--panel:#171a21;--panel-2:#1e222b;--line:#2a2f3a;--text:#e7e9ee;
+  --muted:#9aa3b2;--accent:#ffd24a;--accent-2:#6ea8fe;--radius:14px;--shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:14px 22px;background:rgba(15,17,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{font-size:26px}
+.brand-text strong{font-size:17px;display:block}
+.brand-text small{color:var(--muted);font-size:12px}
+.topbar-actions{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
+.search{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:999px;
+  padding:9px 16px;min-width:240px;font-size:14px;outline:none}
+.search:focus{border-color:var(--accent-2)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:999px;
+  padding:7px 13px;font-size:13px;cursor:pointer}
+.filter:hover{color:var(--text);border-color:var(--accent-2)}
+.filter.active{background:var(--accent);color:#1a1400;border-color:var(--accent);font-weight:600}
+.board{max-width:1200px;margin:0 auto;padding:26px 22px 60px}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.stat{font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 18px 16px;cursor:pointer;
+  transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease;
+  display:flex;flex-direction:column;gap:10px;outline:none}
+.card:hover,.card:focus{transform:translateY(-3px);border-color:var(--accent-2);box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between}
+.card-num{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.card-title{margin:0;font-size:19px;line-height:1.25}
+.card-one{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11.5px;color:var(--accent-2);background:rgba(110,168,254,.12);
+  border:1px solid rgba(110,168,254,.3);border-radius:6px;padding:2px 8px}
+.card-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:auto}
+.meta-bit{font-size:12px;color:var(--muted)}
+.card-cta{font-size:13px;color:var(--accent);font-weight:600}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;font-weight:600;white-space:nowrap}
+.s-raw{background:rgba(255,210,74,.16);color:var(--accent)}
+.s-exploring{background:rgba(110,168,254,.16);color:var(--accent-2)}
+.s-building{background:rgba(120,220,150,.16);color:#79dc96}
+.s-parked{background:rgba(150,160,175,.16);color:#aab2c0}
+.s-shipped{background:rgba(190,130,255,.18);color:#c79bff}
+span.stat.s-raw,span.stat.s-exploring,span.stat.s-building,span.stat.s-parked,span.stat.s-shipped{border:none}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+.foot{max-width:1200px;margin:0 auto;padding:0 22px 40px;color:var(--muted);font-size:12.5px}
+.foot code{background:var(--panel-2);padding:1px 6px;border-radius:5px}
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+body.modal-open{overflow:hidden}
+.modal-card{position:relative;z-index:1;width:min(760px,94vw);max-height:90vh;overflow-y:auto;margin:5vh 0;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 28px 32px;box-shadow:var(--shadow)}
+.m-close{position:absolute;top:14px;right:14px;background:var(--panel-2);border:1px solid var(--line);
+  color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px}
+.m-close:hover{border-color:var(--accent-2)}
+.m-head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.m-title{margin:0 0 6px;font-size:26px;line-height:1.2}
+.m-one{margin:0 0 14px;color:var(--muted);font-size:15.5px;line-height:1.5}
+.m-sec{margin-top:22px}
+.m-h{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.m-p{margin:0;line-height:1.6;font-size:15px}
+.m-list{margin:0;padding-left:20px;line-height:1.6;font-size:15px}
+.m-list li{margin-bottom:6px}
+.m-note{margin-top:24px;padding:12px 14px;background:var(--panel-2);border-left:3px solid var(--accent-2);
+  border-radius:8px;color:var(--muted);font-size:13.5px;line-height:1.55}
+.m-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.m-table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+.m-table th,.m-table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.m-table th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.m-table tr:last-child td{border-bottom:none}
+.td-strong{font-weight:600}
+.effort{font-size:12px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.e-low,.e-lowmed{background:rgba(120,220,150,.16);color:#79dc96}
+.e-med{background:rgba(255,210,74,.16);color:var(--accent)}
+.e-high{background:rgba(255,130,130,.16);color:#ff8a8a}
+@media (max-width:520px){.topbar-actions{width:100%}.search{flex:1;min-width:0}}
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">💡</span>
-      <div class="brand-text">
-        <strong>Idea Board</strong>
-        <small>Raw ideas, fleshed out enough to judge</small>
-      </div>
-    </div>
-    <div class="topbar-actions">
-      <input type="search" id="search" class="search" placeholder="Search ideas, tags, text…" />
-      <div class="filters" id="statusFilters"></div>
-    </div>
-  </header>
-
-  <main class="board">
-    <div class="stats" id="stats"></div>
-    <section class="grid" id="grid"></section>
-    <p class="empty" id="empty" hidden>No ideas match your filter.</p>
-  </main>
-
-  <footer class="foot">
-    <span>Add or edit ideas in <code>ideas.js</code>. Open this file in any browser — nothing is uploaded.</span>
-  </footer>
-
-  <!-- Card detail modal -->
-  <div class="modal" id="modal" hidden>
-    <div class="modal-backdrop" data-close></div>
-    <article class="modal-card" id="modalCard" role="dialog" aria-modal="true"></article>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">💡</span>
+    <div class="brand-text"><strong>Idea Board</strong><small>Raw ideas, fleshed out enough to judge</small></div>
   </div>
+  <div class="topbar-actions">
+    <input type="search" id="search" class="search" placeholder="Search ideas, tags, text…" />
+    <div class="filters" id="statusFilters"></div>
+  </div>
+</header>
+<main class="board">
+  <div class="stats" id="stats"></div>
+  <section class="grid" id="grid"></section>
+  <p class="empty" id="empty" hidden>No ideas match your filter.</p>
+</main>
+<footer class="foot">
+  <span>Add or edit ideas in the <code>IDEAS</code> list inside this file. Open it in any browser — nothing is uploaded.</span>
+</footer>
+<div class="modal" id="modal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <article class="modal-card" id="modalCard" role="dialog" aria-modal="true"></article>
+</div>
 
-  <script src="ideas.js"></script>
-  <script src="app.js"></script>
+<script>
+/* ===== DATA — edit this list to add or update ideas =====================
+   status: "raw" | "exploring" | "building" | "parked" | "shipped"
+   Every field except id/title/status/oneLiner is optional. ===========*/
+const IDEAS = [
+  {
+    id:"01",
+    title:"3D Layered Images",
+    status:"raw",
+    tags:["images","3d","physical","digital"],
+    oneLiner:"Images with depth that appear to move as you walk past — no glasses, no headset.",
+    coreIdea:"Split an image into depth layers (foreground / midground / background) and present them so the viewer's changing angle — from walking past, or tilting a phone — reveals parallax: near layers shift more than far ones. The brain reads that relative motion as genuine 3D depth.",
+    whyInteresting:[
+      "Works without 3D glasses or a headset.",
+      "The “wow” moment is involuntary — people stop and move side to side.",
+      "Maps onto things people already buy: posters, album art, signage, shopfronts, greetings cards, digital collectibles, gallery pieces."
+    ],
+    approaches:[
+      {approach:"Lenticular print",medium:"Physical",how:"Ridged lens sheet over interlaced layered image; angle selects which slice you see",effort:"Low–Med"},
+      {approach:"Parallax / “depthy” web",medium:"Screen",how:"Layers as PNGs with depth; move on scroll, mouse, or device gyroscope",effort:"Low"},
+      {approach:"Depth-map 2D→3D",medium:"Screen",how:"One photo + AI-generated depth map → fake parallax on motion",effort:"Med"},
+      {approach:"Light-field / holographic display",medium:"Hardware",how:"True multi-view (Looking Glass etc.) — real depth from any angle",effort:"High"},
+      {approach:"Layered physical “shadow box”",medium:"Physical",how:"Real cut layers spaced apart in a frame; parallax is genuine",effort:"Med"}
+    ],
+    cheapestDemo:[
+      "Take or generate an image.",
+      "Auto-generate a depth map (AI), or hand-cut 3 layers in any editor.",
+      "Drop the layers into a parallax viewer that responds to the phone's gyroscope / cursor position.",
+      "Ship as a web page → instant “walk past and it moves” on mobile."
+    ],
+    openQuestions:[
+      "Physical product (lenticular / shadow box) or digital (web / display)?",
+      "Is the value the effect (sell prints) or the tool (let anyone turn a photo into a layered 3D image)?",
+      "Single hero use case to nail first: posters? shopfront signage? phone wallpapers? gift cards?"
+    ],
+    nextStep:"Build the cheapest demo above, look at it on a phone, then decide which direction is worth more than an afternoon.",
+    note:"This repo already has an in-browser image tool (image-annotator/) — a zero-dependency, runs-locally pattern the same approach could reuse for a “layer + parallax” web demo."
+  }
+];
+
+/* ===== APP ============================================================ */
+(function(){
+  "use strict";
+  const ideas = IDEAS.slice();
+  const STATUS={raw:{label:"💡 Raw",cls:"s-raw"},exploring:{label:"🔭 Exploring",cls:"s-exploring"},
+    building:{label:"🔨 Building",cls:"s-building"},parked:{label:"🅿️ Parked",cls:"s-parked"},
+    shipped:{label:"🚀 Shipped",cls:"s-shipped"}};
+  const grid=document.getElementById("grid"),empty=document.getElementById("empty"),
+    stats=document.getElementById("stats"),search=document.getElementById("search"),
+    filtersEl=document.getElementById("statusFilters"),modal=document.getElementById("modal"),
+    modalCard=document.getElementById("modalCard");
+  const state={query:"",status:"all"};
+  function el(t,c,x){const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;}
+  function statusMeta(s){return STATUS[s]||{label:s||"—",cls:"s-raw"};}
+  function matches(i){
+    if(state.status!=="all"&&i.status!==state.status)return false;
+    const q=state.query.trim().toLowerCase();if(!q)return true;
+    const hay=[i.title,i.oneLiner,i.coreIdea,(i.tags||[]).join(" "),(i.whyInteresting||[]).join(" "),
+      (i.openQuestions||[]).join(" "),i.nextStep].join(" ").toLowerCase();
+    return hay.includes(q);
+  }
+  function renderStats(){
+    stats.innerHTML="";const total=ideas.length;
+    stats.appendChild(el("span","stat",total+" idea"+(total===1?"":"s")));
+    const counts={};ideas.forEach(i=>counts[i.status]=(counts[i.status]||0)+1);
+    Object.keys(counts).forEach(s=>{const m=statusMeta(s);stats.appendChild(el("span","stat "+m.cls,m.label+": "+counts[s]));});
+  }
+  function renderFilters(){
+    filtersEl.innerHTML="";
+    const present=["all"].concat(Array.from(new Set(ideas.map(i=>i.status))));
+    present.forEach(s=>{
+      const label=s==="all"?"All":statusMeta(s).label;
+      const btn=el("button","filter",label);
+      if(state.status===s)btn.classList.add("active");
+      btn.addEventListener("click",()=>{state.status=s;renderFilters();renderGrid();});
+      filtersEl.appendChild(btn);
+    });
+  }
+  function card(i){
+    const m=statusMeta(i.status),c=el("article","card");c.tabIndex=0;c.setAttribute("role","button");
+    const head=el("div","card-head");head.appendChild(el("span","card-num","#"+i.id));
+    head.appendChild(el("span","pill "+m.cls,m.label));c.appendChild(head);
+    c.appendChild(el("h2","card-title",i.title));c.appendChild(el("p","card-one",i.oneLiner));
+    if(i.tags&&i.tags.length){const w=el("div","tags");i.tags.forEach(t=>w.appendChild(el("span","tag",t)));c.appendChild(w);}
+    const meta=el("div","card-meta");
+    if(i.approaches)meta.appendChild(el("span","meta-bit",i.approaches.length+" build approaches"));
+    if(i.openQuestions)meta.appendChild(el("span","meta-bit",i.openQuestions.length+" open questions"));
+    c.appendChild(meta);c.appendChild(el("span","card-cta","View details →"));
+    const open=()=>openModal(i);c.addEventListener("click",open);
+    c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
+    return c;
+  }
+  function renderGrid(){grid.innerHTML="";const vis=ideas.filter(matches);vis.forEach(i=>grid.appendChild(card(i)));empty.hidden=vis.length!==0;}
+  function section(t,n){const s=el("section","m-sec");s.appendChild(el("h3","m-h",t));s.appendChild(n);return s;}
+  function list(items){const ul=el("ul","m-list");items.forEach(t=>ul.appendChild(el("li",null,t)));return ul;}
+  function orderedList(items){const ol=el("ol","m-list");items.forEach(t=>ol.appendChild(el("li",null,t)));return ol;}
+  function approachTable(rows){
+    const wrap=el("div","m-table-wrap"),table=el("table","m-table"),thead=el("thead"),htr=el("tr");
+    ["Approach","Medium","How it works","Effort"].forEach(h=>htr.appendChild(el("th",null,h)));
+    thead.appendChild(htr);table.appendChild(thead);const tb=el("tbody");
+    rows.forEach(r=>{const tr=el("tr");tr.appendChild(el("td","td-strong",r.approach));
+      tr.appendChild(el("td",null,r.medium));tr.appendChild(el("td",null,r.how));
+      const e=el("td");e.appendChild(el("span","effort e-"+r.effort.toLowerCase().replace(/[^a-z]/g,""),r.effort));
+      tr.appendChild(e);tb.appendChild(tr);});
+    table.appendChild(tb);wrap.appendChild(table);return wrap;
+  }
+  function openModal(i){
+    const m=statusMeta(i.status);modalCard.innerHTML="";
+    const close=el("button","m-close","✕");close.setAttribute("aria-label","Close");
+    close.addEventListener("click",closeModal);modalCard.appendChild(close);
+    const head=el("div","m-head");head.appendChild(el("span","card-num","#"+i.id));
+    head.appendChild(el("span","pill "+m.cls,m.label));modalCard.appendChild(head);
+    modalCard.appendChild(el("h1","m-title",i.title));modalCard.appendChild(el("p","m-one",i.oneLiner));
+    if(i.tags&&i.tags.length){const w=el("div","tags");i.tags.forEach(t=>w.appendChild(el("span","tag",t)));modalCard.appendChild(w);}
+    if(i.coreIdea)modalCard.appendChild(section("Core idea",el("p","m-p",i.coreIdea)));
+    if(i.whyInteresting)modalCard.appendChild(section("Why it's interesting",list(i.whyInteresting)));
+    if(i.approaches)modalCard.appendChild(section("Ways to actually build it",approachTable(i.approaches)));
+    if(i.cheapestDemo)modalCard.appendChild(section("Cheapest path to a demo",orderedList(i.cheapestDemo)));
+    if(i.openQuestions)modalCard.appendChild(section("Open questions",list(i.openQuestions)));
+    if(i.nextStep)modalCard.appendChild(section("Next step",el("p","m-p",i.nextStep)));
+    if(i.note)modalCard.appendChild(el("p","m-note",i.note));
+    modal.hidden=false;document.body.classList.add("modal-open");close.focus();
+  }
+  function closeModal(){modal.hidden=true;document.body.classList.remove("modal-open");}
+  modal.addEventListener("click",e=>{if(e.target.hasAttribute("data-close"))closeModal();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)closeModal();});
+  search.addEventListener("input",()=>{state.query=search.value;renderGrid();});
+  renderStats();renderFilters();renderGrid();
+})();
+</script>
 </body>
 </html>
