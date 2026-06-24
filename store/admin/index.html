@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Store Admin · Lumen Commerce</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
+        <span class="mark">◆</span>
+        <div><strong>Lumen Admin</strong><small id="storeNameLabel">Your store</small></div>
+      </div>
+      <nav class="side-nav" id="sideNav">
+        <button class="nav-item active" data-view="dashboard"><span class="ico">▦</span> Dashboard</button>
+        <button class="nav-item" data-view="orders"><span class="ico">🧾</span> Orders</button>
+        <button class="nav-item" data-view="products"><span class="ico">📦</span> Products</button>
+        <button class="nav-item" data-view="collections"><span class="ico">🗂</span> Collections</button>
+        <button class="nav-item" data-view="customers"><span class="ico">👤</span> Customers</button>
+        <button class="nav-item" data-view="discounts"><span class="ico">🏷</span> Discounts</button>
+        <button class="nav-item" data-view="analytics"><span class="ico">📈</span> Analytics</button>
+        <div class="nav-sep">Store</div>
+        <button class="nav-item" data-view="settings"><span class="ico">⚙</span> Settings</button>
+        <button class="nav-item" data-view="publish"><span class="ico">🚀</span> Publish &amp; backup</button>
+      </nav>
+      <div class="side-foot">
+        <a href="../" target="_blank">↗ View storefront</a>
+        <button id="resetDemo">↺ Reset to demo data</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <button class="btn ghost icon mobile-only" id="menuBtn">☰</button>
+        <div>
+          <h1 id="viewTitle">Dashboard</h1>
+          <div class="sub" id="viewSub"></div>
+        </div>
+        <div id="topActions"></div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <div class="modal-head"><h2 id="modalTitle">Edit</h2><button class="x" id="modalClose">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../catalog.js"></script>
+  <script src="../shared.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
