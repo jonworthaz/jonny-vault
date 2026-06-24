@@ -62,6 +62,10 @@ install needed on Mac/Linux; on Windows install Python from python.org and tick
 
 ## Host it on your own website
 
+> **On Hostinger?** There's a step-by-step guide for putting this live on your
+> own domain (with real customer orders emailed to you): see
+> **[HOSTING-HOSTINGER.md](./HOSTING-HOSTINGER.md)**.
+
 Because it's just static files, hosting is copy-and-paste:
 
 1. In the admin, open **Publish & backup → Download `catalog.js`** and let it
@@ -89,13 +93,17 @@ serverless). In **Settings → Checkout** you choose how orders reach you:
   "reserve / request an order" shop where you invoice afterwards.
 - **Email** — checkout opens the buyer's email app pre-filled with their order,
   addressed to you.
+- **Server** — orders POST to the included PHP endpoint (`api/orders.php`) on
+  your own host, which **stores them server-side and emails you**. You then pull
+  real orders into the admin from any device with **Orders → Sync from server**.
+  This is the closest to "a real shop" and works great on Hostinger or any host
+  with PHP. See [HOSTING-HOSTINGER.md](./HOSTING-HOSTINGER.md).
 - **Webhook** — each order is POSTed as JSON to a URL you control (e.g. a
   Zapier/Make automation, a Google Sheet, or your own endpoint), which can then
   email you, create an invoice, or send a payment link.
 
-For card payments, point the webhook at an automation that generates a payment
-link (Stripe Payment Links, PayPal, GoCardless, etc.), or take payment on
-pickup/delivery.
+For card payments, reply to each order with a payment link (Stripe Payment
+Links, PayPal, GoCardless, etc.), or take payment on pickup/delivery.
 
 ---
 
@@ -112,8 +120,17 @@ store/
 │   ├── index.html    admin shell
 │   ├── admin.js      admin app
 │   └── admin.css     admin styles
+├── api/              optional PHP backend (only needed for "Server" checkout)
+│   ├── orders.php    receives + stores + emails orders; admin syncs from it
+│   ├── config.php    your email + secret key (edit before uploading)
+│   └── data/         stored orders live here, blocked from the web
+├── HOSTING-HOSTINGER.md
 ├── start-windows.bat
 └── start-mac-linux.command
 ```
+
+The `api/` folder is **optional** — the store is fully functional without it on
+any static host. Add it only when you want orders stored and emailed from your
+own server (Server checkout mode).
 
 No build step, no dependencies. Edit a file, refresh the page.

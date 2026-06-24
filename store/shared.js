@@ -29,7 +29,7 @@
         name: "My Store", tagline: "", currencyCode: "GBP", currencySymbol: "£",
         accent: "#b5471f", logo: "", email: "", about: "",
         shippingFlat: 0, freeShippingOver: 0, taxRate: 0, taxIncluded: true,
-        checkoutMode: "demo", webhookUrl: "", socialUrl: "", footerNote: ""
+        checkoutMode: "demo", webhookUrl: "", serverUrl: "", serverKey: "", socialUrl: "", footerNote: ""
       },
       collections: [], products: [], discounts: [], orders: []
     };

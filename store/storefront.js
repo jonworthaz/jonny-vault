@@ -371,6 +371,7 @@
 
   function prefillEmail() { return ""; }
   function checkoutModeNote() {
+    if (S.checkoutMode === "server") return "No payment is taken now — the shop confirms your order and is in touch by email.";
     if (S.checkoutMode === "email") return "You'll be taken to your email app to send the order to the shop.";
     if (S.checkoutMode === "webhook") return "Your order is sent securely to the shop.";
     return "Demo checkout — no payment is taken. The order is recorded for the shop owner.";
@@ -411,7 +412,20 @@
     L.save(store);
     L.clearCart(); cart = []; updateCartCount();
 
-    // 2) Optionally forward (email / webhook) so a hosted store reaches the owner.
+    // 2) Forward so a hosted store reaches the owner.
+    if (S.checkoutMode === "server" && S.serverUrl) {
+      // Send to your own PHP endpoint and adopt the server's order number.
+      var btn = document.getElementById("placeOrder");
+      if (btn) { btn.disabled = true; btn.textContent = "Placing order…"; }
+      fetch(S.serverUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(order) })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          if (res && res.number) { order.number = res.number; L.save(store); }
+        })
+        .catch(function () { /* order is already saved locally; confirm anyway */ })
+        .then(function () { location.hash = "#/order/" + order.id; });
+      return;
+    }
     if (S.checkoutMode === "email" && S.email) {
       window.location.href = buildMailto(order);
     } else if (S.checkoutMode === "webhook" && S.webhookUrl) {

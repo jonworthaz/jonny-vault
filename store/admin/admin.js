@@ -166,6 +166,10 @@
       counts[s] = store.orders.filter(function (o) { return o.status === s; }).length;
     });
     viewSub.textContent = store.orders.length + " orders · " + money(store.orders.reduce(function (a, o) { return o.status === "cancelled" ? a : a + o.total; }, 0)) + " revenue";
+    if (store.settings.serverUrl) {
+      topActions.innerHTML = '<button class="btn ghost" id="syncOrders">⤓ Sync from server</button>';
+      byId("syncOrders").onclick = syncOrdersFromServer;
+    }
 
     var tabs = ["all", "pending", "paid", "fulfilled", "cancelled"].map(function (s) {
       return '<button class="btn ' + (orderFilter === s ? "" : "ghost") + ' sm" data-filter="' + s + '">' +
@@ -674,18 +678,35 @@
         '<div class="field"><label>How orders reach you</label><select id="s_mode">' +
           '<option value="demo"' + (s.checkoutMode === "demo" ? " selected" : "") + '>Demo — record orders in this browser (no payment)</option>' +
           '<option value="email"' + (s.checkoutMode === "email" ? " selected" : "") + '>Email — open the buyer’s email app with the order</option>' +
+          '<option value="server"' + (s.checkoutMode === "server" ? " selected" : "") + '>Server — your own PHP endpoint stores &amp; emails orders (Hostinger)</option>' +
           '<option value="webhook"' + (s.checkoutMode === "webhook" ? " selected" : "") + '>Webhook — POST each order to a URL (Zapier/Make/your own)</option>' +
         '</select></div>' +
         '<div class="field" id="s_webhookwrap"><label>Webhook URL</label><input id="s_webhook" value="' + esc(s.webhookUrl || "") + '" placeholder="https://hooks.zapier.com/…"></div>' +
-        '<div class="banner">Lumen has no payment processor of its own. For real payments, point the webhook at an automation that creates an invoice/payment link, or take payment on delivery/pickup. The demo mode is perfect for testing and for a “request an order” shop.</div>' +
+        '<div id="s_serverwrap"><div class="grid2">' +
+          '<div class="field"><label>Order endpoint URL</label><input id="s_server" value="' + esc(s.serverUrl || "") + '" placeholder="https://base-reality.com/store/api/orders.php"></div>' +
+          '<div class="field"><label>Server admin key <span class="hint">(matches config.php)</span></label><input id="s_serverkey" value="' + esc(s.serverKey || "") + '" placeholder="your secret key"></div>' +
+        '</div><div style="display:flex;gap:8px"><button class="btn ghost sm" id="testServer" type="button">Test connection</button><button class="btn ghost sm" id="syncServer2" type="button">⤓ Sync orders now</button></div></div>' +
+        '<div class="banner">Lumen has no payment processor of its own. With <strong>Server</strong> mode on Hostinger, real customer orders are stored on your host and emailed to you; pull them in here with “Sync orders”. For card payments, send a payment link by email or take payment on delivery/pickup.</div>' +
       '</div>' +
       '<div style="display:flex;gap:10px"><button class="btn" id="saveSettings">Save settings</button>' +
       '<button class="btn ghost" id="previewStore">↗ Preview storefront</button></div>';
 
     var modeSel = byId("s_mode");
-    function syncMode() { byId("s_webhookwrap").style.display = modeSel.value === "webhook" ? "block" : "none"; }
+    function syncMode() {
+      byId("s_webhookwrap").style.display = modeSel.value === "webhook" ? "block" : "none";
+      byId("s_serverwrap").style.display = modeSel.value === "server" ? "block" : "none";
+    }
     modeSel.onchange = syncMode; syncMode();
     byId("previewStore").onclick = function () { window.open("../", "_blank"); };
+    byId("testServer").onclick = function () {
+      var url = byId("s_server").value.trim(), key = byId("s_serverkey").value.trim();
+      if (!url) { toast("Enter the endpoint URL first"); return; }
+      testServerConnection(url, key);
+    };
+    byId("syncServer2").onclick = function () {
+      s.serverUrl = byId("s_server").value.trim(); s.serverKey = byId("s_serverkey").value.trim(); save();
+      syncOrdersFromServer();
+    };
 
     byId("saveSettings").onclick = function () {
       s.name = byId("s_name").value.trim() || "My Store";
@@ -703,10 +724,43 @@
       s.taxIncluded = byId("s_taxinc").value === "1";
       s.checkoutMode = modeSel.value;
       s.webhookUrl = byId("s_webhook").value.trim();
+      s.serverUrl = byId("s_server").value.trim();
+      s.serverKey = byId("s_serverkey").value.trim();
       save();
       byId("storeNameLabel").textContent = s.name;
       toast("Settings saved");
     };
+  }
+
+  // =========================================================================
+  // SERVER SYNC (pull real orders from your PHP endpoint)
+  // =========================================================================
+  function testServerConnection(url, key) {
+    toast("Testing…");
+    fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "key=" + encodeURIComponent(key))
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        if (res.status === 403) toast("Reached it, but the admin key is wrong");
+        else if (res.j && res.j.ok) toast("Connected ✓ " + (res.j.orders ? res.j.orders.length : 0) + " orders on server");
+        else toast("Reached it, but got an unexpected response");
+      })
+      .catch(function () { toast("Couldn't reach that URL (check the address & that PHP is on)"); });
+  }
+  function syncOrdersFromServer() {
+    var url = store.settings.serverUrl, key = store.settings.serverKey;
+    if (!url) { toast("Set the order endpoint URL in Settings first"); return; }
+    toast("Syncing orders…");
+    fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "key=" + encodeURIComponent(key))
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (res) {
+        if (!res || !res.ok || !res.orders) { toast("Sync failed — check the admin key"); return; }
+        var seen = {}; store.orders.forEach(function (o) { seen[o.id] = true; });
+        var added = 0;
+        res.orders.forEach(function (o) { if (o && o.id && !seen[o.id]) { store.orders.push(o); added++; } });
+        save(); render();
+        toast(added ? added + " new order" + (added === 1 ? "" : "s") + " synced" : "Up to date — no new orders");
+      })
+      .catch(function () { toast("Couldn't reach the server"); });
   }
 
   // =========================================================================
