@@ -8,6 +8,11 @@ videos with moving ASMR sound for **base-reality.com** social channels.*
 > Reference look: the flowing, high-def animated typography on a site like
 > vertus.ai — but in **9:16**, brand-coloured, and with native sound.
 
+> **Two formats, one brand.** Pick per post:
+> - **Format A — Kinetic Typography:** flowing animated text (the vertus.ai look).
+> - **Format B — AI Crafts, Zoomed In:** extreme-macro, satisfying-ASMR shots of
+>   impossible AI-crafted objects being made. Same colour world + moving sound.
+
 ---
 
 ## How to use this
@@ -24,7 +29,7 @@ videos with moving ASMR sound for **base-reality.com** social channels.*
 
 ---
 
-## Master Prompt
+## Format A — Kinetic Typography · Master Prompt
 
 > Copy this whole block. Replace every `{{slot}}`. Keep the **STYLE LOCK** and
 > **AUDIO** sections identical day to day — only the theme, text, and palette
@@ -93,6 +98,72 @@ every day = fresh content.
 
 ---
 
+## Format B — AI Crafts, Zoomed In (macro ASMR) · Master Prompt
+
+Extreme close-up of an *impossible, beautiful* object being crafted — glass,
+clay, resin, thread, paper, sand, metal — rendered so detailed it feels
+tactile. The "zoom" is the whole point: macro lens, shallow focus, every
+texture huge. Sound is the crafting itself, panning with the camera.
+
+> Fill the `{{slots}}`. Keep STYLE LOCK + AUDIO constant; change only the
+> **craft**, **material/colour**, and any **on-screen word**.
+
+```
+VERTICAL 9:16 EXTREME-MACRO CRAFT VIDEO — ULTRA HIGH DEFINITION, ~{{8–12}} seconds.
+
+SUBJECT (today): {{a craft being made — e.g. "molten glass being shaped into a tiny spinning galaxy"}}
+MATERIAL/COLOUR: {{e.g. "iridescent glass, magenta→cyan with gold flecks, glowing from within"}}
+ON-SCREEN WORD (optional, tiny): "{{one word — e.g. 'made'}}"
+BRAND: Base Reality — base-reality.com
+
+STYLE LOCK (keep constant):
+- True macro photography: 1:1 magnification, razor-shallow depth of field,
+  creamy bokeh, dust motes catching light. The object fills the frame.
+- Hyper-real, tactile, premium. Surfaces you can almost feel — wet sheen,
+  fibre, grain, molten glow, condensation.
+- Slow, hypnotic, perfectly controlled craft motion — hands or tools (or none)
+  shaping the material. Satisfying, deliberate, no rush.
+- Cinematic colour grade, luminous highlights, gentle volumetric light.
+
+CAMERA: slow macro push-in / lateral drift along the surface; one smooth move,
+        rack-focus to reveal a new detail. No cuts.
+MOTION BEATS:
+1. Macro on raw material, still, glistening.
+2. The craft action begins — shaping, pouring, threading, slicing, blooming.
+3. Push in / rack focus as the form resolves into something beautiful.
+4. Final reveal holds, glints once, settles. Loop-friendly.
+
+RENDER: 4K, ultra-sharp micro-detail, photoreal subsurface scattering and
+        reflections, whisper of film grain. Aspect 9:16. NO watermark,
+        NO stocky look.
+
+AUDIO (native ASMR, spatial/moving):
+- Intimate, crisp crafting sounds that PAN L↔R with the camera: {{material
+  sounds — e.g. soft glassy chimes, a low molten hum, delicate taps}}.
+- A warm sub-bass swell on the push-in; tiny tactile details up close
+  (snip, brush, squish, scrape, fizz); an airy tail on the final reveal.
+- Calm, tingly, headphone-first. No music, no voice.
+
+AVOID: clutter, fast cuts, fake CGI plastic look, harsh light, anything generic
+       or stocky. One object, one action, fully in focus.
+```
+
+### Craft-subject rotation (Format B)
+
+| Day | Craft (zoomed in) | Material / colour | Signature ASMR |
+|---|---|---|---|
+| Mon | Molten glass shaped into a tiny galaxy | Iridescent glass, magenta→cyan, gold flecks | Glassy chimes, low molten hum |
+| Tue | Resin pour with suspended bioluminescent flecks | Clear resin, electric violet glow | Slow viscous pour, soft fizz |
+| Wed | Clay rising on a micro potter's wheel | Pearlescent clay, amber→rose | Wet squelch, smooth scrape |
+| Thu | Embroidery threading liquid light | Glowing thread, emerald→aqua | Thread pull, needle tick |
+| Fri | Paper quilling unfurling neon petals | Coral→fuchsia paper, gilt edges | Crisp paper crinkle, snips |
+| Sat | Kinetic-sand / soap clean slice | Deep blue with one neon seam | Satisfying slice, soft crumble |
+| Sun | Sand mandala shifting through the spectrum | Full prism / aurora | Grain pour, fine brush sweep |
+
+> Format A and Format B share the **same colour palettes, STYLE consistency,
+> and moving-ASMR philosophy** — so alternating them keeps the feed varied yet
+> unmistakably Base Reality.
+
 ## ASMR audio (moving sound)
 
 If your video model generates audio natively, the AUDIO block above is enough.
@@ -120,8 +191,9 @@ If not, build this layer in your editor and sync to the motion:
 
 ---
 
-## Quick-start example (filled in)
+## Quick-start examples (filled in)
 
+**Format A — Kinetic Typography**
 ```
 VERTICAL 9:16 KINETIC-TYPOGRAPHY VIDEO — ULTRA HIGH DEFINITION, ~10 seconds.
 CONCEPT (today): the moment the simulation resolves into base reality.
@@ -130,4 +202,16 @@ BRAND: Base Reality — base-reality.com
 [STYLE LOCK as above]
 COLOUR: iridescent magenta→cyan gradient with gold sparks, shifting over time.
 [MOTION BEATS + CAMERA + RENDER + AUDIO + AVOID as above]
+```
+
+**Format B — AI Crafts, Zoomed In**
+```
+VERTICAL 9:16 EXTREME-MACRO CRAFT VIDEO — ULTRA HIGH DEFINITION, ~10 seconds.
+SUBJECT (today): molten glass being shaped into a tiny spinning galaxy.
+MATERIAL/COLOUR: iridescent glass, magenta→cyan with gold flecks, glowing within.
+ON-SCREEN WORD: "made"
+BRAND: Base Reality — base-reality.com
+[STYLE LOCK + CAMERA + MOTION BEATS + RENDER as above]
+AUDIO: soft glassy chimes + low molten hum panning L↔R, sub-bass on push-in,
+       tiny tactile taps, airy tail on the reveal. No music, no voice.
 ```
