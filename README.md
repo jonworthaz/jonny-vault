@@ -36,6 +36,15 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 09 | [Idea Board](./09-idea-board.md) | Running board of scored product ideas — the on-ramp to the niche sprint |
 | 10 | [Build & Tooling Board](./10-build-and-tooling-board.md) | Internal tooling / Claude Home workflow ideas, scored on leverage |
 
+## Explorations
+
+Competitor / adjacent-business teardowns, in the same "copy the engine, not the
+shortcuts" voice as the Medvi research:
+
+| Doc | What it covers |
+|---|---|
+| [Vertus.ai](./vertus-ai-exploration.md) | "Superintelligence"-branded quant-trading + AI-licensing company. The owned-engine + licensed-distribution + scarcity playbook executed in B2B finance — and a case study in staking your moat on unverifiable claims. |
+
 ## The tools
 
 Self-contained, zero-dependency web tools that live alongside the playbook
