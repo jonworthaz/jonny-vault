@@ -141,4 +141,11 @@ const SEED_IDEAS = [
     criteria: { Demand: 3, Intent: 3, Headroom: 4, Quality: 2, 'Affiliate fit': 2 },
     gates: { compounds: true, screenshot: false }, medviOS: false,
   },
+  {
+    title: 'Reconstructed Crystal Palace, "live" on YouTube',
+    summary: 'A 24/7 YouTube live stream of a digitally reconstructed Crystal Palace, fed by "live" AI-generated scenes — the lost 1936 landmark, always on. Third "reconstruct the lost" idea (places, alongside memories #11 and people #12). Media property as captured; needs a productised "reconstruct any lost place" engine + memberships to fit the vault\'s recurring/affiliate shape.',
+    source: '09-idea-board.md · #13', tags: ['product', 'content', 'reconstruction', 'watch'], status: 'Captured',
+    criteria: { Demand: 3, Intent: 2, Headroom: 2, Quality: 4, 'Affiliate fit': 2 },
+    gates: { compounds: false, screenshot: true }, medviOS: false,
+  },
 ];

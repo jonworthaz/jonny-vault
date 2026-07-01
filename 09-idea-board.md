@@ -224,6 +224,42 @@ voice, writing and stories — that the family can talk to, interview, or explor
 - **Affiliate pool:** thin and sensitive — estate planners, funeral homes, grief
   professionals — reachable but not the kind of pool you can win on payout alone.
 
+### 🟡 #13 — Reconstructed Crystal Palace, "live" on YouTube
+*A 24/7 YouTube live stream of a digitally reconstructed Crystal Palace, fed by
+"live" AI-generated scenes — the lost landmark, back and always on.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 2 | 2 | 4 | 2 | ⚠️ only as a productised platform/membership | ✅ if labelled honestly |
+
+- **The job (as captured):** the Crystal Palace (glass-and-iron, burned down 1936)
+  rebuilt digitally and streamed "live" on YouTube — AI-generated feeds giving seasons,
+  weather, day/night, crowds, events inside a landmark that no longer exists.
+- **The theme:** the third "reconstruct the lost" idea on the board — #11 (memories),
+  #12 (people), and now **#13 (places)**. Same emotional engine: bring back something
+  gone. That's the through-line worth noticing.
+- **Quality / edge:** genuinely unique and defensible — nobody else has a living,
+  always-on Crystal Palace. Ambient 24/7 live streams (lofi radio, live cams) have a
+  proven watch pattern, and this rides the AI-video wave ([law 5](./02-operating-system.md)).
+- **The tension (why it's 🟡, not a lead):** as described it's a **media property, not
+  the vault's shape**. A single channel isn't a recurring-billing, affiliate-distributed
+  micro-SaaS ([03](./03-our-business-plan.md)) — monetisation is ad/sponsor/membership
+  (low intent, thin CPC) and there's no obvious payout-driven affiliate pool
+  ([law 2](./02-operating-system.md)). Closer in spirit to #09 (a great funnel, not the
+  business) than to #01/#02.
+- **How it could still fit:** treat the stream as **top-of-funnel** for a productised
+  engine — *"reconstruct any lost/beloved place as a live AI feed"* sold to heritage
+  sites, tourism boards, museums, estates and property developers on subscription — with
+  channel **memberships / licensing** as the recurring layer. Validate that the audience
+  (or a B2B buyer) pays before treating the channel itself as the product.
+- **Affiliate / promoter pool:** history & heritage YouTubers, London/Crystal Palace
+  community, architecture and nostalgia audiences — reachable for reach, but not the
+  kind of pool you win on payout.
+- **Risk / watch:** honesty under [07](./07-guardrails.md) — label it unmistakably as an
+  **AI reconstruction / imagining**, never passed off as a real live feed or genuine
+  historical footage. Confirm no trademark/likeness issues around the Crystal Palace name
+  and any branded events depicted.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the
