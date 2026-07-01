@@ -127,4 +127,18 @@ const SEED_IDEAS = [
     criteria: { Demand: 3, Intent: 3, Headroom: 4, Quality: 4, 'Affiliate fit': 3 },
     gates: { compounds: false, screenshot: true }, medviOS: false,
   },
+  {
+    title: 'AI memory animator (memorial & family archive)',
+    summary: 'Still family photos → gently moving clips + AI-restored tribute video montages to download (funerals, memorials, anniversaries). Recurring play = a family memory-vault subscription.',
+    source: '09-idea-board.md · #11', tags: ['product', 'memorial', 'watch'], status: 'Captured',
+    criteria: { Demand: 4, Intent: 4, Headroom: 3, Quality: 4, 'Affiliate fit': 3 },
+    gates: { compounds: false, screenshot: true }, medviOS: false,
+  },
+  {
+    title: 'AI persona of a departed loved one (ethics-gated)',
+    summary: 'Interactive AI recreation of someone no longer with us — built from their real photos, voice, writing and stories — to interview, hear stories from, or explore with. Hosted persona subscription. Must clear a hard consent/honesty gate before any build.',
+    source: '09-idea-board.md · #12', tags: ['product', 'memorial', 'ethics', 'watch'], status: 'Captured',
+    criteria: { Demand: 3, Intent: 3, Headroom: 4, Quality: 2, 'Affiliate fit': 2 },
+    gates: { compounds: true, screenshot: false }, medviOS: false,
+  },
 ];
