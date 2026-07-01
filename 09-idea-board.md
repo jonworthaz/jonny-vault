@@ -159,6 +159,107 @@ grows accurately and evenly.*
   the recurring relationship* even though delivery is physical. Validate refill repeat-
   rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
+### 🟡 #11 — AI memory animator (memorial & family archive)
+*Still family photos → gently moving clips, plus AI-restored/animated video montages
+you can download — for funerals, memorials, anniversaries and the family archive.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 4 | 4 | 3 | 4 | 3 | ⚠️ only as an archive subscription | ✅ with care |
+
+- **The job (as captured):** AI-animated family memories and videos to download —
+  e.g. moving images of a loved one shown at a funeral. Bring old, still or damaged
+  photos to life (subtle motion, restoration, colourisation) and stitch them into a
+  downloadable tribute video.
+- **Demand:** evergreen and emotional — ~everyone plans a memorial eventually, and
+  "animate an old photo" already went viral (Deep Nostalgia). A rising, durable wave,
+  not a fad ([law 5](./02-operating-system.md)).
+- **Recurring job / the tension:** a single tribute is **one-off** (fails
+  [law #1](./02-operating-system.md)). The compounding version is a **family memory
+  vault** — an ongoing archive that keeps ingesting photos/clips and auto-produces
+  montages for each birthday/anniversary — billed monthly. Validate that families
+  keep paying *after* the event before betting; until then it's a lead magnet, not a
+  business.
+- **Affiliate pool:** funeral homes, celebrants, genealogy/ancestry communities,
+  memorial-keepsake sellers — reachable, warm, and used to referral economics.
+- **Edge:** emotional output quality + a real, tasteful before/after on the family's
+  own photos. Win on restraint (dignified, subtle) not gimmickry.
+- **Risk / watch:** this is grief-adjacent — tone is everything. Stay on the right
+  side of [07](./07-guardrails.md): the imagery is the family's *own* photos, clearly
+  labelled AI-assisted, never fabricated events. Offer subtle vs. expressive modes and
+  make "too much" easy to dial back. Handled with taste this survives a screenshot;
+  handled cheaply it reads as ghoulish.
+
+### 🟡 #12 — AI persona of a departed loved one *(ethics-gated)*
+*An interactive AI recreation of someone no longer with us — built from their photos,
+voice, writing and stories — that the family can talk to, interview, or explore with.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 3 | 4 | 2 | 2 | ✅ hosted persona subscription | ⚠️ needs a hard consent/ethics gate |
+
+- **The job (as captured):** AI regeneration of family members no longer with us —
+  a persona that can be interviewed, tell its stories, "explore" or narrate, as a way
+  to preserve and revisit a life.
+- **Recurring angle:** unlike #11 this compounds naturally — a **hosted, always-on
+  persona** (storage + inference + new-memory ingestion) is a genuine monthly
+  relationship, and adjacent to legacy/estate planning.
+- **Headroom:** few credible competitors (griefbots, StoryFile, HereAfter) and real
+  pricing power for something this personal — but a small, self-selecting market.
+- **Why it's only 🟡 (the hard part):** this collides head-on with the guardrails.
+  A synthetic stand-in for a real named person is exactly the shape [07](./07-guardrails.md)
+  lines **#1 (no fake personas)** and **#2 (no deepfakes without consent)** exist to
+  police — the twist being the subject *can't* consent. Quality is also hard to
+  defend: a hallucinating model putting words in a dead relative's mouth is both a
+  product failure and a potential harm. The headline risk ("startup sells AI clones of
+  your dead relatives") is real.
+- **How it could still survive the screenshot:** treat it as **preservation, not
+  resurrection**. Ground every answer in *actual* recorded material (their real words,
+  voice, writing) with visible sourcing; never invent beyond the record; require
+  **estate/next-of-kin consent** and, ideally, opt-in captured while the person is
+  living (record-your-story-now → persona-later). Label it unmistakably as an AI
+  recreation. Consider grief-counsellor input on psychological safety. **Gate this
+  before any build** — if it can't clear consent + honesty cleanly, it's a #08-style
+  kill, not a lead.
+- **Affiliate pool:** thin and sensitive — estate planners, funeral homes, grief
+  professionals — reachable but not the kind of pool you can win on payout alone.
+
+### 🟡 #13 — Reconstructed Crystal Palace, "live" on YouTube
+*A 24/7 YouTube live stream of a digitally reconstructed Crystal Palace, fed by
+"live" AI-generated scenes — the lost landmark, back and always on.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 2 | 2 | 4 | 2 | ⚠️ only as a productised platform/membership | ✅ if labelled honestly |
+
+- **The job (as captured):** the Crystal Palace (glass-and-iron, burned down 1936)
+  rebuilt digitally and streamed "live" on YouTube — AI-generated feeds giving seasons,
+  weather, day/night, crowds, events inside a landmark that no longer exists.
+- **The theme:** the third "reconstruct the lost" idea on the board — #11 (memories),
+  #12 (people), and now **#13 (places)**. Same emotional engine: bring back something
+  gone. That's the through-line worth noticing.
+- **Quality / edge:** genuinely unique and defensible — nobody else has a living,
+  always-on Crystal Palace. Ambient 24/7 live streams (lofi radio, live cams) have a
+  proven watch pattern, and this rides the AI-video wave ([law 5](./02-operating-system.md)).
+- **The tension (why it's 🟡, not a lead):** as described it's a **media property, not
+  the vault's shape**. A single channel isn't a recurring-billing, affiliate-distributed
+  micro-SaaS ([03](./03-our-business-plan.md)) — monetisation is ad/sponsor/membership
+  (low intent, thin CPC) and there's no obvious payout-driven affiliate pool
+  ([law 2](./02-operating-system.md)). Closer in spirit to #09 (a great funnel, not the
+  business) than to #01/#02.
+- **How it could still fit:** treat the stream as **top-of-funnel** for a productised
+  engine — *"reconstruct any lost/beloved place as a live AI feed"* sold to heritage
+  sites, tourism boards, museums, estates and property developers on subscription — with
+  channel **memberships / licensing** as the recurring layer. Validate that the audience
+  (or a B2B buyer) pays before treating the channel itself as the product.
+- **Affiliate / promoter pool:** history & heritage YouTubers, London/Crystal Palace
+  community, architecture and nostalgia audiences — reachable for reach, but not the
+  kind of pool you win on payout.
+- **Risk / watch:** honesty under [07](./07-guardrails.md) — label it unmistakably as an
+  **AI reconstruction / imagining**, never passed off as a real live feed or genuine
+  historical footage. Confirm no trademark/likeness issues around the Crystal Palace name
+  and any branded events depicted.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the
