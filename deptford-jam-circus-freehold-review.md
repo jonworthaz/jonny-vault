@@ -404,6 +404,24 @@ upper floors to residential.**
 5. **Full multi-vendor dine-in food hall** — not viable (3–10× too small; niche
    already taken).
 
+### Could a national grocery multiple (Lidl / Aldi) operate here? — No
+
+A **standard Lidl** needs an **18,000–26,500 sq ft** store (~14,000 sq ft
+single-floor sales), **≥100 parking spaces** and ~1.5 acres — this building is
+**~8–10× too small**, multi-floor, and has no parking or HGV loading. Even the
+**smallest urban formats** (Aldi Local ~6,458 sq ft; Lidl's ~500 sqm ≈ 5,400 sq
+ft high-street trial) are **2–3× larger than the *entire* building** and still
+need a **single rectangular sales floor** with chiller/freezer plant — impossible
+across three stacked ~870 sq ft plates. **Discounters are out.**
+
+The only national grocery covenant that could fit is a **small convenience
+format** (Tesco Express / Sainsbury's Local / Co-op, or a symbol-group c-store)
+on the **~870 sq ft ground floor** — but it's tight even for those (they prefer
+~1,500–3,000 sq ft), and value grocery is **already saturated locally** (Tesco,
+Asda, Sainsbury's nearby), so appetite is questionable. **If** you landed one on
+an FRI lease it would be the best *letting* outcome — a strong covenant that
+lifts value and financeability — but treat it as **upside, not a plan.**
+
 ### Where the panel converges
 
 | Reviewer | Fair value / max price | Food hall? | The real value lever |
@@ -443,6 +461,8 @@ Conservation Area, and you land the entry near £520k–£575k.
 - [HouseMetric — SE8-4 sold-price analysis (£/sq ft resi)](https://housemetric.co.uk/analysis/sector/SE8-4/London)
 - [Rightmove — Deptford High Street house prices](https://www.rightmove.co.uk/house-prices/se8/deptford-high-street.html)
 - [Lewisham — Article 4 directions (Deptford High St Conservation Area)](https://lewisham.gov.uk/myservices/planning/conservation/article-4-directions)
+- [Lidl Real Estate — new store site requirements (18,000–26,500 sq ft, ≥100 spaces)](https://www.realestate-lidl.co.uk/new-store-site-requirements)
+- [Lidl Real Estate — High Street store concept](https://www.realestate-lidl.co.uk/store-concepts/high-street-store)
 
 > **DYOR / not financial advice.** Figures for floor area and rateable value are
 > to be confirmed in DD; the investment-value numbers above are illustrative at
