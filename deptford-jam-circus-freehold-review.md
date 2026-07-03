@@ -8,6 +8,14 @@
 > *trading record*. Attractive as an **owner-occupier freehold**; dangerous as a
 > **buy-to-let priced off the £65k rent**. Do not underwrite it at £65k — two
 > operators in a row failed on this site. Offer below ask, or walk.
+>
+> **Expert-panel consensus (added below):** worth **~£520k–£575k today**, not
+> £750k. The real value is **manufactured by converting the two vacant upper
+> floors to residential** (via an SPV, on full planning — *not* permitted
+> development), with the ground floor run as a **daytime-led F&B** or let. **An
+> indoor food-market / food-hall is a NO here** — the building is 3–10× too small
+> and Deptford Market Yard already owns that niche 100m away. The F&B *instinct*
+> is right; the *scale and format* are not.
 
 ---
 
@@ -161,11 +169,15 @@ Then it's a freehold-in-a-gentrifying-area play, and the calculus is your trade,
 not the rent.
 
 **Either way, offer below the ask.** Vacant possession + a twice-failed trading
-record + a vendor hedging between "sell or let" = leverage. A defensible opening
-position is **£600k–£650k**, and only complete once you've confirmed the
-rateable value, the floor area, whether there's airspace/upper-floor upside, and
-(if letting) have a tenant signed. If those checks come back weak, walk — a good
-pitch does not rescue bad site economics.
+record + a vendor hedging between "sell or let" = leverage. **The expert panel
+(below) converged on ~£520k–£575k as fair value** — tighter and lower than my
+first-pass £600k–£650k, because two independent appraisals put the income value
+at ~£480k–£560k and the development residual at ~£440–575k. **Open around
+£500k–£520k; hard ceiling ~£575k** — push toward £600k *only* if an upper-floor
+conversion scheme demonstrably stacks. Only complete once you've confirmed the
+rateable value, VAT position, independent upper-floor access, and (if letting)
+have a tenant signed. If those checks come back weak, walk — a good pitch does
+not rescue bad site economics.
 
 ---
 
@@ -198,17 +210,21 @@ the **price and the framing**. Likely take:
    airspace** play — and here it's **intact**: the freehold includes **two vacant
    upper floors (first + second, ~870 sq ft each) that are ancillary, not already
    flats.** Keep Class E on the ground floor, **convert the upper floors to
-   residential** (Class E → resi permitted development, or a full scheme —
-   plausibly 1–4 flats subject to access/light). Planning gain can dwarf the
-   rental yield, and it's *available* here rather than already taken. **Key
-   condition: independent street access to the upper floors.**
+   residential** — plausibly ~3 flats subject to access/light. Planning gain can
+   dwarf the rental yield, and it's *available* here rather than already taken.
+   **⚠️ Corrected by the panel:** the site is in a **Conservation Area with an
+   Article 4 direction**, so **assume a FULL planning application, not Class MA
+   permitted development** (~4–6 months, conservation consent for new windows).
+   **Key condition: independent street access to the upper floors.**
 
 5. **"Buy it in your pension."** The classic Touchstone tax move: hold commercial
    property inside a **SSAS/SIPP pension**. If you occupy it with your own
    business, the business pays **rent into your pension tax-free**, growth sits
    outside your estate, and a SSAS can **borrow up to 50% of its net value** to
-   help fund the purchase. For an owner-occupier this is often the single biggest
-   reason to buy the freehold at all.
+   help fund the purchase. **⚠️ Corrected by the panel:** pensions **cannot hold
+   residential property** — so this works only for the **commercial ground
+   floor**. If you convert the upper floors to flats, those must sit in a
+   **trading SPV**, not the pension.
 
 6. **"How many exits does it have?"** A good deal has 3+: **owner-occupy, re-let,
    convert to resi, or flip with planning.** This site plausibly has several —
@@ -230,7 +246,7 @@ proceed if you can manufacture equity. At £750k on a £65k fantasy rent, pass."
 | **Personal name** | Simplest | Gains taxed as CGT; less tax-efficient for income |
 | **Investment SPV (Ltd co)** | Buy-to-let landlord | Standard for commercial BTL; lenders expect it; ~£150–300 to set up |
 | **Trading Ltd (your business)** | Owner-occupier | Your business owns & occupies |
-| **SSAS / SIPP pension** ⭐ | Owner-occupier, tax-led | Rent paid to pension tax-free; pension can borrow ~50% of net value; **the Paul-Smith move** — needs an existing pot + a scheme provider |
+| **SSAS / SIPP pension** ⭐ | Owner-occupier, **commercial only** | Rent to pension tax-free; can borrow ~50% of net value. **Cannot hold residential** → use only for the ground floor; put any flats in an SPV |
 
 ### Step 2 — Line up finance *before* offering
 
@@ -299,6 +315,118 @@ Commercial conveyancing differs from residential — key items:
 
 ---
 
+## Expert panel review — three independent assessments
+
+*Three specialists were briefed on the full deck and asked to review the deal
+from their discipline. Live transaction-comp lookups were partly blocked by the
+environment, so property-level comps are flagged **[unverified]**; the methods,
+area data and public planning/tax facts are sound. Their conclusions converge
+tightly, and two of them corrected assumptions made earlier in this deck (folded
+in above).*
+
+### 1 · Property investment agent — RICS surveyor lens 🏢
+
+- **£/sq ft:** £750k ÷ 2,610 sq ft ≈ **£287/sq ft** — top of the plausible SE8
+  secondary-parade band (~£200–320/sq ft *[unverified]*), and this stock is
+  vacant, dated and twice-failed.
+- **Real ERV:** £65k implies ~£25/sq ft across *all three* floors — unrealistic.
+  Floor-by-floor: ground £26–33k, first £9–13k, second £7–10k → **blended ERV
+  ~£42–56k, likely ~£48–50k.**
+- **Investment value:** £49k ÷ 8.5% ≈ £576k gross; net of a realistic 12–18-month
+  void + fit-out → **~£480k–£560k.**
+- **Void / rates:** 12–24 months to let is plausible; **empty business rates
+  £10–20k+ pa** is the silent cash drain.
+- **Finance:** no income = no term loan today → bridge (~55–65% LTV against a
+  *cautious* ~£550k, not £750k) then refinance on letting.
+- **Verdict:** *Prime pitch, priced on hope not income — walk at £750k; re-engage
+  at **£520k–£560k**, or on proven residential-conversion upside.*
+
+### 2 · Value-add commercial investor — principal lens 💰
+
+Models the real prize: keep the ground floor Class E, **convert the ~1,740 sq ft
+upper floors to residential.**
+
+- **End value:** SE8-4 resi ~£515–573/sq ft, haircut to £540/sq ft (above a
+  high-street unit, no lift) → ~1,427 sq ft net saleable → **GDV ≈ £770k** (≈3
+  flats). Ground floor let ~£20–22k @ 7.5% → **~£280k** income asset. **Total end
+  value ≈ £1.05m.**
+- **BRRR at a £550k buy:** total project cost **~£930k** (incl. ~£200k conversion
+  @ £110/sq ft, ~£75k finance, fees, ~10% contingency) → sell 3 flats ~£755k net
+  + refinance ground floor ~£182k → **cash left in ≈ £0**, retaining a £280k
+  income asset. A near-infinite-return BRRR — **but only at a ~£550k entry.**
+- **Hurdle check:** at £550k the dev margin is ~11% on GDV (*below* a 20% hurdle);
+  residual land value at a 20% margin ≈ **£440k**; the "recycle + keep income"
+  lens stretches to **~£575k.** Above that, you subsidise the vendor's exit.
+- **Structure/tax corrections (folded in above):** Conservation Area + **Article
+  4** → price **full planning, not permitted development**; **pensions can't hold
+  resi** → SPV develops the flats, SSAS optionally holds only the commercial
+  ground floor; neutralise **VAT** via **TOGC**/de-option before offer (£150k
+  swing); dwelling-creating conversion works qualify for **5% reduced-rate VAT**.
+- **Verdict:** *Conditional **GO** — open at **£500k, max £575k**, conditional on
+  (a) VAT neutralised and (b) confirmed independent upper-floor access. Walk near
+  £750k.*
+
+### 3 · Local-area & food-market strategist — location/F&B lens 📍
+
+- **Area:** young (avg age ~34), student-heavy (Goldsmiths), fast-gentrifying but
+  income-barbelled; the site sits on the highest-footfall node (opposite the
+  station), steps from **Deptford Market Yard** + the street market. Convoys Wharf
+  (3,500 homes) upside is real but **stalled** — don't underwrite near-term.
+- **Saturated:** nail bars, barbers, phone shops, betting/convenience,
+  African/Caribbean & Vietnamese takeaways, value grocery. **Wet-led pubs are
+  *not* under-served here.**
+- **Genuine gaps:** daytime **specialty coffee / bakery / brunch** with seating;
+  **natural-wine / small-plates** evening; quality **all-day casual dining**;
+  experiential/dessert capturing commuter flow.
+- **Food-hall question → NO.** Viable food halls need **~7,000–25,000+ sq ft**
+  (Mercato Metropolitano 17–45k; Pop Brixton ~15k; Peckham Levels ~90k). This is
+  ~2,610 sq ft over three *stacked* ~870 sq ft plates — operationally hostile to
+  shared stalls/seating/extract — and **Deptford Market Yard already owns the
+  multi-vendor niche 100m away** (direct cannibalisation). A "micro food hall" is
+  only viable delivery/ghost-kitchen-led — not the buzzy dine-in the pitch
+  implies.
+- **The two-failed-pubs signal:** a big, wet-led, high-fixed-cost box cannot hold
+  here. A winner must **break the pattern** — lower fixed cost, strong *daytime*
+  trade, differentiated non-pub concept.
+
+**Best-fit uses (best → worst):**
+
+1. **Single daytime-led F&B** — coffee/bakery/brunch on the ground floor, wine +
+   small-plates upstairs. Fits the footprint, hits the clearest gap, rides
+   station/market daytime flow. *Best pattern-breaker.*
+2. **Ground-floor F&B/retail let + upper floors converted to resi/workspace.**
+   Strongest **risk-adjusted** play — doesn't bet the whole building on
+   hospitality.
+3. **Owner-occupier trade/retail** (destination retail, wellness/fitness, clinic)
+   — durable but lower rent, less on-trend.
+4. **Micro food hall (3–5 kitchens)** — only if delivery/hybrid-led and clearly
+   differentiated from Market Yard; direct cannibalisation. Marginal.
+5. **Full multi-vendor dine-in food hall** — not viable (3–10× too small; niche
+   already taken).
+
+### Where the panel converges
+
+| Reviewer | Fair value / max price | Food hall? | The real value lever |
+|---|---|---|---|
+| Property agent 🏢 | £520k–£560k | — | Upper-floor conversion |
+| Value-add investor 💰 | £500k open / **£575k max** | — | Upper-floor resi conversion (BRRR) |
+| Area strategist 📍 | — | **No** (too small; Market Yard) | Daytime F&B + resi conversion |
+
+**Consensus:** the building is worth **~£520k–£575k today**, not £750k. Value is
+**manufactured by converting the two upper floors to residential** (SPV, full
+planning — not PD), while the ground floor runs as a **daytime-led F&B or is
+let**. **The indoor food-market idea is a NO at this size** — but the "there's an
+F&B opportunity here" instinct is right; it's a small, daytime, pattern-breaking
+concept, not a Mercato.
+
+**So, is there an opportunity here?** Yes — but not the one on the tin. The
+opportunity is **buy the mispricing** (~£175k–£230k below ask) and **manufacture
+resi equity upstairs**, with a modest daytime F&B or letting downstairs — *if*
+(and only if) the upper floors have independent access, the planning stacks in a
+Conservation Area, and you land the entry near £520k–£575k.
+
+---
+
 ### Sources
 
 - [HRH Retail — Deptford freehold listing](https://www.hrhretail.com/property/deptford/)
@@ -312,6 +440,9 @@ Commercial conveyancing differs from residential — key items:
 - [Touchstone Education — Why invest in commercial property (Paul Smith)](https://touchstoneeducation.com/blog/why-should-i-invest-in-commercial-property)
 - [Touchstone Education — How to finance your property investment (Paul Smith)](https://touchstoneeducation.com/blog/how-to-finance-your-property-investment-insight-from-paul-smith)
 - [FD Commercial — commercial mortgage calculator & LTV/ICR guidance](https://www.fdcommercial.co.uk/commercial-mortgages/commercial-mortgage-calculator/)
+- [HouseMetric — SE8-4 sold-price analysis (£/sq ft resi)](https://housemetric.co.uk/analysis/sector/SE8-4/London)
+- [Rightmove — Deptford High Street house prices](https://www.rightmove.co.uk/house-prices/se8/deptford-high-street.html)
+- [Lewisham — Article 4 directions (Deptford High St Conservation Area)](https://lewisham.gov.uk/myservices/planning/conservation/article-4-directions)
 
 > **DYOR / not financial advice.** Figures for floor area and rateable value are
 > to be confirmed in DD; the investment-value numbers above are illustrative at
