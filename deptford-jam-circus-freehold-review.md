@@ -15,9 +15,10 @@
 
 | Item | Detail |
 |---|---|
-| Location | Deptford High Street, SE8 — almost directly **opposite the station entrance** (prime footfall pitch) |
-| Tenure | **Freehold**, sold with **full vacant possession** |
-| Building | Former 1960s/70s **Job Centre** office block, stripped to a bare shell; large rectangular open ground floor, bar, small rear outside seating area |
+| Address | **120–122 Deptford High Street, SE8 4NP** — almost directly **opposite the station entrance** (prime footfall pitch) |
+| Tenure | **Freehold**, whole building, sold with **full vacant possession** |
+| Size / floors | **~2,610 sq ft over ground + first + second floors** (~870 sq ft/floor). **Not single-storey** — two upper floors above the bar |
+| Building | Former 1960s/70s **Job Centre** office block, stripped to a bare shell; large rectangular open ground floor + bar + small rear yard; **upper floors were ancillary to the pub (offices/storage), not separate flats** |
 | History | Opened by **Antic** as "The Job Centre" pub July 2014 → refurb + rebrand to **Jam Circus** in 2023 → **closed 2nd week Jan 2026, no warning** |
 | Asking price | **Offers in excess of £750,000** |
 | Alternative | Vendor may **let at £65,000 pa exclusive** instead of selling |
@@ -130,9 +131,12 @@ reflects the letting history. The £750k is really underwritten by
       operators complain about here). Search the gov.uk VOA rating list.
 - [ ] **Net internal / trading floor area (sq ft)** → compute £/sq ft and
       rent/sq ft to sanity-check against comparable Deptford High St units.
-- [ ] **Number of floors / upper parts** — is there residential/office airspace
-      above with conversion (permitted development / planning) upside, or is it
-      genuinely a single-storey shell? This materially changes the £750k case.
+- [x] **Number of floors / upper parts** — *confirmed:* ground + first + second,
+      ~2,610 sq ft total, whole building in the freehold. **No existing flats.**
+      Now verify: (a) all three floors included with vacant possession; (b) no
+      residential units/leases carved out of the upper floors; (c) **independent
+      street access to the upper floors** (essential for any resi conversion so
+      flats don't enter through the ground-floor unit).
 - [ ] **Reason Jam Circus actually closed** — lease default, trade, or landlord
       action? Ask the agent directly; it tells you if the rent or the site is the
       problem.
@@ -191,11 +195,13 @@ the **price and the framing**. Likely take:
    cash into the next deal. *This only works if you buy well below £750k.*
 
 4. **"Where's the planning angle?"** The real money is a **change-of-use /
-   airspace** play. A 1960s office/Job-Centre shell **opposite a station** is
-   exactly the profile for **upper-floor or rear residential conversion** (Class
-   E → resi permitted development, or a full scheme). Planning gain can dwarf the
-   rental yield. **First DD question: is there airspace/upper floors, and what
-   will Lewisham allow?**
+   airspace** play — and here it's **intact**: the freehold includes **two vacant
+   upper floors (first + second, ~870 sq ft each) that are ancillary, not already
+   flats.** Keep Class E on the ground floor, **convert the upper floors to
+   residential** (Class E → resi permitted development, or a full scheme —
+   plausibly 1–4 flats subject to access/light). Planning gain can dwarf the
+   rental yield, and it's *available* here rather than already taken. **Key
+   condition: independent street access to the upper floors.**
 
 5. **"Buy it in your pension."** The classic Touchstone tax move: hold commercial
    property inside a **SSAS/SIPP pension**. If you occupy it with your own
