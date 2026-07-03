@@ -165,6 +165,134 @@ pitch does not rescue bad site economics.
 
 ---
 
+## What would a commercial investor like Paul Smith say?
+
+*(Paul Smith of Touchstone Education — UK commercial-property investor/educator.
+This is an informed characterisation of the playbook he teaches, not his actual
+words. The same logic is standard among value-add commercial investors.)*
+
+The Touchstone/value-add school would **not** hate this deal — but they'd hate
+the **price and the framing**. Likely take:
+
+1. **"You make your money on the buy, not the sale."** Never pay a vendor's price
+   built on an *aspirational* rent. £65k is fantasy rent — two operators proved
+   it. Price the deal off the *real* achievable rent, then offer below that.
+
+2. **"Vacant possession is the opportunity, not the problem."** You can only
+   *add value* to an empty building. A fully-let unit at market rent has no
+   angle. Empty + twice-failed + hedging vendor = the exact distress a value-add
+   buyer wants — *at the right price*.
+
+3. **"Manufacture the equity" (commercial BRRR).** The signature move: buy the
+   empty box cheap → grant a new **FRI lease to a solid tenant** → the building
+   is now an income asset → **revalue on the investment method** → refinance and
+   **pull most/all of your deposit back out.** Example: buy at £600k, let at
+   £55k, revalue at ~£650k (8.5% yield), refinance at 70% → recycle much of your
+   cash into the next deal. *This only works if you buy well below £750k.*
+
+4. **"Where's the planning angle?"** The real money is a **change-of-use /
+   airspace** play. A 1960s office/Job-Centre shell **opposite a station** is
+   exactly the profile for **upper-floor or rear residential conversion** (Class
+   E → resi permitted development, or a full scheme). Planning gain can dwarf the
+   rental yield. **First DD question: is there airspace/upper floors, and what
+   will Lewisham allow?**
+
+5. **"Buy it in your pension."** The classic Touchstone tax move: hold commercial
+   property inside a **SSAS/SIPP pension**. If you occupy it with your own
+   business, the business pays **rent into your pension tax-free**, growth sits
+   outside your estate, and a SSAS can **borrow up to 50% of its net value** to
+   help fund the purchase. For an owner-occupier this is often the single biggest
+   reason to buy the freehold at all.
+
+6. **"How many exits does it have?"** A good deal has 3+: **owner-occupy, re-let,
+   convert to resi, or flip with planning.** This site plausibly has several —
+   which is *for* it — but each depends on price and on the planning answer.
+
+**Their verdict, in one line:** *"Good bones, good pitch, motivated seller,
+multiple exits — but the number's wrong. Offer off the real rent with a planning
+angle in mind, structure it through a pension if you're occupying, and only
+proceed if you can manufacture equity. At £750k on a £65k fantasy rent, pass."*
+
+---
+
+## How to actually purchase it
+
+### Step 1 — Decide the ownership vehicle (do this first, it drives everything)
+
+| Vehicle | When it fits | Notes |
+|---|---|---|
+| **Personal name** | Simplest | Gains taxed as CGT; less tax-efficient for income |
+| **Investment SPV (Ltd co)** | Buy-to-let landlord | Standard for commercial BTL; lenders expect it; ~£150–300 to set up |
+| **Trading Ltd (your business)** | Owner-occupier | Your business owns & occupies |
+| **SSAS / SIPP pension** ⭐ | Owner-occupier, tax-led | Rent paid to pension tax-free; pension can borrow ~50% of net value; **the Paul-Smith move** — needs an existing pot + a scheme provider |
+
+### Step 2 — Line up finance *before* offering
+
+- **Commercial mortgage:** typically **65–75% LTV** (owner-occupier can reach
+  ~75–80%; investment ~65–70%). Affordability is an **Interest Coverage Ratio**
+  test — rent must cover interest ~125–145%. Commercial rates are materially
+  higher than resi (roughly 7–9% territory).
+- **The catch on this deal:** it's **empty**, so there's no income to satisfy an
+  ICR test → a straight commercial investment mortgage is hard until it's let.
+  Realistic routes: **(a)** cash / pension purchase, **(b)** **bridging finance**
+  now → refinance onto a term mortgage once let (the BRRR path), or **(c)**
+  owner-occupier mortgage underwritten on *your* trading business's accounts.
+- Use a **commercial mortgage broker** — get a Decision in Principle so your
+  offer is credible.
+
+### Step 3 — Offer & Heads of Terms (subject to contract)
+
+- Offer through the agent (HRH Retail). Put it in writing as **Heads of Terms**,
+  marked **"subject to contract and survey."**
+- Make it **conditional**: subject to survey, subject to finance, and — given the
+  upside thesis — consider **subject to (or timed around) a planning answer**.
+- **Anchor low.** Vacant possession + two failed operators + a vendor hedging
+  "sell or let" = leverage. Opening at **£600k–£650k** is defensible.
+
+### Step 4 — Instruct a commercial solicitor (the real DD)
+
+Commercial conveyancing differs from residential — key items:
+
+- **VAT / "option to tax"** ⚠️ *the big one.* If the vendor has opted to tax, you
+  pay **20% VAT on the price** (£150k on £750k) — recoverable only if you VAT-
+  register and opt to tax yourself, and **SDLT is charged on the VAT-inclusive
+  figure.** Establish the VAT position before anything else.
+- **Title, searches, and CPSE replies** (commercial pre-contract enquiries).
+- **Planning history & use class** — confirm what's permitted and any resi/airspace
+  potential.
+- **Any residual lease/tenancy**, service charges, rights of way, the rear yard.
+
+### Step 5 — Survey & valuation
+
+- **RICS building survey** (a stripped 1960s shell hides services/structure/damp
+  cost) **+ Red Book valuation** for the lender.
+
+### Step 6 — Exchange → complete
+
+- **Exchange contracts** (pay ~10% deposit, deal becomes binding) → **complete**
+  on the agreed date.
+- **Pay SDLT within 14 days** (~£27k on £750k; more if VAT applies) and **register
+  at the Land Registry.**
+- Sort **buildings insurance, business rates** (mind **empty-property rates** if
+  it sits vacant), and security.
+
+### Ballpark cash to complete (at £750k, ~30–35% down)
+
+| Item | ~Cost |
+|---|---|
+| Deposit (30–35% typical for commercial) | £225k–£265k |
+| SDLT | £27,000 |
+| Legal + survey + valuation | £8k–£15k |
+| Broker / arrangement / lender fees | ~1–2% of loan |
+| **Cash needed to complete** | **~£270k–£320k** (before fit-out) |
+
+> **Sequence in one line:** choose vehicle (ideally a pension if occupying) →
+> broker + Decision in Principle → offer low on Heads of Terms subject to contract
+> → commercial solicitor (check VAT first) → survey → exchange → complete → SDLT
+> within 14 days.
+
+---
+
 ### Sources
 
 - [HRH Retail — Deptford freehold listing](https://www.hrhretail.com/property/deptford/)
@@ -175,6 +303,9 @@ pitch does not rescue bad site economics.
 - [Murky Depths — Lewisham puts Deptford High Street pedestrianisation on hold (Sept 2025)](https://www.fromthemurkydepths.co.uk/2025/09/05/lewisham-put-deptford-high-street-pedestrianisation-on-hold/)
 - [Property Investments UK — highest-yield London areas (Deptford SE8 ~5.9% residential)](https://www.propertyinvestmentsuk.co.uk/areas-of-london-highest-rental-yields/)
 - [gov.uk VOA — find a business rates valuation](https://www.gov.uk/correct-your-business-rates) *(look up the exact rateable value)*
+- [Touchstone Education — Why invest in commercial property (Paul Smith)](https://touchstoneeducation.com/blog/why-should-i-invest-in-commercial-property)
+- [Touchstone Education — How to finance your property investment (Paul Smith)](https://touchstoneeducation.com/blog/how-to-finance-your-property-investment-insight-from-paul-smith)
+- [FD Commercial — commercial mortgage calculator & LTV/ICR guidance](https://www.fdcommercial.co.uk/commercial-mortgages/commercial-mortgage-calculator/)
 
 > **DYOR / not financial advice.** Figures for floor area and rateable value are
 > to be confirmed in DD; the investment-value numbers above are illustrative at
