@@ -152,8 +152,10 @@ reflects the letting history. The £750k is really underwritten by
       you can do without consent.
 - [ ] **Neighbour precedent — pull the 124 Deptford High Street (Sainsbury's
       Local) consent** from Lewisham's portal (decision notice, officer's report,
-      drawings, storeys, unit mix, affordable-housing/CIL). Identify the architect
-      who won it. Strongest single planning lever — see "Planning precedent" below.
+      drawings, storeys, unit mix, affordable-housing/CIL) + the **17 Jun 2004
+      Committee C** report and the **2025 Mitchell Architecture ref
+      `_LEWIS_DCAPR_131489`**. Confirm the **address/title overlap (120–122 vs
+      122–124)**. Strongest single planning lever — see "Planning precedent" below.
 - [ ] **Building survey** — a stripped 1960s shell can hide services/structure/
       damp costs; budget realistic fit-out.
 - [ ] **Comparable evidence** — recent Deptford High St freehold sales and
@@ -451,6 +453,42 @@ is a **strong material consideration** in our favour. It:
 - **Deptford Broadway (former nursery)** — partial demolition → **shop + 8 flats**,
   approved *despite* a committee call-in after objections.
 
+**What the planning record shows (researched — see ref caveat):**
+
+- **The building next door is itself a redeveloped former Job Centre — the
+  strongest possible precedent.** The old Deptford Job Centre occupied **122 & 124
+  Deptford High Street** (closed Nov 2010; solicitors, then an African church
+  above). In **~2011–12 it was rebuilt by retaining the 1970s steel frame and
+  attaching new steel to build a *larger* building** — ground-floor retail
+  (Poundland → **Sainsbury's Local** from 2023) with **residential flats above**
+  (Flats 1–9+, 124 DHS, SE8 4BW). Same steel-framed Job-Centre construction, same
+  parade, same Conservation Area — **and they were permitted to keep the frame and
+  build up with flats over a shop.** This also answers the panel's structural
+  question: *this frame type can be extended upward* (they literally welded new
+  steel to old next door).
+- **Recent (Sept 2025) High-Street CA scheme — Mitchell Architecture Studio**,
+  Lewisham ref **`_LEWIS_DCAPR_131489`**: office + first floor → a **2-bed
+  self-contained flat**, plus a rear single-storey "Assembly Hall" → a **1-bed
+  unit** (~176 sqm), inside the Deptford High Street Conservation Area. Fresh
+  evidence that resi conversion/intensification is *actively* being pursued and
+  processed here.
+- **Older committee item:** a **17 June 2004** Lewisham Planning Committee C
+  report for **124 Deptford High Street** (an earlier iteration of the
+  residential-above-shop scheme).
+
+**⚠️ Two honest caveats on this evidence:**
+
+1. **Addressing overlaps — confirm which building you're buying.** The "former
+   Job Centre" label attaches to *both* the redeveloped **122–124** block (now
+   Sainsbury's + flats) *and* the sale property marketed as **120–122** (Jam
+   Circus). Confirm with the agent / Land Registry **exactly which title and
+   footprint** is for sale and how it abuts the Sainsbury's block.
+2. **Exact references / architect / decision for the *built* 124 scheme could not
+   be downloaded** in this research environment (Lewisham's planning host is
+   blocked here). Pull them from the portal or Planning team (see below); the
+   **2004 committee item** and the **2025 Mitchell Architecture ref
+   `_LEWIS_DCAPR_131489`** are your starting leads.
+
 **Caveats:** precedent ≠ guarantee; our ~870 sq ft footprint may not absorb the
 same massing; the 1960s frame may need strengthening or demolition/rebuild to go
 up; **right-to-light cuts both ways** — the *new* Sainsbury's flats next door now
@@ -512,6 +550,10 @@ Conservation Area, and you land the entry near £520k–£575k.
 - [Murky Depths — mixed-use (shop + 8 flats) approved near Deptford High Street (2024)](https://www.fromthemurkydepths.co.uk/2024/11/20/proposal-for-new-development-near-deptford-high-street-submitted/)
 - [Lewisham — Deptford High Street & St Paul's Conservation Area](https://lewisham.gov.uk/myservices/planning/conservation/conservation-areas/deptford-high-street-and-st-paul-s-conservation-area)
 - [Lewisham — find & comment on planning applications (portal)](https://lewisham.gov.uk/myservices/planning/find-comment-planning-applications)
+- [Deptford Misc — 124 Deptford High Street redevelopment (steel-frame retained, built ~2011–12)](http://deptfordmisc.blogspot.com/2012/06/124-deptford-high-street.html)
+- [Lewisham Planning Committee C — 124 Deptford High Street report, 17 Jun 2004](https://councilmeetings.lewisham.gov.uk/Data/Planning%20Committee%20C/20040617/Agenda/124%20Deptford%20High%20Street%20SE8.pdf) *(host blocked in research env; access via portal)*
+- [Mitchell Architecture Studio — Sept 2025 planning statement, Deptford High St CA (ref _LEWIS_DCAPR_131489)](https://docs.planning.org.uk/20260420/48/_LEWIS_DCAPR_131489/jayzc2uavisygxmh.pdf) *(host blocked in research env)*
+- [NovaLoca — 120–124 Deptford High Street commercial particulars](http://docs.novaloca.com/47_2617_634777777428540000.pdf) *(host blocked in research env)*
 
 > **DYOR / not financial advice.** Figures for floor area and rateable value are
 > to be confirmed in DD; the investment-value numbers above are illustrative at
