@@ -150,6 +150,10 @@ reflects the letting history. The £750k is really underwritten by
       problem.
 - [ ] **Planning history & use class** (likely Sui Generis pub / Class E) — what
       you can do without consent.
+- [ ] **Neighbour precedent — pull the 124 Deptford High Street (Sainsbury's
+      Local) consent** from Lewisham's portal (decision notice, officer's report,
+      drawings, storeys, unit mix, affordable-housing/CIL). Identify the architect
+      who won it. Strongest single planning lever — see "Planning precedent" below.
 - [ ] **Building survey** — a stripped 1960s shell can hide services/structure/
       damp costs; budget realistic fit-out.
 - [ ] **Comparable evidence** — recent Deptford High St freehold sales and
@@ -422,6 +426,46 @@ Asda, Sainsbury's nearby), so appetite is questionable. **If** you landed one on
 an FRI lease it would be the best *letting* outcome — a strong covenant that
 lifts value and financeability — but treat it as **upside, not a plan.**
 
+### Planning precedent — the neighbour at 124 (Sainsbury's Local) ⭐
+
+**The Sainsbury's Local is at 124 Deptford High Street — directly next door to
+our 120–122** — and its building has been redeveloped with **residential above
+the shop**. In English planning there's no *binding* precedent (each application
+is decided on its own merits), but a recently approved **and built**
+residential-over-retail scheme on the same parade, in the same Conservation Area,
+is a **strong material consideration** in our favour. It:
+
+1. **Neutralises the panel's biggest planning worry** — a completed resi-over-
+   retail block next door is hard evidence that **Lewisham accepts the principle
+   here**, despite the Conservation Area + Article 4.
+2. **Sets the height/massing benchmark** — "match the adjacent approved building
+   line/height" becomes a powerful design argument (consistency with context is
+   what CA policy rewards).
+3. **May unlock more than conversion** — if the neighbour *added storeys*, we may
+   be able to **build up**, not just convert the existing 1st/2nd floors — lifting
+   resi GDV above the panel's conservative 3-flat model.
+
+**Not relying on one example** — the same stretch has live comparables:
+- **229 Deptford High Street** — **5 flats** (1st/2nd/3rd) + **2 commercial units**
+  (ground + basement). Almost exactly our model.
+- **Deptford Broadway (former nursery)** — partial demolition → **shop + 8 flats**,
+  approved *despite* a committee call-in after objections.
+
+**Caveats:** precedent ≠ guarantee; our ~870 sq ft footprint may not absorb the
+same massing; the 1960s frame may need strengthening or demolition/rebuild to go
+up; **right-to-light cuts both ways** — the *new* Sainsbury's flats next door now
+have windows that could **constrain our massing**; independent flat access is
+still essential; and the **Deptford Society** actively objects to scale in this
+CA and can trigger a committee call-in — so design quality matters.
+
+**Action:** pull the **124 Deptford High Street planning reference** from
+Lewisham's portal (decision notice, officer's report, drawings, unit mix,
+affordable-housing/CIL obligations); **identify and hire the architect/planning
+consultant who won it**; then take a scheme to **pre-application citing 124 (and
+229 DHS) explicitly.** This moves the upper-floor resi play from "hopeful" to
+"built precedent next door" — a genuine plus, and possibly grounds for a more
+ambitious add-storeys scheme.
+
 ### Where the panel converges
 
 | Reviewer | Fair value / max price | Food hall? | The real value lever |
@@ -463,6 +507,11 @@ Conservation Area, and you land the entry near £520k–£575k.
 - [Lewisham — Article 4 directions (Deptford High St Conservation Area)](https://lewisham.gov.uk/myservices/planning/conservation/article-4-directions)
 - [Lidl Real Estate — new store site requirements (18,000–26,500 sq ft, ≥100 spaces)](https://www.realestate-lidl.co.uk/new-store-site-requirements)
 - [Lidl Real Estate — High Street store concept](https://www.realestate-lidl.co.uk/store-concepts/high-street-store)
+- [Premier Construction — new Sainsbury's Local, 124 Deptford High Street (Sept 2023)](https://premierconstructionnews.com/2023/09/11/new-sainsburys-local-lands-on-deptford-high-street/)
+- [229 Deptford High Street — resi-over-commercial scheme (5 flats + 2 commercial)](https://229dhs.co.uk/)
+- [Murky Depths — mixed-use (shop + 8 flats) approved near Deptford High Street (2024)](https://www.fromthemurkydepths.co.uk/2024/11/20/proposal-for-new-development-near-deptford-high-street-submitted/)
+- [Lewisham — Deptford High Street & St Paul's Conservation Area](https://lewisham.gov.uk/myservices/planning/conservation/conservation-areas/deptford-high-street-and-st-paul-s-conservation-area)
+- [Lewisham — find & comment on planning applications (portal)](https://lewisham.gov.uk/myservices/planning/find-comment-planning-applications)
 
 > **DYOR / not financial advice.** Figures for floor area and rateable value are
 > to be confirmed in DD; the investment-value numbers above are illustrative at
