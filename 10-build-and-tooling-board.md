@@ -138,6 +138,17 @@ opinionated and lean rather than copying the doc wholesale:
   intervention**. (Local-first: no LLM/key embedded in the app — an optional in-browser
   API-key mode could be added later for one-click in-app analysis.)
 
+**v4 — built into Claude Code (process + agents).** The board is now first-class Claude
+Code process, not a standalone silo:
+- Root **`CLAUDE.md`** documents the idea → launch process and how Claude operates the board.
+- Agents **`idea-analyst`** (analyse + gate one idea) and **`idea-scout`** (market research)
+  in `.claude/agents/`.
+- Commands **`/dispatch-idea`** (capture → `dropbox.json`) and **`/fill-idea-board`**
+  (autonomous analyse + fill loop) in `.claude/commands/`.
+- New **`board.json`** sync file: the fill loop writes `{ version, ideas }`; the app
+  **auto-upserts by id on load, once per version** — so an agent lands analysed ideas on
+  the board with **no manual Import**. (Desktop-app port still via `claude-ideas/SPEC.md`.)
+
 **Next steps:** read seed ideas live from the Markdown boards, in-app score editing,
 multiple workflows per idea, optional in-app API-key AI mode, and cloud sync.
 

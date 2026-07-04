@@ -13,7 +13,15 @@ uses, so anything a human can do in the UI, an agent can do via files.
 | Channel | File | Use |
 |---|---|---|
 | **Dispatch (capture)** | `dropbox.json` | Drop raw one-line ideas. The app ingests new entries into the **Dropbox** on load (deduped by `id`). |
-| **Import (full analysis)** | any `*.json` you produce | A `{ "ideas": [ … ] }` document the user loads via **Import data** (the app **upserts by `id`**). This is how analysed ideas land on the board. |
+| **Board sync (analysis)** | `board.json` | `{ "version": n, "ideas": [ … ] }`. The app **auto-upserts these by `id` on load**, once per `version`. This is the hands-off path — write analysed ideas here and **bump `version`**; no human Import needed. |
+| **Import (manual)** | any `*.json` | A `{ "ideas": [ … ] }` doc the user loads via **Import data** (also upserts by `id`). Use when you can't write to the repo. |
+
+### Running inside Claude Code
+
+This repo ships the board as first-class Claude Code process (see the root `CLAUDE.md`):
+- **`/dispatch-idea <text>`** → appends to `dropbox.json` (capture).
+- **`/fill-idea-board [filter]`** → the autonomous loop below, writing `board.json`.
+- Agents **`idea-analyst`** (analyse + gate one idea) and **`idea-scout`** (market research).
 
 A human triggers nothing in the autonomous path except, at most, one **Import** (and
 even that can be skipped if you write directly to the store — see "Direct" below).
@@ -87,8 +95,8 @@ The app computes a weighted % (weights in `SPEC.md §5`). Map score → decision
      d. propose 1–3 experiments with hypotheses + metrics,
      e. write analysis, development and a one-paragraph aiAnalysis,
      f. set inbox:false to promote it.
-3. Emit { "ideas": [ … ] } and hand it to the user to Import
-   (or write it directly — see below). Keep ids stable so re-runs update in place.
+3. Write { "version": n+1, "ideas": [ … ] } to board.json (the app auto-applies it),
+   or emit it for Import. Keep ids stable so re-runs update in place.
 ```
 
 ## Direct write (fully hands-off)

@@ -187,6 +187,13 @@ experiments, records a decision and writes back a `{ "ideas": [...] }` document.
 This is what makes the board fillable **end-to-end without human intervention**: dispatch
 → analyse → gate decision → promote, all as file/JSON operations.
 
+**Built into Claude Code.** The repo ships the board as first-class process (root
+`CLAUDE.md`): agents `idea-analyst` + `idea-scout` (`.claude/agents/`) and commands
+`/dispatch-idea`, `/fill-idea-board` (`.claude/commands/`). The fill loop writes
+`board.json` (`{ version, ideas }`), which the app **auto-upserts by id on load, once per
+`version`** — so an agent working in the repo lands analysed ideas on the board with no
+manual Import.
+
 ### 5a. Stage-gate, experiments & analytics (NPD layer)
 
 Added after a review of *"Designing a Local-First Ideas & NPD Management System"*. Rather
@@ -236,7 +243,9 @@ No params ⇒ the builder runs as the standalone tool (its own `forge.workflow.v
 | `data.js` | `STATUSES`, `STATUS_META`, `MEDVI_OS` (weighted gate), `DECISIONS`, `EXPERIMENT_*`, `BRAINSTORM_PROMPTS`, `SEED_IDEAS` |
 | `app.js` | Store load/save/normalize/upsert · router · dashboard · **dropbox + dispatch ingest** · board · Medvi gate scoring + decisions · brainstorm · experiments/learnings · **AI prompt bridge** · Forge handoff · brief generator · export/import |
 | `dropbox.json` | Agent **dispatch** inbox (`{ dispatch: [...] }`) |
+| `board.json` | Agent **board sync** (`{ version, ideas }`) — auto-upserted on load |
 | `AGENT.md` | Agent operating procedure — fill the board end-to-end |
+| `../CLAUDE.md`, `../.claude/{agents,commands}` | Claude Code integration (process, agents, `/dispatch-idea`, `/fill-idea-board`) |
 | `start-*.{command,bat}` | Local launchers — serve the **parent** folder (so sibling tools resolve) and open `/claude-ideas/` |
 
 ### `workflow-builder/` (Forge) — relevant additions

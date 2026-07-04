@@ -289,6 +289,15 @@ function decisionColor(d) { return (DECISIONS.find((x) => x.key === d) || {}).co
 /* ------------------------------------------------------------------ idea dropbox */
 const DISPATCH_FILE = 'dropbox.json';
 const DISPATCHED_KEY = 'claudeideas.dispatched.v1';
+const BOARD_FILE = 'board.json';
+const BOARDVER_KEY = 'claudeideas.boardVersion.v1';
+
+/* upsert an idea by id (shared by Import and agent board ingest). */
+function upsertIdea(raw) {
+  const ex = raw.id && getIdea(raw.id);
+  if (ex) { Object.assign(ex, normalizeIdea(Object.assign({}, ex, raw)), { id: ex.id, createdAt: ex.createdAt, updatedAt: now() }); return 'updated'; }
+  DB.ideas.unshift(normalizeIdea(raw)); return 'added';
+}
 
 function inboxIdeas() { return DB.ideas.filter((i) => i.inbox).sort((a, b) => b.createdAt - a.createdAt); }
 
@@ -380,6 +389,22 @@ function ingestDispatch(cb) {
       addQuickIdea(text, null, 'dispatch'); seen[id] = 1; n++;
     });
     if (n) { try { localStorage.setItem(DISPATCHED_KEY, JSON.stringify(seen)); } catch (e) {} }
+    if (cb) cb(n);
+  }).catch(() => { if (cb) cb(0); });
+}
+
+/* Ingest a full analysed board written by an agent (board.json), version-guarded so
+ * it applies once per agent write. Upserts by id — never deletes. This is the
+ * hands-off path: an agent fills board.json and it lands in the app on next load. */
+function ingestBoard(cb) {
+  fetch(BOARD_FILE, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    if (!d || !Array.isArray(d.ideas)) { if (cb) cb(0); return; }
+    const ver = String(d.version == null ? '' : d.version);
+    let last = ''; try { last = localStorage.getItem(BOARDVER_KEY) || ''; } catch (e) {}
+    if (ver && ver === last) { if (cb) cb(0); return; }
+    let n = 0;
+    d.ideas.forEach((raw) => { upsertIdea(raw); n++; });
+    if (n) { saveStore(); try { localStorage.setItem(BOARDVER_KEY, ver); } catch (e) {} }
     if (cb) cb(n);
   }).catch(() => { if (cb) cb(0); });
 }
@@ -901,11 +926,7 @@ function importData(file) {
       const incoming = Array.isArray(d) ? d : (d && d.ideas);
       if (!Array.isArray(incoming)) throw 0;
       let added = 0, updated = 0;
-      incoming.forEach((raw) => {
-        const ex = raw.id && getIdea(raw.id);
-        if (ex) { Object.assign(ex, normalizeIdea(Object.assign({}, ex, raw)), { id: ex.id, createdAt: ex.createdAt, updatedAt: now() }); updated++; }
-        else { DB.ideas.unshift(normalizeIdea(raw)); added++; }
-      });
+      incoming.forEach((raw) => { upsertIdea(raw) === 'updated' ? updated++ : added++; });
       saveStore(); render(); toast(`Imported — ${added} new, ${updated} updated`);
     } catch (e) { toast('Not a valid ideas / {"ideas":[…]} file'); }
   };
@@ -940,7 +961,8 @@ function init() {
   setView(views.includes(v) ? v : (dropText ? 'dropbox' : 'dashboard'));
   if (params.get('idea')) { setView('ideas'); openIdea(params.get('idea')); }
 
-  // ingest any agent-dispatched ideas from dropbox.json
+  // ingest agent output: raw dispatches (dropbox.json) + analysed board (board.json)
   ingestDispatch((n) => { if (n) { toast(`${n} dispatched idea${n > 1 ? 's' : ''} added`); if (currentView === 'dropbox' || currentView === 'dashboard') render(); } });
+  ingestBoard((n) => { if (n) { toast(`${n} idea${n > 1 ? 's' : ''} synced from the agent`); render(); } });
 }
 document.addEventListener('DOMContentLoaded', init);
