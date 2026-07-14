@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architect — Agent Creation Wizard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">📐</span>
+      <div class="brand-text">
+        <strong>Architect</strong>
+        <small>Agent creation wizard</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <input type="text" id="agentName" class="agent-name" placeholder="Agent name (e.g. PackPro AI)" />
+    </div>
+    <div class="topbar-buttons">
+      <button id="newBtn" class="tool" title="Start a new, empty agent">✦ New</button>
+      <button id="importBtn" class="tool" title="Open a saved blueprint.json">📂 Open</button>
+      <input type="file" id="importInput" accept="application/json,.json" hidden />
+      <span id="saveState" class="save-state" title="Blueprints autosave to this browser">Saved</span>
+      <button id="generateBtn" class="tool tool-primary" title="Generate the agent spec">⤓ Generate</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <!-- Step rail -->
+    <aside class="rail">
+      <ol id="stepRail" class="steps"></ol>
+      <div class="rail-foot">
+        <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+        <small id="progressText" class="muted">Step 1 of 6</small>
+      </div>
+    </aside>
+
+    <!-- Step content -->
+    <main class="stage">
+      <section id="stepContent" class="step-content"></section>
+      <nav class="step-nav">
+        <button id="backBtn" class="tool" disabled>← Back</button>
+        <div class="spacer"></div>
+        <button id="nextBtn" class="tool tool-primary">Next →</button>
+      </nav>
+    </main>
+  </div>
+
+  <!-- Output overlay -->
+  <div id="overlay" class="overlay" hidden>
+    <div class="sheet">
+      <header class="sheet-head">
+        <div class="tabs" id="outTabs">
+          <button class="tab active" data-tab="spec">Agent spec</button>
+          <button class="tab" data-tab="prompt">Architect prompt</button>
+          <button class="tab" data-tab="blueprint">Blueprint (JSON)</button>
+        </div>
+        <div class="sheet-actions">
+          <button id="copyOut" class="tool">⧉ Copy</button>
+          <button id="downloadOut" class="tool">⤓ Download</button>
+          <button id="closeOut" class="tool">✕ Close</button>
+        </div>
+      </header>
+      <div class="sheet-hint" id="sheetHint"></div>
+      <pre id="outBody" class="out-body"></pre>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
