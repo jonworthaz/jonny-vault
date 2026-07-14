@@ -1,0 +1,939 @@
+<title>plims — Technical Package</title>
+<style>
+  :root{
+    --paper:#F3F4F1; --panel:#FBFBFA; --panel-2:#F7F8F5;
+    --ink:#191C20; --ink-2:#565C63; --ink-3:#8A9097;
+    --line:#DADCD5; --line-2:#E8E9E4;
+    --accent:#2749C7; --accent-soft:#E9EDFB;
+    --good:#2E7D57; --warn:#B26A12; --crit:#B23B32;
+    /* fixed drawing-card tokens — flats stay light in both themes */
+    --fl-ink:#20242A; --draw-bg:#FCFCFA; --draw-grid:#ECEDE8; --draw-edge:#E2E3DD;
+    --sole-default:#23272C; --foxing-default:#ECEAE2;
+    --f-sans:"Helvetica Neue","Segoe UI",system-ui,Arial,sans-serif;
+    --f-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --maxw:940px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --paper:#121418; --panel:#191C21; --panel-2:#15181C;
+      --ink:#E9EBE7; --ink-2:#A7ACB2; --ink-3:#767C83;
+      --line:#2A2E34; --line-2:#23272C; --accent:#8296FF; --accent-soft:#1D2740; }
+  }
+  :root[data-theme="dark"]{ --paper:#121418; --panel:#191C21; --panel-2:#15181C;
+    --ink:#E9EBE7; --ink-2:#A7ACB2; --ink-3:#767C83;
+    --line:#2A2E34; --line-2:#23272C; --accent:#8296FF; --accent-soft:#1D2740; }
+  :root[data-theme="light"]{ --paper:#F3F4F1; --panel:#FBFBFA; --panel-2:#F7F8F5;
+    --ink:#191C20; --ink-2:#565C63; --ink-3:#8A9097;
+    --line:#DADCD5; --line-2:#E8E9E4; --accent:#2749C7; --accent-soft:#E9EDFB; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--f-sans);line-height:1.55;
+    -webkit-font-smoothing:antialiased;font-size:15px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px 96px}
+
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+  .mono{font-family:var(--f-mono)}
+  .ey{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3)}
+  h1,h2,h3,h4{margin:0;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+
+  /* ---- title block ---- */
+  .title{border-bottom:2px solid var(--ink);padding:64px 0 24px;margin-bottom:8px}
+  .brand{font-size:clamp(58px,15vw,140px);line-height:.86;font-weight:800;
+    letter-spacing:-.04em;margin:0}
+  .brand .dot{color:var(--accent)}
+  .title-sub{display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline;
+    margin-top:22px}
+  .title-sub .t{font-size:clamp(17px,3.4vw,22px);font-weight:600;letter-spacing:.02em}
+  .tblock{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:26px;
+    background:var(--panel)}
+  .tblock .cell{padding:12px 14px;border-right:1px solid var(--line-2)}
+  .tblock .cell:last-child{border-right:0}
+  .tblock .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .tblock .v{font-family:var(--f-mono);font-size:14px;margin-top:5px;font-weight:500}
+  @media(max-width:640px){.tblock{grid-template-columns:repeat(2,1fr)}
+    .tblock .cell:nth-child(2n){border-right:0}}
+
+  .lede{max-width:62ch;color:var(--ink-2);font-size:16px;margin:26px 0 8px}
+  .lede strong{color:var(--ink);font-weight:600}
+
+  /* ---- section scaffold ---- */
+  section{padding-top:56px;scroll-margin-top:20px}
+  .shead{display:flex;align-items:baseline;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:26px}
+  .shead .no{font-family:var(--f-mono);font-size:12px;color:var(--accent);
+    font-weight:600;letter-spacing:.04em;white-space:nowrap}
+  .shead h2{font-size:clamp(21px,3.6vw,27px);text-transform:uppercase;
+    letter-spacing:.01em}
+  .shead .sheet{margin-left:auto;font-family:var(--f-mono);font-size:11px;
+    color:var(--ink-3);white-space:nowrap}
+
+  p{margin:0 0 14px;max-width:66ch}
+  .muted{color:var(--ink-2)}
+
+  /* ---- index grid ---- */
+  .idx{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.idx{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:460px){.idx{grid-template-columns:1fr}}
+  .idx a{display:block;border:1px solid var(--line);border-radius:10px;
+    background:var(--panel);padding:14px;color:inherit;transition:border-color .15s}
+  .idx a:hover{border-color:var(--accent);text-decoration:none}
+  .idx .n{font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
+  .idx .nm{font-weight:700;font-size:17px;margin:2px 0 0;letter-spacing:-.01em}
+  .idx .ds{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+
+  /* ---- drawing card / flats ---- */
+  .flatcard{background:var(--draw-bg);border:1px solid var(--draw-edge);border-radius:12px;
+    background-image:linear-gradient(var(--draw-grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--draw-grid) 1px,transparent 1px);
+    background-size:22px 22px;position:relative;overflow:hidden}
+  .flatcard .stamp{position:absolute;top:10px;left:12px;font-family:var(--f-mono);
+    font-size:10px;letter-spacing:.1em;color:#9AA0A6;text-transform:uppercase}
+  .flatcard .scale{position:absolute;bottom:10px;right:12px;font-family:var(--f-mono);
+    font-size:10px;color:#9AA0A6}
+  svg.flat{display:block;width:100%;height:auto}
+  .hero-flat{padding:8px 8px 4px}
+
+  /* colourway strip */
+  .cways{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  @media(max-width:560px){.cways{grid-template-columns:1fr}}
+  .cway{border:1px solid var(--line);border-radius:10px;background:var(--panel);
+    padding:10px;display:flex;flex-direction:column;gap:8px}
+  .cway .mini{background:var(--draw-bg);border:1px solid var(--draw-edge);
+    border-radius:7px;padding:2px}
+  .cway .mini svg{display:block;width:100%;height:auto}
+  .cway .meta{display:flex;align-items:center;gap:8px}
+  .chips{display:flex;gap:4px}
+  .chip{width:15px;height:15px;border-radius:4px;border:1px solid rgba(0,0,0,.14)}
+  .cway .cn{font-family:var(--f-mono);font-size:11.5px;font-weight:500}
+  .cway .cc{font-family:var(--f-mono);font-size:10px;color:var(--ink-3);margin-top:1px}
+
+  /* ---- style sheet layout ---- */
+  .styletop{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:start}
+  @media(max-width:760px){.styletop{grid-template-columns:1fr}}
+  .style-id{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .style-id .snum{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:600}
+  .style-id h3{font-size:clamp(24px,4.6vw,34px);letter-spacing:-.02em}
+  .style-id .sku{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);
+    border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+  .style-tag{font-size:15px;color:var(--ink-2);margin:8px 0 16px;max-width:52ch}
+
+  /* ---- tables ---- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;
+    background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-2);
+    vertical-align:top}
+  thead th{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3);background:var(--panel-2);
+    border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.k{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);white-space:nowrap;
+    width:1%;padding-right:20px}
+  td .val,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+  .num{text-align:right;white-space:nowrap}
+  caption{caption-side:top;text-align:left;font-family:var(--f-mono);font-size:10.5px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:0 0 8px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .blocklabel{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-3);margin:26px 0 10px}
+
+  /* construction steps */
+  ol.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+  ol.steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;
+    border-bottom:1px solid var(--line-2)}
+  ol.steps li:last-child{border-bottom:0}
+  ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:9px;
+    font-family:var(--f-mono);font-size:12px;color:var(--accent);font-weight:600;
+    border:1px solid var(--line);border-radius:5px;width:30px;height:26px;
+    display:flex;align-items:center;justify-content:center}
+  ol.steps li b{font-weight:600}
+  ol.steps li .d{color:var(--ink-2);font-size:13.5px}
+
+  .pill{display:inline-block;font-family:var(--f-mono);font-size:10.5px;
+    padding:2px 8px;border-radius:999px;border:1px solid var(--line);
+    color:var(--ink-2);background:var(--panel)}
+  .pill.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+
+  .note{border-left:2px solid var(--accent);background:var(--accent-soft);
+    padding:12px 16px;border-radius:0 8px 8px 0;font-size:13.5px;margin:18px 0}
+  .note .h{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+
+  hr.rule{border:0;border-top:1px solid var(--line);margin:52px 0 0}
+  .foot{margin-top:60px;padding-top:22px;border-top:2px solid var(--ink);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
+
+  .swrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
+  .sw{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11px;
+    color:var(--ink-2)}
+  .sw i{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.18);display:inline-block}
+
+  @media print{
+    body{background:#fff}
+    section{page-break-inside:avoid}
+    .idx a,.flatcard{break-inside:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* SVG flat classes (fixed drawing ink, product-colour fills) */
+  .flat .up{fill:var(--upper,#E8E2D2);stroke:var(--fl-ink);stroke-width:2.4}
+  .flat .fx{fill:var(--foxing,var(--foxing-default));stroke:var(--fl-ink);stroke-width:2}
+  .flat .sl{fill:var(--sole,var(--sole-default));stroke:var(--fl-ink);stroke-width:2}
+  .flat .cue{fill:none;stroke:var(--cw,#E1543A);stroke-width:5;stroke-linecap:round}
+  .flat .ln{fill:none;stroke:var(--fl-ink);stroke-width:1.6;stroke-linecap:round}
+  .flat .st{fill:none;stroke:var(--fl-ink);stroke-width:1.2;stroke-dasharray:2 3;opacity:.75}
+  .flat .tk{stroke:#B9BEC4;stroke-width:1.4}
+  .flat .eye{fill:var(--draw-bg);stroke:var(--fl-ink);stroke-width:1.6}
+  .flat .dim{stroke:var(--accent);stroke-width:1;fill:none}
+  .flat .dimtx{fill:var(--accent);font-family:var(--f-mono);font-size:11px}
+  .flat .lbl{fill:var(--ink-3,#8A9097);font-family:var(--f-mono);font-size:10px}
+  .flat .knitfill{fill:var(--upper,#4A4E52)}
+</style>
+
+<!-- ===================== FLAT SPRITE ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="knit" width="8" height="6" patternUnits="userSpaceOnUse">
+      <path d="M0 5 L4 1 L8 5" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="1"/>
+    </pattern>
+
+    <!-- shared sole unit: foxing + outsole + signature cue -->
+    <g id="sole-unit">
+      <path class="fx" d="M48 162 C40 172,40 186,56 192 L424 192 C440 186,440 172,430 162 Z"/>
+      <path class="sl" d="M56 192 L424 192 C433 198,427 205,414 205 L66 205 C53 205,47 198,56 192 Z"/>
+      <line class="tk" x1="110" y1="196" x2="110" y2="203"/>
+      <line class="tk" x1="160" y1="196" x2="160" y2="203"/>
+      <line class="tk" x1="210" y1="196" x2="210" y2="203"/>
+      <line class="tk" x1="260" y1="196" x2="260" y2="203"/>
+      <line class="tk" x1="310" y1="196" x2="310" y2="203"/>
+      <line class="tk" x1="360" y1="196" x2="360" y2="203"/>
+      <path class="cue" d="M50 163 C160 155,320 155,430 163"/>
+    </g>
+
+    <!-- 01 CORE : low slip-on, single elastic gore -->
+    <symbol id="flat-core" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="up" d="M60 174 C52 148,52 118,66 102 C74 92,86 90,100 94 L158 108 C210 116,258 120,300 126 C348 133,388 143,414 152 C424 156,430 160,428 166 L60 174 Z"/>
+      <path class="ln" d="M100 98 L158 111 C205 118,250 121,296 127"/>
+      <path class="st" d="M368 144 C386 150,398 158,402 174"/>
+      <ellipse class="ln" cx="212" cy="138" rx="22" ry="11"/>
+      <line class="ln" x1="202" y1="130" x2="202" y2="146"/>
+      <line class="ln" x1="212" y1="128" x2="212" y2="148"/>
+      <line class="ln" x1="222" y1="130" x2="222" y2="146"/>
+      <path class="ln" d="M66 102 C60 96,60 90,66 88 L74 90"/>
+    </symbol>
+
+    <!-- 02 LACE : 4-eyelet low derby -->
+    <symbol id="flat-lace" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="up" d="M60 174 C52 148,52 118,66 102 C74 92,86 90,100 94 L150 108 C200 116,252 120,300 126 C348 133,388 143,414 152 C424 156,430 160,428 166 L60 174 Z"/>
+      <path class="ln" d="M150 108 C168 128,176 146,178 168"/>
+      <path class="ln" d="M236 122 C230 142,228 156,228 170"/>
+      <circle class="eye" cx="176" cy="126" r="3.4"/>
+      <circle class="eye" cx="192" cy="132" r="3.4"/>
+      <circle class="eye" cx="208" cy="137" r="3.4"/>
+      <circle class="eye" cx="224" cy="141" r="3.4"/>
+      <circle class="eye" cx="200" cy="130" r="3.4"/>
+      <circle class="eye" cx="216" cy="135" r="3.4"/>
+      <path class="ln" d="M176 126 L216 135 M192 132 L208 137 M208 137 L224 141 M200 130 L176 126"/>
+      <path class="st" d="M368 144 C386 150,398 158,402 174"/>
+      <path class="ln" d="M66 102 C60 96,60 90,66 88 L74 90"/>
+    </symbol>
+
+    <!-- 03 SLIP : twin gore, lowest cut -->
+    <symbol id="flat-slip" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="up" d="M60 174 C52 150,53 124,66 110 C74 100,86 98,100 102 L164 116 C214 122,262 124,302 128 C350 134,388 144,414 152 C424 156,430 160,428 166 L60 174 Z"/>
+      <path class="ln" d="M100 106 L164 118 C210 124,252 126,298 130"/>
+      <ellipse class="ln" cx="176" cy="132" rx="16" ry="8"/>
+      <ellipse class="ln" cx="220" cy="136" rx="16" ry="8"/>
+      <line class="ln" x1="170" y1="126" x2="170" y2="138"/>
+      <line class="ln" x1="182" y1="126" x2="182" y2="138"/>
+      <line class="ln" x1="214" y1="130" x2="214" y2="142"/>
+      <line class="ln" x1="226" y1="130" x2="226" y2="142"/>
+      <path class="st" d="M368 144 C386 150,398 158,402 174"/>
+    </symbol>
+
+    <!-- 04 HIGH : high sock collar -->
+    <symbol id="flat-high" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="up" d="M60 174 C52 148,50 112,60 84 C64 66,76 58,92 58 C108 58,118 68,122 88 L150 110 C200 118,252 121,300 127 C348 134,388 144,414 152 C424 156,430 160,428 166 L60 174 Z"/>
+      <path class="ln" d="M74 78 C70 96,72 112,84 122 M108 74 C112 92,112 106,120 118"/>
+      <ellipse class="ln" cx="95" cy="80" rx="20" ry="12"/>
+      <path class="ln" d="M122 88 L150 110 C196 118,246 122,294 128"/>
+      <path class="st" d="M368 144 C386 150,398 158,402 174"/>
+      <path class="ln" d="M60 84 C54 78,56 70,64 70"/>
+    </symbol>
+
+    <!-- 05 KNIT : one-piece seamless knit -->
+    <symbol id="flat-knit" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="knitfill" d="M60 174 C52 148,52 118,66 102 C74 92,86 90,100 94 L158 108 C210 116,258 120,300 126 C348 133,388 143,414 152 C424 156,430 160,428 166 L60 174 Z"/>
+      <path d="M60 174 C52 148,52 118,66 102 C74 92,86 90,100 94 L158 108 C210 116,258 120,300 126 C348 133,388 143,414 152 C424 156,430 160,428 166 L60 174 Z" fill="url(#knit)" stroke="var(--fl-ink)" stroke-width="2.4"/>
+      <path class="ln" d="M100 98 L158 111 C205 118,250 121,296 127"/>
+      <path class="ln" style="opacity:.5" d="M80 122 C160 130,260 138,410 158 M78 138 C160 146,260 152,412 168"/>
+      <path class="ln" d="M66 102 C60 96,60 90,66 88 L74 90"/>
+    </symbol>
+
+    <!-- 06 MULE : open-heel backless -->
+    <symbol id="flat-mule" viewBox="0 0 480 224">
+      <use href="#sole-unit"/>
+      <path class="up" d="M150 172 C148 150,150 130,162 118 C170 110,182 108,196 112 L238 120 C286 127,330 137,414 152 C424 156,430 160,428 166 L150 172 Z"/>
+      <path class="ln" d="M162 116 C176 132,182 150,182 168"/>
+      <path class="ln" d="M196 112 L238 120 C284 128,326 138,406 154"/>
+      <path class="st" d="M368 146 C386 152,398 160,402 174"/>
+      <path class="ln" style="opacity:.5" d="M60 168 C90 164,120 164,150 168"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <!-- ===================== TITLE BLOCK ===================== -->
+  <header class="title">
+    <div class="ey">Technical Package · Confidential</div>
+    <h1 class="brand">plims<span class="dot">.</span></h1>
+    <div class="title-sub">
+      <span class="t">Machine-washable plimsolls — Spring/Summer development</span>
+    </div>
+    <div class="tblock">
+      <div class="cell"><div class="k">Document</div><div class="v">TP-PLIMS-001</div></div>
+      <div class="cell"><div class="k">Revision</div><div class="v">A · 2026-07-14</div></div>
+      <div class="cell"><div class="k">Styles</div><div class="v">6 (01–06)</div></div>
+      <div class="cell"><div class="k">Platform</div><div class="v">Last PL-01</div></div>
+      <div class="cell"><div class="k">Prepared by</div><div class="v">LastPro AI</div></div>
+      <div class="cell"><div class="k">For</div><div class="v">plims / factory</div></div>
+      <div class="cell"><div class="k">Construction</div><div class="v">Strobel + foxing</div></div>
+      <div class="cell"><div class="k">Status</div><div class="v">Sampling</div></div>
+    </div>
+    <p class="lede">Six plimsoll styles built on <strong>one shared last and one shared
+      outsole platform</strong> — a deliberate cost decision that lets the range launch
+      on a single set of tooling. Every style is engineered to be <strong>machine
+      washable</strong>: cement-free bonds, closed-cell foam, no leather, colourfast
+      trims. The brand signature is a <strong>coloured pinstripe along the sole edge</strong>,
+      recoloured per colourway.</p>
+    <div class="note">
+      <div class="h">Read me first</div>
+      All measurements are for size <b>UK 7</b> and are development targets, not final
+      graded specs. Drawings are technical flats (not to scale unless dimensioned).
+      All wash, bond, flex and slip figures are <b>targets to be confirmed by physical
+      testing</b> per §5 before any "machine washable" claim is made.
+    </div>
+  </header>
+
+  <!-- ===================== INDEX ===================== -->
+  <section id="index">
+    <div class="shead"><span class="no">00</span><h2>Style index</h2>
+      <span class="sheet">Sheet 01 / 12</span></div>
+    <div class="idx">
+      <a href="#s01"><div class="n">STYLE 01 · PLM-01</div><div class="nm">Core</div>
+        <div class="ds">Low slip-on, single elastic gore — the hero.</div></a>
+      <a href="#s02"><div class="n">STYLE 02 · PLM-02</div><div class="nm">Lace</div>
+        <div class="ds">4-eyelet low derby for those who want laces.</div></a>
+      <a href="#s03"><div class="n">STYLE 03 · PLM-03</div><div class="nm">Slip</div>
+        <div class="ds">Twin-gore full slip-on, cleanest & most minimal.</div></a>
+      <a href="#s04"><div class="n">STYLE 04 · PLM-04</div><div class="nm">High</div>
+        <div class="ds">High sock collar for more hold and warmth.</div></a>
+      <a href="#s05"><div class="n">STYLE 05 · PLM-05</div><div class="nm">Knit</div>
+        <div class="ds">One-piece seamless knit, most breathable.</div></a>
+      <a href="#s06"><div class="n">STYLE 06 · PLM-06</div><div class="nm">Mule</div>
+        <div class="ds">Open-heel backless, desk-to-door slip.</div></a>
+    </div>
+  </section>
+
+  <!-- ===================== PLATFORM SPEC ===================== -->
+  <section id="platform">
+    <div class="shead"><span class="no">01</span><h2>Shared platform &amp; materials</h2>
+      <span class="sheet">Sheet 02 / 12</span></div>
+    <p class="muted">Common to all six styles. Style sheets list only what differs from this.</p>
+
+    <div class="grid2">
+      <div>
+        <div class="blocklabel">Last &amp; geometry — PL-01 (unisex)</div>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Toe shape</td><td class="val">Rounded-square, low toe spring 12 mm</td></tr>
+            <tr><td class="k">Fitting</td><td class="val">Standard / medium volume (D)</td></tr>
+            <tr><td class="k">Heel height</td><td class="val">20 mm stack</td></tr>
+            <tr><td class="k">Forefoot</td><td class="val">16 mm stack</td></tr>
+            <tr><td class="k">Heel-to-toe drop</td><td class="val">4 mm</td></tr>
+            <tr><td class="k">Foxing height</td><td class="val">22 mm at toe / 26 mm at heel</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">Style-dependent (see sheets)</td></tr>
+            <tr><td class="k">Target weight</td><td class="val">230 g ± 15 g per shoe (UK 7)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <div class="blocklabel">Construction — all styles</div>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Method</td><td class="val">Strobel lasted, vulcanised rubber foxing to cup outsole</td></tr>
+            <tr><td class="k">Bonding</td><td class="val">Water-based / heat-activated, wash-durable. No solvent cement.</td></tr>
+            <tr><td class="k">Lasting board</td><td class="val">None — strobel sock only (no cellulose board)</td></tr>
+            <tr><td class="k">Heel counter</td><td class="val">Molded TPU, washable</td></tr>
+            <tr><td class="k">Toe puff</td><td class="val">Thermoplastic, low-profile</td></tr>
+            <tr><td class="k">Stitching</td><td class="val">Bonded polyester, 8–9 SPI, colourfast</td></tr>
+            <tr><td class="k">Washability</td><td class="val"><span class="pill good">Machine wash 30°C</span> validated to §5</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="blocklabel">Materials library</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Ref</th><th>Component</th><th>Material</th><th>Spec / grade</th><th>Wash note</th></tr></thead>
+      <tbody>
+        <tr><td class="k">M-01</td><td>Upper — canvas</td><td>Organic cotton canvas</td><td class="val">10 oz, pre-shrunk, reactive-dyed</td><td>Colourfast ≥4</td></tr>
+        <tr><td class="k">M-02</td><td>Upper — knit</td><td>Recycled PET engineered knit</td><td class="val">Knit-to-shape, 1-piece</td><td>Fast-dry</td></tr>
+        <tr><td class="k">M-03</td><td>Lining</td><td>Recycled polyester mesh</td><td class="val">3 mm spacer at collar</td><td>Non-wicking</td></tr>
+        <tr><td class="k">M-04</td><td>Footbed</td><td>Molded closed-cell EVA</td><td class="val">Asker C 45±5, arch cradle, removable, anti-microbial</td><td>No water-log</td></tr>
+        <tr><td class="k">M-05</td><td>Midsole/strobel</td><td>EVA sheet + strobel textile</td><td class="val">2 mm strobel, PET thread</td><td>Sealed</td></tr>
+        <tr><td class="k">M-06</td><td>Outsole</td><td>Vulcanised rubber</td><td class="val">Shore A 60±5, non-marking, siped</td><td>Inert</td></tr>
+        <tr><td class="k">M-07</td><td>Foxing tape</td><td>Vulcanised rubber</td><td class="val">18 mm tape, gum or ink</td><td>Inert</td></tr>
+        <tr><td class="k">M-08</td><td>Signature pinstripe</td><td>Co-extruded rubber bead</td><td class="val">3 mm, colour per colourway</td><td>Bonded in vulcanising</td></tr>
+        <tr><td class="k">M-09</td><td>Heel counter</td><td>TPU</td><td class="val">1.2 mm molded</td><td>Washable</td></tr>
+        <tr><td class="k">M-10</td><td>Laces / gore</td><td>Recycled PET flat lace / elastic gore</td><td class="val">Removable laces; colourfast elastic</td><td>Remove laces to wash</td></tr>
+        <tr><td class="k">M-11</td><td>Adhesive</td><td>Water-based PU / heat-activated film</td><td class="val">Wash-durable</td><td>Retains ≥80% bond post-wash</td></tr>
+        <tr><td class="k">M-12</td><td>Thread</td><td>Bonded polyester</td><td class="val">Tex 40, colourfast</td><td>Colourfast ≥4</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="grid2" style="margin-top:22px">
+      <div>
+        <div class="blocklabel">Care claim &amp; wash protocol</div>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Cycle</td><td class="val">Cold–warm, 30°C, gentle/delicate</td></tr>
+            <tr><td class="k">Prep</td><td class="val">Remove footbed + laces; use a wash bag</td></tr>
+            <tr><td class="k">Detergent</td><td class="val">Mild, non-bleach</td></tr>
+            <tr><td class="k">Dry</td><td class="val">Air dry only, no tumble, no direct heat</td></tr>
+            <tr><td class="k">Validation</td><td class="val">10 cycles, acceptance per §5</td></tr>
+            <tr><td class="k">On-pack claim</td><td class="val">Only after wash validation passes</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <div class="blocklabel">Tolerances</div>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Length</td><td class="val">± 3 mm</td></tr>
+            <tr><td class="k">Girth</td><td class="val">± 4 mm</td></tr>
+            <tr><td class="k">Stack height</td><td class="val">± 1.5 mm</td></tr>
+            <tr><td class="k">Weight (pair)</td><td class="val">± 30 g</td></tr>
+            <tr><td class="k">Shrinkage (post-wash)</td><td class="val">≤ 3 %</td></tr>
+            <tr><td class="k">Colour match</td><td class="val">ΔE ≤ 1.5 to approved lab-dip</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 01 CORE ===================== -->
+  <section id="s01">
+    <div class="shead"><span class="no">02</span><h2>Style 01 — Core</h2>
+      <span class="sheet">Sheet 03 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#E8E2D2;--cw:#E1543A;--sole:#23272C;--foxing:#ECEAE2">
+          <span class="stamp">PLM-01 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 232" role="img"
+               aria-label="Side technical flat of the Core low slip-on plimsoll with dimension callouts">
+            <use href="#flat-core"/>
+            <!-- dimension callouts -->
+            <g>
+              <line class="dim" x1="446" y1="152" x2="446" y2="205"/>
+              <path class="dim" d="M443 155 L446 150 L449 155 M443 202 L446 207 L449 202"/>
+              <text class="dimtx" x="452" y="182">20</text>
+              <line class="dim" x1="30" y1="174" x2="30" y2="205"/>
+              <path class="dim" d="M27 177 L30 172 L33 177 M27 202 L30 207 L33 202"/>
+              <text class="dimtx" x="6" y="194">16</text>
+              <line class="dim" x1="18" y1="88" x2="18" y2="174"/>
+              <text class="dimtx" x="2" y="134" transform="rotate(-90 8 134)">collar 62</text>
+              <line class="dim" x1="300" y1="214" x2="300" y2="205"/>
+              <text class="lbl" x="240" y="226">stack 20 / drop 4 mm · foxing 22 mm</text>
+              <text class="lbl" x="120" y="86">single elastic gore</text>
+              <path class="dim" d="M180 92 L206 128" style="opacity:.5"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">01</span><h3>Core</h3><span class="sku">PLM-01</span></div>
+        <p class="style-tag">Low slip-on with a single hidden elastic gore and a sock-knit
+          collar. The default plims — most minimal thing that still holds the foot.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Closure</td><td class="val">Slip-on, single elastic gore (concealed)</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">62 mm (low)</td></tr>
+            <tr><td class="k">Upper</td><td class="val">M-01 canvas + M-03 mesh collar</td></tr>
+            <tr><td class="k">Toe cap</td><td class="val">Stitched, low-profile</td></tr>
+            <tr><td class="k">Heel counter</td><td class="val">M-09 TPU</td></tr>
+            <tr><td class="k">Footbed</td><td class="val">M-04 EVA, removable</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">225 g</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway">
+        <div class="mini" style="--upper:#E8E2D2;--cw:#E1543A;--sole:#23272C;--foxing:#ECEAE2">
+          <svg class="flat" viewBox="0 0 480 210" aria-label="Core in Chalk / Persimmon"><use href="#flat-core"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#E8E2D2"></span><span class="chip" style="background:#E1543A"></span></div>
+          <div><div class="cn">Chalk / Persimmon</div><div class="cc">E8E2D2 · E1543A</div></div></div>
+      </div>
+      <div class="cway">
+        <div class="mini" style="--upper:#23262A;--cw:#3A3E42;--sole:#17191C;--foxing:#2B2E32">
+          <svg class="flat" viewBox="0 0 480 210" aria-label="Core in Ink"><use href="#flat-core"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#23262A"></span><span class="chip" style="background:#3A3E42"></span></div>
+          <div><div class="cn">Ink / Ink</div><div class="cc">23262A · tonal</div></div></div>
+      </div>
+      <div class="cway">
+        <div class="mini" style="--upper:#EDE9DF;--cw:#2C4CC9;--sole:#EDE9DF;--foxing:#F3F0E8">
+          <svg class="flat" viewBox="0 0 480 210" aria-label="Core in Bone / Cobalt"><use href="#flat-core"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#EDE9DF"></span><span class="chip" style="background:#2C4CC9"></span></div>
+          <div><div class="cn">Bone / Cobalt</div><div class="cc">EDE9DF · 2C4CC9</div></div></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:22px">
+      <div>
+        <div class="blocklabel">Bill of materials</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">1</td><td>Upper canvas — vamp/quarters</td><td>M-01</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">2</td><td>Collar mesh</td><td>M-03</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">3</td><td>Elastic gore</td><td>M-10</td><td class="num">2</td></tr>
+            <tr><td class="k">4</td><td>Heel counter</td><td>M-09</td><td class="num">2</td></tr>
+            <tr><td class="k">5</td><td>Toe puff</td><td>—</td><td class="num">2</td></tr>
+            <tr><td class="k">6</td><td>Strobel sock</td><td>M-05</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">7</td><td>Outsole cup</td><td>M-06</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">8</td><td>Foxing + pinstripe</td><td>M-07/08</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">9</td><td>EVA footbed</td><td>M-04</td><td class="num">1 pr</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <div class="blocklabel">Construction sequence</div>
+        <ol class="steps">
+          <li><b>Cut</b> <span class="d">— die-cut canvas to grain; cut mesh, gore, reinforcements.</span></li>
+          <li><b>Close upper</b> <span class="d">— join quarters to vamp, insert gore, bind collar, stitch toe cap (8–9 SPI).</span></li>
+          <li><b>Strobel</b> <span class="d">— stitch strobel sock to lasting margin; set TPU counter + toe puff.</span></li>
+          <li><b>Last &amp; heat-set</b> <span class="d">— mount PL-01, steam, heat-set profile.</span></li>
+          <li><b>Prep bond</b> <span class="d">— rough + water-based primer on margin &amp; outsole.</span></li>
+          <li><b>Attach sole</b> <span class="d">— position cup outsole, apply foxing + pinstripe bead, press.</span></li>
+          <li><b>Vulcanise</b> <span class="d">— cure foxing bond; chill-set.</span></li>
+          <li><b>De-last &amp; finish</b> <span class="d">— insert footbed, clean, QC + lot wash-test, box.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 02 LACE ===================== -->
+  <section id="s02">
+    <div class="shead"><span class="no">03</span><h2>Style 02 — Lace</h2>
+      <span class="sheet">Sheet 04 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#E7E1D2;--cw:#2C4CC9;--sole:#EDE9DF;--foxing:#F1EEE6">
+          <span class="stamp">PLM-02 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 210" role="img" aria-label="Side flat of the Lace 4-eyelet plimsoll"><use href="#flat-lace"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">02</span><h3>Lace</h3><span class="sku">PLM-02</span></div>
+        <p class="style-tag">A minimal 4-eyelet low derby on the same platform, for wearers
+          who want an adjustable fit and a more classic face.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Closure</td><td class="val">4 eyelets, removable flat lace (M-10)</td></tr>
+            <tr><td class="k">Eyelets</td><td class="val">Washable, tonal metal-free</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">64 mm</td></tr>
+            <tr><td class="k">Upper</td><td class="val">M-01 canvas + facing reinforcement</td></tr>
+            <tr><td class="k">Tongue</td><td class="val">Gusseted, mesh-lined</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">238 g</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><div class="h">Differs from platform</div>
+          Adds eyelet facing + gusseted tongue; laces are removed before washing.</div>
+      </div>
+    </div>
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway"><div class="mini" style="--upper:#E7E1D2;--cw:#2C4CC9;--sole:#EDE9DF;--foxing:#F1EEE6"><svg class="flat" viewBox="0 0 480 205" aria-label="Lace in Ecru / Cobalt"><use href="#flat-lace"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#E7E1D2"></span><span class="chip" style="background:#2C4CC9"></span></div><div><div class="cn">Ecru / Cobalt</div><div class="cc">E7E1D2 · 2C4CC9</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#5B636B;--cw:#E8E2D2;--sole:#23272C;--foxing:#4C545B"><svg class="flat" viewBox="0 0 480 205" aria-label="Lace in Slate / Chalk"><use href="#flat-lace"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#5B636B"></span><span class="chip" style="background:#E8E2D2"></span></div><div><div class="cn">Slate / Chalk</div><div class="cc">5B636B · E8E2D2</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#23262A;--cw:#E1543A;--sole:#17191C;--foxing:#2B2E32"><svg class="flat" viewBox="0 0 480 205" aria-label="Lace in Black / Signal"><use href="#flat-lace"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#23262A"></span><span class="chip" style="background:#E1543A"></span></div><div><div class="cn">Black / Signal</div><div class="cc">23262A · E1543A</div></div></div></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="blocklabel">Bill of materials (delta)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">+1</td><td>Eyelet facing reinforcement</td><td>M-01</td><td class="num">2</td></tr>
+            <tr><td class="k">+2</td><td>Eyelets (metal-free)</td><td>—</td><td class="num">8</td></tr>
+            <tr><td class="k">+3</td><td>Gusseted tongue + mesh</td><td>M-01/03</td><td class="num">2</td></tr>
+            <tr><td class="k">+4</td><td>Flat lace (removable)</td><td>M-10</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">—</td><td>Elastic gore (deleted)</td><td>M-10</td><td class="num">0</td></tr>
+          </tbody></table></div></div>
+      <div><div class="blocklabel">Construction — changes</div>
+        <ol class="steps">
+          <li><b>Cut facing</b> <span class="d">— add eyelet facings + tongue to the cut plan.</span></li>
+          <li><b>Punch + set eyelets</b> <span class="d">— reinforce, punch 4 per side, set metal-free eyelets.</span></li>
+          <li><b>Attach tongue</b> <span class="d">— stitch gusseted tongue to throat before closing.</span></li>
+          <li><b>Then follow Core steps 3–8.</b></li>
+        </ol></div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 03 SLIP ===================== -->
+  <section id="s03">
+    <div class="shead"><span class="no">04</span><h2>Style 03 — Slip</h2>
+      <span class="sheet">Sheet 05 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#E8E2D2;--cw:#6E7B4B;--sole:#EDE9DF;--foxing:#F1EEE6">
+          <span class="stamp">PLM-03 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 210" role="img" aria-label="Side flat of the Slip twin-gore slip-on"><use href="#flat-slip"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">03</span><h3>Slip</h3><span class="sku">PLM-03</span></div>
+        <p class="style-tag">Twin-gore full slip-on. No laces, no visible closure — the
+          purest, most office-appropriate face in the range and the easiest to kick on/off.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Closure</td><td class="val">Twin elastic gore, no laces</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">58 mm (lowest)</td></tr>
+            <tr><td class="k">Topline</td><td class="val">Elasticated binding for grip</td></tr>
+            <tr><td class="k">Upper</td><td class="val">M-01 canvas, seam-minimised</td></tr>
+            <tr><td class="k">Heel</td><td class="val">M-09 TPU + pull loop</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">218 g (lightest)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway"><div class="mini" style="--upper:#E8E2D2;--cw:#6E7B4B;--sole:#EDE9DF;--foxing:#F1EEE6"><svg class="flat" viewBox="0 0 480 205" aria-label="Slip in Chalk / Moss"><use href="#flat-slip"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#E8E2D2"></span><span class="chip" style="background:#6E7B4B"></span></div><div><div class="cn">Chalk / Moss</div><div class="cc">E8E2D2 · 6E7B4B</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#B6AC98;--cw:#8A8069;--sole:#8A8069;--foxing:#C3BAA6"><svg class="flat" viewBox="0 0 480 205" aria-label="Slip in Greige tonal"><use href="#flat-slip"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#B6AC98"></span><span class="chip" style="background:#8A8069"></span></div><div><div class="cn">Greige / Greige</div><div class="cc">B6AC98 · tonal</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#2B3A55;--cw:#EDE9DF;--sole:#1B2536;--foxing:#33425E"><svg class="flat" viewBox="0 0 480 205" aria-label="Slip in Navy / Bone"><use href="#flat-slip"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#2B3A55"></span><span class="chip" style="background:#EDE9DF"></span></div><div><div class="cn">Navy / Bone</div><div class="cc">2B3A55 · EDE9DF</div></div></div></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="blocklabel">Bill of materials (delta)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">+1</td><td>Twin elastic gore</td><td>M-10</td><td class="num">4</td></tr>
+            <tr><td class="k">+2</td><td>Elasticated topline binding</td><td>M-10</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">+3</td><td>Heel pull loop</td><td>M-10</td><td class="num">2</td></tr>
+            <tr><td class="k">—</td><td>Toe cap seam</td><td>—</td><td class="num">optional</td></tr>
+          </tbody></table></div></div>
+      <div><div class="blocklabel">Construction — changes</div>
+        <ol class="steps">
+          <li><b>Insert twin gores</b> <span class="d">— set two elastic panels each side of the throat.</span></li>
+          <li><b>Elasticate topline</b> <span class="d">— bind collar with elastic tape for lockdown.</span></li>
+          <li><b>Add pull loop</b> <span class="d">— stitch heel loop at counter.</span></li>
+          <li><b>Then follow Core steps 3–8.</b></li>
+        </ol></div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 04 HIGH ===================== -->
+  <section id="s04">
+    <div class="shead"><span class="no">05</span><h2>Style 04 — High</h2>
+      <span class="sheet">Sheet 06 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#DED6C2;--cw:#B5623C;--sole:#23272C;--foxing:#ECEAE2">
+          <span class="stamp">PLM-04 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 210" role="img" aria-label="Side flat of the High sock-collar plimsoll"><use href="#flat-high"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">04</span><h3>High</h3><span class="sku">PLM-04</span></div>
+        <p class="style-tag">A high sock collar for more ankle hold and warmth — still indoor
+          weight. The most secure "holds the foot" fit in the range.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Closure</td><td class="val">Pull-on high sock, single gore</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">118 mm (mid/high)</td></tr>
+            <tr><td class="k">Cuff</td><td class="val">Ribbed stretch knit, mesh-lined</td></tr>
+            <tr><td class="k">Upper</td><td class="val">M-01 canvas body + M-02 knit cuff</td></tr>
+            <tr><td class="k">Heel counter</td><td class="val">M-09 TPU, extended</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">252 g</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway"><div class="mini" style="--upper:#DED6C2;--cw:#B5623C;--sole:#23272C;--foxing:#ECEAE2"><svg class="flat" viewBox="0 0 480 205" aria-label="High in Oat / Clay"><use href="#flat-high"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#DED6C2"></span><span class="chip" style="background:#B5623C"></span></div><div><div class="cn">Oat / Clay</div><div class="cc">DED6C2 · B5623C</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#3B3F44;--cw:#E8E2D2;--sole:#17191C;--foxing:#44494F"><svg class="flat" viewBox="0 0 480 205" aria-label="High in Charcoal / Chalk"><use href="#flat-high"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#3B3F44"></span><span class="chip" style="background:#E8E2D2"></span></div><div><div class="cn">Charcoal / Chalk</div><div class="cc">3B3F44 · E8E2D2</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#9AA588;--cw:#EDE9DF;--sole:#3E4436;--foxing:#A7B295"><svg class="flat" viewBox="0 0 480 205" aria-label="High in Sage / Bone"><use href="#flat-high"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#9AA588"></span><span class="chip" style="background:#EDE9DF"></span></div><div><div class="cn">Sage / Bone</div><div class="cc">9AA588 · EDE9DF</div></div></div></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="blocklabel">Bill of materials (delta)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">+1</td><td>Ribbed knit cuff</td><td>M-02</td><td class="num">2</td></tr>
+            <tr><td class="k">+2</td><td>Extended TPU counter</td><td>M-09</td><td class="num">2</td></tr>
+            <tr><td class="k">+3</td><td>Collar mesh (extended)</td><td>M-03</td><td class="num">1 pr</td></tr>
+          </tbody></table></div></div>
+      <div><div class="blocklabel">Construction — changes</div>
+        <ol class="steps">
+          <li><b>Knit cuff</b> <span class="d">— attach ribbed stretch cuff to the quarter top.</span></li>
+          <li><b>Extended counter</b> <span class="d">— set taller TPU counter for ankle support.</span></li>
+          <li><b>Line the collar</b> <span class="d">— full mesh lining up the cuff.</span></li>
+          <li><b>Then follow Core steps 3–8</b> <span class="d">— note higher last collar clearance.</span></li>
+        </ol></div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 05 KNIT ===================== -->
+  <section id="s05">
+    <div class="shead"><span class="no">06</span><h2>Style 05 — Knit</h2>
+      <span class="sheet">Sheet 07 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#4A4E52;--cw:#A6C13E;--sole:#23272C;--foxing:#3C4044">
+          <span class="stamp">PLM-05 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 210" role="img" aria-label="Side flat of the Knit one-piece plimsoll"><use href="#flat-knit"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">05</span><h3>Knit</h3><span class="sku">PLM-05</span></div>
+        <p class="style-tag">One-piece engineered knit upper — seamless, sock-like, the most
+          breathable and fastest-drying. Delivers "holds the foot" through the knit itself.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Upper</td><td class="val">M-02 recycled knit, knit-to-shape, 1-piece</td></tr>
+            <tr><td class="k">Seams</td><td class="val">Seamless vamp; heel seam only</td></tr>
+            <tr><td class="k">Closure</td><td class="val">Slip-on, integrated stretch collar</td></tr>
+            <tr><td class="k">Collar height</td><td class="val">66 mm</td></tr>
+            <tr><td class="k">Reinforcement</td><td class="val">TPU heel + fused eyestay zones</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">205 g (lightest upper)</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><div class="h">Sourcing note</div>
+          Requires a flat-knit supplier (Stoll/Shima). Higher upper unit cost, lower
+          cutting/closing labour — nets close to canvas at volume.</div>
+      </div>
+    </div>
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway"><div class="mini" style="--upper:#4A4E52;--cw:#A6C13E;--sole:#23272C;--foxing:#3C4044"><svg class="flat" viewBox="0 0 480 205" aria-label="Knit in Graphite / Lime"><use href="#flat-knit"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#4A4E52"></span><span class="chip" style="background:#A6C13E"></span></div><div><div class="cn">Graphite / Lime</div><div class="cc">4A4E52 · A6C13E</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#CFD4D1;--cw:#E1543A;--sole:#EDE9DF;--foxing:#DDE0DC"><svg class="flat" viewBox="0 0 480 205" aria-label="Knit in Mist / Persimmon"><use href="#flat-knit"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#CFD4D1"></span><span class="chip" style="background:#E1543A"></span></div><div><div class="cn">Mist / Persimmon</div><div class="cc">CFD4D1 · E1543A</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#C9B79A;--cw:#A6482B;--sole:#3A342B;--foxing:#D3C2A7"><svg class="flat" viewBox="0 0 480 205" aria-label="Knit in Sand / Rust"><use href="#flat-knit"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#C9B79A"></span><span class="chip" style="background:#A6482B"></span></div><div><div class="cn">Sand / Rust</div><div class="cc">C9B79A · A6482B</div></div></div></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="blocklabel">Bill of materials</div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">1</td><td>Knit upper (1-piece)</td><td>M-02</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">2</td><td>Fused TPU reinforcement film</td><td>M-09</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">3</td><td>Strobel sock</td><td>M-05</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">4</td><td>Outsole + foxing + pinstripe</td><td>M-06/07/08</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">5</td><td>EVA footbed</td><td>M-04</td><td class="num">1 pr</td></tr>
+          </tbody></table></div></div>
+      <div><div class="blocklabel">Construction sequence</div>
+        <ol class="steps">
+          <li><b>Knit-to-shape</b> <span class="d">— knit upper with integrated collar &amp; reinforcement zones.</span></li>
+          <li><b>Heat-fuse</b> <span class="d">— laminate TPU film to heel/eyestay; close heel seam.</span></li>
+          <li><b>Strobel</b> <span class="d">— stitch strobel; set TPU heel counter.</span></li>
+          <li><b>Last &amp; heat-set</b> <span class="d">— mount PL-01, heat-set knit to shape.</span></li>
+          <li><b>Attach sole + vulcanise</b> <span class="d">— follow Core steps 5–7.</span></li>
+          <li><b>De-last &amp; finish</b> <span class="d">— footbed, QC + lot wash-test, box.</span></li>
+        </ol></div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== STYLE 06 MULE ===================== -->
+  <section id="s06">
+    <div class="shead"><span class="no">07</span><h2>Style 06 — Mule</h2>
+      <span class="sheet">Sheet 08 / 12</span></div>
+    <div class="styletop">
+      <div>
+        <div class="flatcard hero-flat" style="--upper:#E8E2D2;--cw:#7C6BB0;--sole:#23272C;--foxing:#ECEAE2">
+          <span class="stamp">PLM-06 · side · UK7</span><span class="scale">1:2.5</span>
+          <svg class="flat" viewBox="0 0 480 210" role="img" aria-label="Side flat of the Mule open-heel plimsoll"><use href="#flat-mule"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="style-id"><span class="snum">06</span><h3>Mule</h3><span class="sku">PLM-06</span></div>
+        <p class="style-tag">Open-heel backless plimsoll — steps on/off at a desk in one move.
+          Same sole platform, upper cut away at the heel with a reinforced collar.</p>
+        <div class="tbl-wrap"><table>
+          <tbody>
+            <tr><td class="k">Closure</td><td class="val">Backless slip, open heel</td></tr>
+            <tr><td class="k">Collar</td><td class="val">Reinforced elastic binding at instep</td></tr>
+            <tr><td class="k">Upper</td><td class="val">M-01 canvas, front-half only</td></tr>
+            <tr><td class="k">Heel</td><td class="val">Open — no counter</td></tr>
+            <tr><td class="k">Footbed</td><td class="val">M-04 EVA + higher-grip top-cloth</td></tr>
+            <tr><td class="k">Weight (UK7)</td><td class="val">190 g (lightest overall)</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><div class="h">Fit risk</div>
+          Backless = higher heel-slip risk. Requires a snug throat and a grippier footbed
+          top-cloth; wear-trial before sign-off (see §5).</div>
+      </div>
+    </div>
+    <div class="blocklabel">Colourways</div>
+    <div class="cways">
+      <div class="cway"><div class="mini" style="--upper:#E8E2D2;--cw:#7C6BB0;--sole:#23272C;--foxing:#ECEAE2"><svg class="flat" viewBox="0 0 480 205" aria-label="Mule in Chalk / Lilac"><use href="#flat-mule"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#E8E2D2"></span><span class="chip" style="background:#7C6BB0"></span></div><div><div class="cn">Chalk / Lilac</div><div class="cc">E8E2D2 · 7C6BB0</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#B07A55;--cw:#EDE9DF;--sole:#3A2A1E;--foxing:#BC875F"><svg class="flat" viewBox="0 0 480 205" aria-label="Mule in Clay / Bone"><use href="#flat-mule"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#B07A55"></span><span class="chip" style="background:#EDE9DF"></span></div><div><div class="cn">Clay / Bone</div><div class="cc">B07A55 · EDE9DF</div></div></div></div>
+      <div class="cway"><div class="mini" style="--upper:#23262A;--cw:#E8E2D2;--sole:#17191C;--foxing:#2B2E32"><svg class="flat" viewBox="0 0 480 205" aria-label="Mule in Ink / Chalk"><use href="#flat-mule"/></svg></div>
+        <div class="meta"><div class="chips"><span class="chip" style="background:#23262A"></span><span class="chip" style="background:#E8E2D2"></span></div><div><div class="cn">Ink / Chalk</div><div class="cc">23262A · E8E2D2</div></div></div></div>
+    </div>
+    <div class="grid2" style="margin-top:22px">
+      <div><div class="blocklabel">Bill of materials (delta)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Component</th><th>Ref</th><th class="num">Qty</th></tr></thead>
+          <tbody>
+            <tr><td class="k">+1</td><td>Reinforced instep binding</td><td>M-10</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">+2</td><td>Grip top-cloth footbed</td><td>M-04</td><td class="num">1 pr</td></tr>
+            <tr><td class="k">—</td><td>Heel counter (deleted)</td><td>M-09</td><td class="num">0</td></tr>
+            <tr><td class="k">—</td><td>Quarters/heel panel (deleted)</td><td>M-01</td><td class="num">0</td></tr>
+          </tbody></table></div></div>
+      <div><div class="blocklabel">Construction — changes</div>
+        <ol class="steps">
+          <li><b>Cut front-half upper</b> <span class="d">— vamp + instep only, no heel panel.</span></li>
+          <li><b>Reinforce &amp; bind instep</b> <span class="d">— elastic binding for a snug hold.</span></li>
+          <li><b>Strobel (open heel)</b> <span class="d">— stitch strobel; finish exposed heel edge cleanly.</span></li>
+          <li><b>Then follow Core steps 4–8</b> <span class="d">— grip top-cloth on footbed.</span></li>
+        </ol></div>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== TESTING ===================== -->
+  <section id="testing">
+    <div class="shead"><span class="no">08</span><h2>Testing &amp; acceptance</h2>
+      <span class="sheet">Sheet 09 / 12</span></div>
+    <p class="muted">No style ships — and no "machine washable" claim is used — until the
+      sample lot passes every row below. Test to recognised methods (SATRA / ISO).</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Test</th><th>Method</th><th>Acceptance</th><th>Stage</th></tr></thead>
+      <tbody>
+        <tr><td>Sole/upper bond strength</td><td class="val">SATRA TM411 / ISO 20344</td><td>≥ 4.0 N/mm, no substrate failure</td><td>Every lot</td></tr>
+        <tr><td>Bond retention post-wash</td><td class="val">Bond after 10× wash</td><td>≥ 80 % of initial; no delamination</td><td>PP + lot</td></tr>
+        <tr><td>Whole-shoe flex</td><td class="val">SATRA TM60 / ISO 20344</td><td>30,000 flexes, no crack/split</td><td>PP sample</td></tr>
+        <tr><td>Colourfastness to washing</td><td class="val">ISO 105-C06</td><td>Grade ≥ 4 (staining + change)</td><td>Per colour</td></tr>
+        <tr><td>Wash durability (whole shoe)</td><td class="val">plims protocol, 10× @30°C</td><td>≤ 3 % shrink, no odour, cue retained, footbed intact</td><td>PP + lot</td></tr>
+        <tr><td>Slip resistance (indoor)</td><td class="val">SATRA TM144 / ISO 13287</td><td>CoF ≥ 0.30 dry hard floor</td><td>PP sample</td></tr>
+        <tr><td>Footbed compression set</td><td class="val">ISO 1856</td><td>≤ 10 %</td><td>Material</td></tr>
+        <tr><td>Restricted substances</td><td class="val">REACH SVHC / azo / PFAS</td><td>Compliant + supplier declarations</td><td>Material</td></tr>
+        <tr><td>Fit / heel-slip (wear trial)</td><td class="val">8h wear panel, hard floor</td><td>No heel slip, no hot-spots (Mule critical)</td><td>PP sample</td></tr>
+      </tbody>
+    </table></div>
+    <div class="swrow" style="margin-top:16px">
+      <span class="sw"><i style="background:#2E7D57"></i>PP = pre-production</span>
+      <span class="sw"><i style="background:#B26A12"></i>lot = every production lot</span>
+      <span class="sw"><i style="background:#B23B32"></i>material = per material approval</span>
+    </div>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== SIZING ===================== -->
+  <section id="sizing">
+    <div class="shead"><span class="no">09</span><h2>Sizing &amp; grading</h2>
+      <span class="sheet">Sheet 10 / 12</span></div>
+    <p class="muted">Unisex run, UK 3–12 including half sizes. Grade from UK 7 sample size.
+      Forgiving knit/gore uppers reduce size-driven returns — publish a clear fit guide.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>UK</th><th>EU</th><th>US M</th><th>US W</th><th class="num">Last length (mm)</th><th class="num">Insole (mm)</th></tr></thead>
+      <tbody>
+        <tr><td class="val">3</td><td class="val">36</td><td class="val">4</td><td class="val">5</td><td class="num">237</td><td class="num">231</td></tr>
+        <tr><td class="val">4</td><td class="val">37</td><td class="val">5</td><td class="val">6</td><td class="num">245</td><td class="num">239</td></tr>
+        <tr><td class="val">5</td><td class="val">38</td><td class="val">6</td><td class="val">7</td><td class="num">254</td><td class="num">248</td></tr>
+        <tr><td class="val">6</td><td class="val">39–40</td><td class="val">7</td><td class="val">8</td><td class="num">262</td><td class="num">256</td></tr>
+        <tr><td class="val">7</td><td class="val">41</td><td class="val">8</td><td class="val">9</td><td class="num">271</td><td class="num">265</td></tr>
+        <tr><td class="val">8</td><td class="val">42</td><td class="val">9</td><td class="val">10</td><td class="num">279</td><td class="num">273</td></tr>
+        <tr><td class="val">9</td><td class="val">43</td><td class="val">10</td><td class="val">11</td><td class="num">288</td><td class="num">282</td></tr>
+        <tr><td class="val">10</td><td class="val">44</td><td class="val">11</td><td class="val">12</td><td class="num">296</td><td class="num">290</td></tr>
+        <tr><td class="val">11</td><td class="val">45–46</td><td class="val">12</td><td class="val">13</td><td class="num">305</td><td class="num">299</td></tr>
+        <tr><td class="val">12</td><td class="val">47</td><td class="val">13</td><td class="val">14</td><td class="num">313</td><td class="num">307</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="margin-top:12px;font-size:13px">Half sizes (3.5–11.5) graded at
+      the midpoint. Grade increment ≈ 8.5 mm/full size (⅔ length, ⅓ girth split).</p>
+  </section>
+
+  <hr class="rule"/>
+
+  <!-- ===================== PACKAGING + REV ===================== -->
+  <section id="packaging">
+    <div class="shead"><span class="no">10</span><h2>Packaging, labelling &amp; revision</h2>
+      <span class="sheet">Sheet 11–12 / 12</span></div>
+    <div class="grid2">
+      <div><div class="blocklabel">Packaging &amp; labelling</div>
+        <div class="tbl-wrap"><table><tbody>
+          <tr><td class="k">Box</td><td class="val">Recycled kraft, mono-material, no lamination</td></tr>
+          <tr><td class="k">Infill</td><td class="val">Recycled tissue; no plastic wrap</td></tr>
+          <tr><td class="k">Care label</td><td class="val">Wash symbols + "remove footbed &amp; laces"</td></tr>
+          <tr><td class="k">Composition</td><td class="val">Upper / lining / sole per market law</td></tr>
+          <tr><td class="k">Origin</td><td class="val">Country-of-origin marking</td></tr>
+          <tr><td class="k">Claims</td><td class="val">"Machine washable" only post-§5 pass</td></tr>
+        </tbody></table></div></div>
+      <div><div class="blocklabel">Compliance flags — confirm with specialist</div>
+        <div class="tbl-wrap"><table><tbody>
+          <tr><td class="k">EU/UK</td><td class="val">REACH restricted substances; labelling; EPR</td></tr>
+          <tr><td class="k">US</td><td class="val">CPSIA where relevant; CA Prop 65</td></tr>
+          <tr><td class="k">Vegan</td><td class="val">Verify adhesives/finishes are animal-free before claim</td></tr>
+          <tr><td class="k">Recycled %</td><td class="val">Match verified BOM + supplier declarations</td></tr>
+        </tbody></table></div>
+        <p class="muted" style="font-size:12.5px;margin-top:10px">LastPro AI flags law &amp;
+          claims; a compliance specialist verifies before market.</p>
+      </div>
+    </div>
+
+    <div class="blocklabel">Revision history</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Rev</th><th>Date</th><th>Change</th><th>By</th></tr></thead>
+      <tbody>
+        <tr><td class="val">A</td><td class="val">2026-07-14</td><td>Initial 6-style development pack, shared PL-01 platform</td><td class="val">LastPro AI</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <div class="foot">
+    <span>plims · TP-PLIMS-001 · Rev A</span>
+    <span>Confidential — development targets, confirm on sample</span>
+    <span>Prepared by LastPro AI</span>
+  </div>
+</div>
