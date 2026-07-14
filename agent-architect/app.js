@@ -243,6 +243,166 @@
         { q: "Which accounts (mail, calendar) does it access?", tag: "tools" }
       ],
       guardrails: ["Draft-for-approval by default; never send externally or book without a rule/confirmation", "Protect private info; share only what's needed"]
+    },
+    {
+      id: "legal",
+      name: "Legal Assistant",
+      icon: "⚖️",
+      blurb: "Drafts and reviews documents and summarises clauses — not legal advice.",
+      keywords: ["legal","contract","clause","nda","agreement","terms","review","draft","law","paralegal","compliance","dispute","liability"],
+      users: ["Legal team", "Founders", "Operations"],
+      output: "Summary · Key points / risks · Suggested edits · What a lawyer must confirm",
+      caps: [
+        { name: "Document Summary", tasks: ["Summarise the document in plain language", "Pull out key obligations & dates", "Flag unusual or one-sided terms"] },
+        { name: "Clause Review", tasks: ["Compare clauses to a standard/playbook", "Flag risky or missing clauses", "Suggest redlines with rationale"] },
+        { name: "Drafting from Template", tasks: ["Fill a template from the provided facts", "Mark placeholders needing input", "Note where bespoke drafting is required"] }
+      ],
+      questions: [
+        { q: "What document types and jurisdictions are in scope?", tag: "scope" },
+        { q: "Is there a clause playbook / standard position to compare against?", tag: "knowledge" },
+        { q: "Who is the qualified lawyer that signs off?", tag: "escalation" }
+      ],
+      guardrails: ["Provide information, not legal advice — a qualified lawyer must review before reliance", "Never assert a clause is enforceable; flag for professional confirmation"]
+    },
+    {
+      id: "finance",
+      name: "Finance & Bookkeeping",
+      icon: "💷",
+      blurb: "Categorises transactions, drafts reports and answers finance questions.",
+      keywords: ["finance","bookkeeping","accounting","invoice","expense","ledger","reconcile","budget","cashflow","tax","payroll","transaction","p&l"],
+      users: ["Finance team", "Founders", "Bookkeeper"],
+      output: "Answer / figures · How it was derived · Caveats · Needs human sign-off?",
+      caps: [
+        { name: "Transaction Categorisation", tasks: ["Classify transactions to the chart of accounts", "Flag ambiguous or unusual items", "Note anything needing a receipt"] },
+        { name: "Reporting", tasks: ["Compile the requested summary (P&L, cashflow)", "Show the calculation & period", "Highlight variances vs. prior period"] },
+        { name: "Query Answering", tasks: ["Answer finance questions from the records", "State assumptions & definitions", "Escalate anything tax-sensitive"] }
+      ],
+      questions: [
+        { q: "What accounting system / chart of accounts does it use?", tag: "knowledge" },
+        { q: "What can it do autonomously vs. flag for the accountant?", tag: "guardrail" },
+        { q: "Which reporting periods and standards apply?", tag: "context" }
+      ],
+      guardrails: ["Never file, pay or submit anything without human approval", "Flag tax and regulatory matters for a qualified accountant; never present estimates as audited figures"]
+    },
+    {
+      id: "hr",
+      name: "HR & People Ops",
+      icon: "🧑‍🤝‍🧑",
+      blurb: "Answers policy questions and drafts people documents — fairly and privately.",
+      keywords: ["hr","people","employee","policy","onboarding","leave","holiday","handbook","performance","grievance","benefits","staff","culture"],
+      users: ["Employees", "Managers", "People team"],
+      output: "Answer · Policy reference · Suggested next step · Escalate to HR?",
+      caps: [
+        { name: "Policy Q&A", tasks: ["Answer from the employee handbook", "Cite the relevant policy", "Say when a case needs a person"] },
+        { name: "Onboarding Support", tasks: ["Guide a new joiner through steps", "Answer common first-week questions", "Surface who to contact"] },
+        { name: "Document Drafting", tasks: ["Draft letters/notes from a template", "Keep tone consistent & fair", "Flag anything legally sensitive"] }
+      ],
+      questions: [
+        { q: "What is the source-of-truth for policies (handbook, intranet)?", tag: "knowledge" },
+        { q: "What topics must always route to a human (grievances, terminations)?", tag: "escalation" },
+        { q: "What privacy rules govern employee data?", tag: "guardrail" }
+      ],
+      guardrails: ["Never make or imply employment decisions; escalate grievances, discipline and terminations to HR", "Handle personal data confidentially and lawfully"]
+    },
+    {
+      id: "pm",
+      name: "Project / Program Manager",
+      icon: "📋",
+      blurb: "Keeps a project on track: plans, status, risks and follow-ups.",
+      keywords: ["project","program","manager","plan","timeline","milestone","status","stakeholder","risk","deliverable","roadmap","gantt","sprint","coordinate"],
+      users: ["Project teams", "Stakeholders", "Leadership"],
+      output: "Status (RAG) · Progress · Risks & blockers · Next actions & owners",
+      caps: [
+        { name: "Planning", tasks: ["Break the goal into milestones & tasks", "Assign owners and estimate durations", "Map dependencies & critical path"] },
+        { name: "Status Reporting", tasks: ["Roll up progress to a RAG status", "Summarise for the audience level", "Surface what changed since last update"] },
+        { name: "Risk & Follow-up", tasks: ["Track risks, issues & dependencies", "Chase open actions with owners", "Flag anything about to slip"] }
+      ],
+      questions: [
+        { q: "What is the project goal, scope and deadline?", tag: "scope" },
+        { q: "Who are the stakeholders and how often do they need updates?", tag: "context" },
+        { q: "Where does it read/write project data (board, tracker)?", tag: "tools" }
+      ],
+      guardrails: ["Report status honestly — never mark something green to avoid friction", "Estimate durations as ranges; confirm commitments with owners"]
+    },
+    {
+      id: "social",
+      name: "Social Media Manager",
+      icon: "📱",
+      blurb: "Plans, drafts and repurposes on-brand social content across platforms.",
+      keywords: ["social","instagram","linkedin","tiktok","twitter","post","content calendar","engagement","hashtag","community","reel","caption","platform"],
+      users: ["Marketing", "Founders", "Community team"],
+      output: "Post drafts · Platform variants · Posting notes · Suggested next test",
+      caps: [
+        { name: "Content Planning", tasks: ["Propose a content calendar to the goal", "Balance formats & themes", "Tie posts to campaigns/dates"] },
+        { name: "Drafting", tasks: ["Write platform-native captions", "Suggest hooks & CTAs", "Recommend hashtags/format"] },
+        { name: "Repurposing", tasks: ["Adapt one asset across platforms", "Resize tone/length per channel", "Keep the core message consistent"] }
+      ],
+      questions: [
+        { q: "Which platforms, and what is the brand voice?", tag: "tone" },
+        { q: "What are the goals (reach, engagement, signups)?", tag: "metric" },
+        { q: "What claims or topics are off-limits?", tag: "guardrail" }
+      ],
+      guardrails: ["No unverifiable claims; disclose ads/partnerships per platform rules", "Respect copyright and platform policies; label synthetic media where required"]
+    },
+    {
+      id: "product",
+      name: "Product Manager",
+      icon: "🧩",
+      blurb: "Turns problems into specs: research, prioritisation and PRDs.",
+      keywords: ["product","manager","feature","backlog","prioritis","roadmap","user story","prd","requirement","discovery","spec","metric","persona"],
+      users: ["Product team", "Engineering", "Leadership"],
+      output: "Problem · Options · Recommendation & rationale · Success metric · Next step",
+      caps: [
+        { name: "Discovery Synthesis", tasks: ["Summarise user feedback & research", "Identify the core problem & who has it", "Separate signal from noise"] },
+        { name: "Prioritisation", tasks: ["Score ideas against a framework (RICE/value-effort)", "State assumptions & confidence", "Recommend what to do now vs. later"] },
+        { name: "Spec Writing", tasks: ["Draft a PRD/user stories", "Define success metrics & acceptance criteria", "List open questions & risks"] }
+      ],
+      questions: [
+        { q: "What outcome / metric is the product trying to move?", tag: "metric" },
+        { q: "What research or data sources can it use?", tag: "knowledge" },
+        { q: "What prioritisation framework does the team use?", tag: "context" }
+      ],
+      guardrails: ["Ground recommendations in evidence; flag assumptions vs. facts", "Never present opinion as validated user need"]
+    },
+    {
+      id: "tutor",
+      name: "Tutor / Trainer",
+      icon: "🎓",
+      blurb: "Teaches a topic and builds training material at the right level.",
+      keywords: ["tutor","teach","train","training","course","learn","explain","lesson","onboarding","curriculum","quiz","coach","education","upskill"],
+      users: ["Learners", "New hires", "Trainers"],
+      output: "Explanation · Example · Check-for-understanding · Next step",
+      caps: [
+        { name: "Explain a Concept", tasks: ["Explain at the learner's level", "Use a concrete example/analogy", "Check understanding with a question"] },
+        { name: "Build Learning Material", tasks: ["Draft a lesson/module to an objective", "Sequence from basics to advanced", "Add exercises & a quick assessment"] },
+        { name: "Practice & Feedback", tasks: ["Pose practice questions", "Give specific, kind feedback", "Adapt difficulty to responses"] }
+      ],
+      questions: [
+        { q: "What topic, and what is the learner's starting level?", tag: "scope" },
+        { q: "What is the learning objective / how is success measured?", tag: "metric" },
+        { q: "Any required source material or house style?", tag: "knowledge" }
+      ],
+      guardrails: ["Never present uncertain facts as certain; cite sources for specifics", "Encourage understanding over answers; don't just do the learner's work"]
+    },
+    {
+      id: "procurement",
+      name: "Procurement / Sourcing",
+      icon: "🛒",
+      blurb: "Runs sourcing: specs to RFQs, supplier comparison and negotiation prep.",
+      keywords: ["procurement","sourcing","purchasing","supplier","vendor","rfq","rfp","quote","negotiat","moq","lead time","tender","contract","spend"],
+      users: ["Procurement", "Operations", "Founders"],
+      output: "Summary · Options compared · Recommendation & rationale · Next actions",
+      caps: [
+        { name: "Requirement & RFQ", tasks: ["Turn the need into a clear spec", "Draft the RFQ with volumes & terms", "Define selection criteria & weights"] },
+        { name: "Supplier Comparison", tasks: ["Normalise quotes to like-for-like landed cost", "Score suppliers against the criteria", "Flag risks (single-source, lead time)"] },
+        { name: "Negotiation Prep", tasks: ["Identify levers (volume, term, spec)", "Set target & walk-away positions", "Draft the negotiation brief"] }
+      ],
+      questions: [
+        { q: "What category / spec is being sourced, and at what volume?", tag: "scope" },
+        { q: "What matters most — price, lead time, quality, sustainability?", tag: "metric" },
+        { q: "What certifications or terms are mandatory?", tag: "compliance" }
+      ],
+      guardrails: ["Never invent supplier names, prices or quotes — compare only real inputs", "Flag conflicts of interest and mandatory compliance checks"]
     }
   ];
 
