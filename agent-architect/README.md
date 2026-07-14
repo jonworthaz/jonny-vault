@@ -16,11 +16,14 @@ A 6-step wizard:
 1. **Objective / JD** — describe the goal or paste a job description. Architect
    scores it against a built-in library of agent archetypes and suggests the
    best fit (with a % match), lifting capabilities straight from the JD.
-   The built-in library covers 19 archetypes: advisor/consultant, customer
+   The built-in library covers 27 archetypes: advisor/consultant, customer
    support, research, content, sales/outreach, ops/automation, compliance,
    data analyst, recruiting, coding, executive assistant, legal, finance,
    HR/people ops, project manager, social media, product manager,
-   tutor/trainer and procurement.
+   tutor/trainer, procurement, footwear/shoemaker, fashion/apparel,
+   furniture/cabinet maker, jeweller/goldsmith, leather goods, industrial/
+   product design, chef/culinary and interior design. (You can also just paste
+   any job description — the wizard lifts capabilities straight from it.)
 2. **Identity** — name, one-line role, users, domain, and where it'll run
    (Copilot Studio / Claude / custom GPT).
 3. **Capabilities & tasks** — auto-decomposed skills, each broken into the tasks

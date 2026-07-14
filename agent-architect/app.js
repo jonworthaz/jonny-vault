@@ -229,7 +229,7 @@
       name: "Personal / Executive Assistant",
       icon: "🗓️",
       blurb: "Manages inbox, calendar and tasks; drafts on your behalf.",
-      keywords: ["assistant","calendar","schedule","email","inbox","meeting","reminder","task","organise","pa","ea","triage"],
+      keywords: ["assistant","personal assistant","executive assistant","calendar","schedule","email","inbox","meeting","reminder","organise","triage"],
       users: ["The principal", "Their team"],
       output: "What it did / drafted · Options · What needs your decision",
       caps: [
@@ -309,7 +309,7 @@
       name: "Project / Program Manager",
       icon: "📋",
       blurb: "Keeps a project on track: plans, status, risks and follow-ups.",
-      keywords: ["project","program","manager","plan","timeline","milestone","status","stakeholder","risk","deliverable","roadmap","gantt","sprint","coordinate"],
+      keywords: ["project","program","project manager","timeline","milestone","stakeholder","deliverable","roadmap","gantt","sprint","critical path"],
       users: ["Project teams", "Stakeholders", "Leadership"],
       output: "Status (RAG) · Progress · Risks & blockers · Next actions & owners",
       caps: [
@@ -403,6 +403,170 @@
         { q: "What certifications or terms are mandatory?", tag: "compliance" }
       ],
       guardrails: ["Never invent supplier names, prices or quotes — compare only real inputs", "Flag conflicts of interest and mandatory compliance checks"]
+    },
+    {
+      id: "footwear",
+      name: "Footwear / Shoemaker",
+      icon: "👞",
+      blurb: "Deep shoemaking expertise: materials, design, construction, production & QC across all shoe types.",
+      keywords: ["shoe","shoes","shoemaker","footwear","cobbler","cordwainer","boot","sneaker","sole","outsole","insole","last","welt","heel","upper","lasting","clicking","goodyear"],
+      users: ["Footwear brands", "Designers", "Production managers", "Factories / makers"],
+      output: "Summary · Options / recommendation · Materials & construction notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Materials & Components", tasks: ["Select uppers for the use case (full-grain/suede leather, textile, knit, synthetic)", "Spec soling (rubber, TPU, EVA, leather), insoles, linings, adhesives, threads & hardware", "Balance performance, cost, sustainability and sourcing / MOQ"] },
+        { name: "Design & Last Development", tasks: ["Advise on last shape, fit and size grading", "Develop the style across shoe types (dress, boot, sneaker, sandal, loafer, heel, moccasin)", "Turn a concept into a tech pack / specification"] },
+        { name: "Construction Methods", tasks: ["Recommend a construction (cement, Goodyear welt, Blake / Blake-rapid, vulcanised, strobel, stitchdown, moccasin)", "Trade off durability, repairability, flexibility, cost and factory capability", "Flag what each construction demands of materials & tooling"] },
+        { name: "Production & Process", tasks: ["Map the flow: clicking/cutting → closing/stitching → lasting → bottoming → finishing", "Define operations, tooling (dies, lasts, moulds) and line layout", "Identify bottlenecks and cycle times"] },
+        { name: "Labour & Line Planning", tasks: ["Estimate operations and skill level per step", "Plan line balancing and output per day", "Advise where hand-work vs. automation fits"] },
+        { name: "Quality Control", tasks: ["Set QC checkpoints and AQL", "Define tests (flex, bond/peel strength, abrasion, colourfastness, fit/wear trial)", "Diagnose defects (sole separation, bond failure, creasing, poor fit) and corrective actions"] },
+        { name: "Costing & Project Management", tasks: ["Build a bill of materials + labour cost to a target FOB", "Plan the development calendar (concept → sampling → fit → confirmation → production)", "Track the critical path, long-lead tooling and supplier milestones"] }
+      ],
+      questions: [
+        { q: "What shoe type(s) and use case — dress, athletic, work/safety, casual, kids?", tag: "scope" },
+        { q: "What volume, target FOB / retail price, and target markets?", tag: "context" },
+        { q: "What factory & construction capabilities are available, and any brand / material / sustainability requirements?", tag: "knowledge" }
+      ],
+      guardrails: ["Recommend physical testing (flex, bond strength, wear trials) before committing a material or construction — never assert durability unverified", "Give material/cost figures as ranges and flag estimates; real FOB comes from the factory quote"]
+    },
+    {
+      id: "apparel",
+      name: "Fashion / Apparel Designer",
+      icon: "🧵",
+      blurb: "Garment design through to production: materials, fit, construction and tech packs.",
+      keywords: ["apparel","garment","clothing","fashion","sewing","seamstress","pattern","tailoring","fabric","collection","stitch","seam","grading"],
+      users: ["Fashion brands", "Designers", "Garment factories"],
+      output: "Summary · Options / recommendation · Materials & construction notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Design & Range", tasks: ["Develop styles to the brief & season", "Balance the range across price and use", "Turn concepts into tech packs"] },
+        { name: "Materials & Fit", tasks: ["Select fabrics, trims & interlinings", "Advise on fit, grading and size sets", "Flag drape, stretch & care implications"] },
+        { name: "Construction & Production", tasks: ["Specify seams, stitching & finishes", "Map cut → sew → finish operations", "Plan sampling and QC checkpoints"] }
+      ],
+      questions: [
+        { q: "What garment type(s), season and target customer?", tag: "scope" },
+        { q: "What volume, target cost and markets?", tag: "context" },
+        { q: "Any brand fabric / sustainability / labelling requirements?", tag: "knowledge" }
+      ],
+      guardrails: ["Recommend fit and wash/wear testing before bulk — never assert fit or durability unverified", "Give cost figures as ranges; real prices come from the factory quote"]
+    },
+    {
+      id: "furniture",
+      name: "Furniture / Cabinet Maker",
+      icon: "🪑",
+      blurb: "Designs and specs furniture: timber, joinery, construction and production.",
+      keywords: ["furniture","cabinet","woodwork","joinery","carpentry","joiner","timber","cabinetry","veneer","dovetail","upholstery"],
+      users: ["Furniture brands", "Makers / workshops", "Interior clients"],
+      output: "Summary · Options / recommendation · Materials & joinery notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Design & Materials", tasks: ["Advise on timber / board / veneer for the piece", "Balance strength, weight, cost and finish", "Turn a concept into a cut list & drawing"] },
+        { name: "Joinery & Construction", tasks: ["Recommend joints (dovetail, mortise & tenon, dowel, domino)", "Trade off strength, cost and repairability", "Specify hardware, finish and fixings"] },
+        { name: "Production & QC", tasks: ["Map cutting → machining → assembly → finishing", "Plan tooling, jigs and batch flow", "Set QC checks (fit, finish, stability)"] }
+      ],
+      questions: [
+        { q: "What piece(s), style and intended use?", tag: "scope" },
+        { q: "One-off / batch / production volume, and budget?", tag: "context" },
+        { q: "Any material, sustainability (e.g. FSC) or fire requirements?", tag: "compliance" }
+      ],
+      guardrails: ["Recommend a prototype and load/stability testing before batch — don't assert strength unverified", "Give cost/timber figures as ranges and flag estimates"]
+    },
+    {
+      id: "jeweller",
+      name: "Jeweller / Goldsmith",
+      icon: "💍",
+      blurb: "Designs and makes jewellery: metals, stones, setting and production methods.",
+      keywords: ["jewel","jewellery","jewelry","goldsmith","silversmith","ring","gemstone","gem","precious metal","setting","casting","hallmark","carat"],
+      users: ["Jewellery brands", "Bench jewellers", "Private clients"],
+      output: "Summary · Options / recommendation · Materials & method notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Design & Materials", tasks: ["Advise on metal (gold karat, silver, platinum) & finish", "Select and grade stones (cut, clarity, colour, carat)", "Turn a concept into a CAD / bench spec"] },
+        { name: "Making & Setting", tasks: ["Recommend method (fabrication, lost-wax casting, CAD/CAM)", "Advise setting type (claw, bezel, pavé, channel)", "Flag durability & wear considerations"] },
+        { name: "Production & Compliance", tasks: ["Plan sampling and batch production", "Set QC (stone security, finish, weight)", "Cover hallmarking & metal compliance"] }
+      ],
+      questions: [
+        { q: "What piece(s) and style, and any stones involved?", tag: "scope" },
+        { q: "One-off / batch volume, and target price / metal budget?", tag: "context" },
+        { q: "Which markets (drives hallmarking & metal standards)?", tag: "compliance" }
+      ],
+      guardrails: ["Never certify stone authenticity or value — recommend an independent gemmologist / assay", "Give metal/stone costs as ranges; flag hallmarking requirements per market"]
+    },
+    {
+      id: "leathergoods",
+      name: "Leather Goods Maker",
+      icon: "👜",
+      blurb: "Designs and makes bags & accessories: leather, hardware, construction and QC.",
+      keywords: ["handbag","bag","wallet","belt","leather goods","saddler","leatherwork","tannery","stitching","edge paint","accessory"],
+      users: ["Accessory brands", "Leather workshops", "Designers"],
+      output: "Summary · Options / recommendation · Materials & construction notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Materials & Hardware", tasks: ["Select leather (tannage, weight, finish) & linings", "Spec hardware, zips, thread & adhesives", "Balance look, durability, cost and sourcing"] },
+        { name: "Design & Construction", tasks: ["Develop the pattern & structure", "Recommend construction (turned edge, raw/painted edge, piped)", "Turn a concept into a spec / tech pack"] },
+        { name: "Production & QC", tasks: ["Map clicking → skiving → stitching → finishing", "Plan sampling and tooling (clicker dies)", "Set QC (stitching, edge finish, hardware pull)"] }
+      ],
+      questions: [
+        { q: "What item(s) and positioning (luxury, mid, functional)?", tag: "scope" },
+        { q: "Volume, target cost and markets?", tag: "context" },
+        { q: "Any material / traceability / sustainability requirements?", tag: "knowledge" }
+      ],
+      guardrails: ["Recommend wear and hardware-pull testing before bulk — don't assert durability unverified", "Give cost figures as ranges; real prices come from the maker's quote"]
+    },
+    {
+      id: "industrial",
+      name: "Industrial / Product Designer",
+      icon: "🛠️",
+      blurb: "Designs physical products for manufacture: materials, DFM, prototyping and tooling.",
+      keywords: ["industrial design","product design","prototype","cad","injection","tooling","ergonomic","dfm","3d printing","mould","enclosure","manufactur"],
+      users: ["Hardware startups", "Product teams", "Manufacturers"],
+      output: "Summary · Options / recommendation · Materials & DFM notes · Cost & tooling impact · Next actions",
+      caps: [
+        { name: "Concept & Materials", tasks: ["Develop concepts to the brief & ergonomics", "Select materials & processes (injection, sheet metal, cast)", "Turn a concept into CAD / a spec"] },
+        { name: "Design for Manufacture", tasks: ["Review parts for DFM/DFA", "Advise on tolerances, draft & wall thickness", "Flag tooling cost & lead-time drivers"] },
+        { name: "Prototyping & Validation", tasks: ["Plan prototype stages (3D print → tooling)", "Define tests (fit, function, drop, safety)", "Set QC and first-article inspection"] }
+      ],
+      questions: [
+        { q: "What product, and what problem/ergonomics must it solve?", tag: "scope" },
+        { q: "Volume, target unit cost and tooling budget?", tag: "context" },
+        { q: "Which markets & safety standards apply?", tag: "compliance" }
+      ],
+      guardrails: ["Recommend prototyping and safety testing before tooling — never assert it works unverified", "Give cost/tooling figures as ranges and flag estimates"]
+    },
+    {
+      id: "chef",
+      name: "Chef / Culinary Development",
+      icon: "🍳",
+      blurb: "Develops recipes and menus: ingredients, method, costing and kitchen production.",
+      keywords: ["chef","culinary","recipe","menu","kitchen","cooking","food","cuisine","dish","restaurant","pastry","catering"],
+      users: ["Restaurants", "Food brands", "Caterers"],
+      output: "Summary · Options / recommendation · Ingredients & method notes · Cost & yield impact · Next actions",
+      caps: [
+        { name: "Recipe Development", tasks: ["Develop dishes to the brief, cuisine & dietary needs", "Balance flavour, texture and presentation", "Write the method with quantities & yields"] },
+        { name: "Menu & Costing", tasks: ["Design a coherent menu to a price point", "Cost recipes and compute margin / GP%", "Flag allergens and dietary labelling"] },
+        { name: "Kitchen Production", tasks: ["Plan prep, mise en place and service flow", "Advise on scaling and consistency", "Set food-safety (HACCP) checkpoints"] }
+      ],
+      questions: [
+        { q: "What cuisine / concept and service style?", tag: "scope" },
+        { q: "Target price point, covers/volume and dietary needs?", tag: "context" },
+        { q: "Kitchen equipment, skill level and food-safety regime?", tag: "compliance" }
+      ],
+      guardrails: ["Always surface allergens; never omit a known allergen or dietary risk", "Flag food-safety (HACCP) requirements — a person owns compliance sign-off"]
+    },
+    {
+      id: "interior",
+      name: "Interior Designer",
+      icon: "🛋️",
+      blurb: "Designs interior spaces: layout, materials, lighting and specification.",
+      keywords: ["interior design","interior","decor","furnishing","space plan","fit-out","room","mood board","lighting","flooring","joinery"],
+      users: ["Homeowners", "Developers", "Commercial clients"],
+      output: "Summary · Concept / options · Materials & spec notes · Cost & timeline impact · Next actions",
+      caps: [
+        { name: "Concept & Space Planning", tasks: ["Develop a concept to the brief & budget", "Plan layout, flow and zoning", "Produce mood boards / visuals"] },
+        { name: "Materials & Specification", tasks: ["Select finishes, furniture, lighting & FF&E", "Balance look, durability, cost and lead time", "Compile a spec / schedule"] },
+        { name: "Delivery", tasks: ["Plan the phases and trades", "Track budget, long-lead items and installs", "Flag building/fire/access compliance"] }
+      ],
+      questions: [
+        { q: "What space, style and how will it be used?", tag: "scope" },
+        { q: "Budget, timeline and any fixed constraints?", tag: "context" },
+        { q: "Any building / fire / accessibility requirements?", tag: "compliance" }
+      ],
+      guardrails: ["Flag structural, electrical and fire matters for a qualified professional — don't sign them off", "Give cost/lead-time figures as ranges; confirm with suppliers & trades"]
     }
   ];
 
@@ -472,9 +636,23 @@
   function scoreArchetypes() {
     const text = (state.objective + " " + state.jd).toLowerCase();
     if (!text.trim()) return [];
+    const wordHit = (w) => new RegExp("\\b" + w).test(text); // leading word boundary
     return ARCHETYPES.map(a => {
       let hits = 0;
-      a.keywords.forEach(k => { if (text.indexOf(k) !== -1) hits++; });
+      a.keywords.forEach(k => {
+        if (/^[a-z0-9]+$/.test(k)) {
+          // single word: leading boundary (matches plurals/suffixes, avoids
+          // false positives like "ring" inside "manufacturing")
+          if (wordHit(k)) hits++;
+        } else if (text.indexOf(k) !== -1) {
+          hits++; // phrase / punctuation: substring match
+        }
+      });
+      // strongly weight the archetype's own name words — the clearest signal,
+      // so a distinctive name term beats incidental keyword noise
+      a.name.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 4).forEach(w => {
+        if (wordHit(w)) hits += 1;
+      });
       return { a, hits };
     }).filter(x => x.hits > 0).sort((x, y) => y.hits - x.hits);
   }
