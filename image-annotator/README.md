@@ -90,6 +90,16 @@ panel keeps a running **estimated total**.
   opens straight in **Excel / Google Sheets** (job reference, each item's part
   name, notes and cost, plus the total).
 
+### Save & reopen a project (editable)
+The image exports above are *flattened* — the marks are burned into the picture
+and can't be changed afterwards. To come back and keep editing:
+- **Save project** — writes an editable `.json` project file holding the base
+  image and every annotation as data (named like the other exports, e.g.
+  `ab12-cde-front-end-20260620-103045-01-project.json`).
+- **Open project** — loads a saved `.json` back in, image and all annotations
+  restored and fully editable (move, recolour, delete, add more, re-crop).
+  Opening starts a fresh undo history.
+
 ### Shortcuts
 `V` select · `G` / hold `Space` pan · `C` circle · `1` one-click circle ·
 `R` box · `H` highlight · `A` arrow · `P` draw · `T` text box · `N` number ·
@@ -104,5 +114,5 @@ panel keeps a running **estimated total**.
 - Everything is client-side; to share or store reports you'd add a backend.
 - Annotations are vector objects re-rendered each frame, which is why undo/redo,
   move, recolour and "bake on crop/save" all work cleanly.
-- Could add: resize handles for existing marks, saving an editable project file
-  (JSON), blur/redact tool, and multi-image jobs.
+- Could add: resize handles for existing marks, a blur/redact tool, and
+  multi-image jobs.
