@@ -44,6 +44,7 @@ Self-contained, zero-dependency web tools that live alongside the playbook
 | Tool | What it is |
 |---|---|
 | [**Claude Ideas**](./claude-ideas/) | Standalone idea → launch system: idea board, research & launch, Medvi OS gate, workflows |
+| [**Architect**](./agent-architect/) | Agent creation wizard: objective/JD → best-practice agent spec ([+ no-UI prompt](./agent-architect-prompt.md)) |
 | [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
 | [**MarkUp**](./image-annotator/) | Image annotation & markup |
 
