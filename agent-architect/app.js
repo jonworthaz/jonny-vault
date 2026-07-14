@@ -1193,6 +1193,20 @@
   function back() { if (state.step > 0) { state.step--; render(); } }
 
   function boot() {
+    // Deep link: ?agent=<id|name-slug|keyword> opens straight to that archetype
+    // (e.g. ...?agent=shoemaker). Starts a fresh blueprint pre-seeded with it.
+    try {
+      var want = new URLSearchParams(location.search || "").get("agent");
+      if (want) {
+        want = want.toLowerCase().trim();
+        var slug = function (s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); };
+        var a = ARCHETYPES.find(function (x) {
+          return x.id === want || slug(x.name).indexOf(want) !== -1 || x.keywords.indexOf(want) !== -1;
+        });
+        if (a) { state = blank(); state.archetypeId = a.id; seedFromArchetype(true); state.step = 1; }
+      }
+    } catch (e) { /* ignore malformed URL */ }
+
     el("agentName").oninput = () => { state.name = el("agentName").value; save(); };
     el("nextBtn").onclick = next;
     el("backBtn").onclick = back;
