@@ -8,10 +8,10 @@
 > roadmap. Drop it into **Copilot Studio** (Teams / M365), the **Claude API**,
 > or a custom GPT.
 
-Built from Jonathan Worthington's PackPro AI design and tightened into
-reliable, few-shot-anchored prompts. Domain tuned to **personal care /
-cosmetics / toiletries and food** FMCG packaging — flexible, rigid plastics,
-paper & board, metal, and glass.
+Built from the PackPro AI design and tightened into reliable,
+few-shot-anchored prompts. Domain covers **personal care / cosmetics /
+toiletries and food** FMCG packaging — flexible, rigid plastics, paper &
+board, metal, and glass.
 
 ## How to use this
 
@@ -404,7 +404,7 @@ AI-powered supplier scorecards.
 ## Sources
 
 Role and capabilities grounded in packaging consultant / technologist / engineer
-job descriptions, tuned to Jonathan Worthington's PackPro AI design:
+job descriptions, tuned to the PackPro AI design:
 
 - [Container & Packaging — Packaging Consultant Job Description](https://www.containerandpackaging.com/resources/packconjob/)
 - [Zippia — What Does a Packaging Specialist Do?](https://www.zippia.com/packaging-specialist-jobs/what-does-a-packaging-specialist-do/)
