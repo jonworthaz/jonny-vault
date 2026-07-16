@@ -20,16 +20,16 @@ def simple(name,base,rough,coat=0,sheen=0):
 def canvas_mat():
     m=bpy.data.materials.new("canvas"); m.use_nodes=True; nt=m.node_tree; N=nt.nodes; L=nt.links
     b=N.get("Principled BSDF"); I=b.inputs
-    I["Base Color"].default_value=(0.90,0.87,0.79,1); I["Roughness"].default_value=0.92
+    I["Base Color"].default_value=(0.91,0.88,0.80,1); I["Roughness"].default_value=0.92
     if "Sheen Weight" in I: I["Sheen Weight"].default_value=0.6
     tc=N.new("ShaderNodeTexCoord"); mp=N.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value=(42,42,42)
     L.new(tc.outputs["Object"],mp.inputs["Vector"])
-    w1=N.new("ShaderNodeTexWave"); w1.wave_type='BANDS'; w1.bands_direction='X'; w1.inputs["Scale"].default_value=1.0; w1.inputs["Distortion"].default_value=1.5
-    w2=N.new("ShaderNodeTexWave"); w2.wave_type='BANDS'; w2.bands_direction='Y'; w2.inputs["Scale"].default_value=1.0; w2.inputs["Distortion"].default_value=1.5
+    w1=N.new("ShaderNodeTexWave"); w1.wave_type='BANDS'; w1.bands_direction='X'; w1.inputs["Scale"].default_value=1.0; w1.inputs["Distortion"].default_value=0.0
+    w2=N.new("ShaderNodeTexWave"); w2.wave_type='BANDS'; w2.bands_direction='Y'; w2.inputs["Scale"].default_value=1.0; w2.inputs["Distortion"].default_value=0.0
     L.new(mp.outputs["Vector"],w1.inputs["Vector"]); L.new(mp.outputs["Vector"],w2.inputs["Vector"])
     mul=N.new("ShaderNodeMath"); mul.operation='MULTIPLY'
     L.new(w1.outputs["Fac"],mul.inputs[0]); L.new(w2.outputs["Fac"],mul.inputs[1])
-    bump=N.new("ShaderNodeBump"); bump.inputs["Strength"].default_value=1.0; bump.inputs["Distance"].default_value=0.14
+    bump=N.new("ShaderNodeBump"); bump.inputs["Strength"].default_value=0.7; bump.inputs["Distance"].default_value=0.11
     L.new(mul.outputs["Value"],bump.inputs["Height"]); L.new(bump.outputs["Normal"],b.inputs["Normal"])
     return m
 
@@ -93,13 +93,18 @@ while d<total-1e-6:
             box(p.x,p.y,0.96,ang,0.07,0.02,0.02,SV,SF); break
         dd-=L
     d+=spacing
+# toe-cap seam stitching (arch at a toe station)
+xt=2.05; wt=wA(xt); ht=hp(xt)
+for a in range(7,Nt-6,2):
+    th=math.pi*(a/Nt); yv=wt*math.cos(th)*0.99; zv=y0+ht*math.sin(th)*dip(xt,th)+0.035
+    box(xt,yv,zv,math.pi/2,0.055,0.017,0.017,SV,SF)
 stitch=mk("Stitch",SV,SF)
 
 # materials
 sole.data.materials.append(simple("rubber",(0.028,0.032,0.038),0.42,coat=0.3))
 stripe.data.materials.append(simple("persimmon",(0.88,0.33,0.23),0.38,coat=0.35))
 upper.data.materials.append(canvas_mat())
-stitch.data.materials.append(simple("thread",(0.72,0.68,0.58),0.7))
+stitch.data.materials.append(simple("thread",(0.77,0.73,0.63),0.65))
 
 # world + lights + floor + cam
 w=bpy.data.worlds.new("W"); sc.world=w; w.use_nodes=True
