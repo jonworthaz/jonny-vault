@@ -29,14 +29,23 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2200);
 }
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('Copied to clipboard'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copied'); } catch (_) { toast('Copy failed — select manually'); }
+    ta.remove();
+  }
+}
 
 /* ------------------------------------------------------------------ store */
 function normalizeIdea(raw) {
   const a = Object.assign({
     id: uid(), title: 'Untitled idea', summary: '', source: 'manual', tags: [],
     status: 'Captured', criteria: {}, gates: { compounds: false, screenshot: true },
+    inbox: false, aiAnalysis: '',
     medviOS: false, medviChecks: {}, gateScores: {}, medviNotes: '',
-    review: '', research: [], analysis: '', development: '',
+    review: '', research: [], analysis: '', development: '', brainstorm: [],
     gateReviews: [], experiments: [], statusHistory: [],
     attachments: { workflows: [], files: [], agents: [] },
     createdAt: now(), updatedAt: now(),
@@ -45,7 +54,7 @@ function normalizeIdea(raw) {
   a.gates = Object.assign({ compounds: false, screenshot: true }, a.gates);
   a.medviChecks = a.medviChecks || {};
   a.gateScores = a.gateScores || {};
-  a.research = a.research || []; a.gateReviews = a.gateReviews || []; a.experiments = a.experiments || [];
+  a.research = a.research || []; a.gateReviews = a.gateReviews || []; a.experiments = a.experiments || []; a.brainstorm = a.brainstorm || [];
   if (!a.id) a.id = uid();
   // back-fill: derive 0–5 gate scores from any old boolean checklist (true → 4)
   if (!Object.keys(a.gateScores).length && Object.keys(a.medviChecks).length) {
@@ -53,6 +62,9 @@ function normalizeIdea(raw) {
   }
   // seed status history so analytics have a starting point
   if (!a.statusHistory || !a.statusHistory.length) a.statusHistory = [{ status: a.status, ts: a.createdAt || now() }];
+  // ensure sub-items carry ids (so agent-imported JSON is safe to render/edit)
+  ['research', 'brainstorm', 'experiments', 'gateReviews'].forEach((k) => { a[k] = (a[k] || []).map((x) => Object.assign({ id: uid(), ts: x.ts || now() }, x)); });
+  ['files', 'agents', 'workflows'].forEach((k) => { a.attachments[k] = (a.attachments[k] || []).map((x) => Object.assign({ id: uid() }, x)); });
   return a;
 }
 function loadStore() {
@@ -128,13 +140,14 @@ function setView(v) {
   currentView = v;
   document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   $('sidebar').classList.remove('open');
-  const titles = { dashboard: 'Dashboard', ideas: 'Idea Board', medvi: 'Medvi OS', learnings: 'Learnings', workflows: 'Workflow Builder', about: 'About Claude Ideas' };
+  const titles = { dashboard: 'Dashboard', dropbox: 'Idea Dropbox', ideas: 'Idea Board', medvi: 'Medvi OS', learnings: 'Learnings', workflows: 'Workflow Builder', about: 'About Claude Ideas' };
   $('viewTitle').textContent = titles[v] || v;
   render();
 }
 function render() {
   const c = $('content'); const top = $('topActions'); top.innerHTML = '';
   if (currentView === 'dashboard') c.innerHTML = viewDashboard();
+  else if (currentView === 'dropbox') { renderDropboxControls(top); c.innerHTML = viewDropbox(); bindDropbox(); }
   else if (currentView === 'ideas') { renderBoardControls(top); c.innerHTML = viewIdeas(); bindBoard(); }
   else if (currentView === 'medvi') c.innerHTML = viewMedvi();
   else if (currentView === 'learnings') { c.innerHTML = viewLearnings(); bindLearnings(); }
@@ -144,17 +157,17 @@ function render() {
 
 /* ------------------------------------------------------------------ dashboard */
 function viewDashboard() {
-  const ideas = DB.ideas;
+  const inboxN = DB.ideas.filter((i) => i.inbox).length;
+  const ideas = DB.ideas.filter((i) => !i.inbox);   // board metrics exclude the dropbox
   const active = ideas.filter((i) => i.status !== 'Parked' && i.status !== 'Launched').length;
-  const medvi = ideas.filter((i) => i.medviOS).length;
   const launched = ideas.filter((i) => i.status === 'Launched').length;
   const counts = {}; STATUSES.forEach((s) => counts[s] = ideas.filter((i) => i.status === s).length);
   const recent = [...ideas].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
   let h = `<div class="stat-row">
-    <div class="stat"><div class="num">${ideas.length}</div><div class="lbl">Total ideas</div></div>
+    <div class="stat" data-go="dropbox" style="cursor:pointer"><div class="num">${inboxN}</div><div class="lbl">📥 In the dropbox</div></div>
+    <div class="stat"><div class="num">${ideas.length}</div><div class="lbl">Ideas on the board</div></div>
     <div class="stat"><div class="num">${active}</div><div class="lbl">In progress</div></div>
-    <div class="stat"><div class="num">${medvi}</div><div class="lbl">On the Medvi OS</div></div>
     <div class="stat"><div class="num">${launched}</div><div class="lbl">Launched</div></div>
   </div>`;
 
@@ -226,7 +239,7 @@ function viewIdeas() {
 }
 function filteredIdeas() {
   const q = board.q.trim().toLowerCase();
-  return DB.ideas.filter((i) =>
+  return DB.ideas.filter((i) => !i.inbox &&
     (!board.status || i.status === board.status) &&
     (!board.tag || i.tags.includes(board.tag)) &&
     (!q || (i.title + ' ' + i.summary + ' ' + i.tags.join(' ')).toLowerCase().includes(q))
@@ -272,6 +285,159 @@ function ideaCard(i) {
   </div>`;
 }
 function decisionColor(d) { return (DECISIONS.find((x) => x.key === d) || {}).color || 'var(--muted)'; }
+
+/* ------------------------------------------------------------------ idea dropbox */
+const DISPATCH_FILE = 'dropbox.json';
+const DISPATCHED_KEY = 'claudeideas.dispatched.v1';
+const BOARD_FILE = 'board.json';
+const BOARDVER_KEY = 'claudeideas.boardVersion.v1';
+
+/* upsert an idea by id (shared by Import and agent board ingest). */
+function upsertIdea(raw) {
+  const ex = raw.id && getIdea(raw.id);
+  if (ex) { Object.assign(ex, normalizeIdea(Object.assign({}, ex, raw)), { id: ex.id, createdAt: ex.createdAt, updatedAt: now() }); return 'updated'; }
+  DB.ideas.unshift(normalizeIdea(raw)); return 'added';
+}
+
+function inboxIdeas() { return DB.ideas.filter((i) => i.inbox).sort((a, b) => b.createdAt - a.createdAt); }
+
+function addQuickIdea(text, files, source) {
+  const t = (text || '').trim();
+  const title = (t ? t.split('\n')[0] : (files && files[0] ? files[0].name : 'Quick idea')).slice(0, 80);
+  const idea = normalizeIdea({ title, summary: t, inbox: true, source: source || 'dropbox', tags: ['quick'] });
+  if (files && files.length) idea.attachments.files.push(...files);
+  DB.ideas.unshift(idea); saveStore();
+  return idea;
+}
+function promoteIdea(i) { i.inbox = false; i.updatedAt = now(); saveStore(); toast('Promoted to the idea board'); }
+
+function renderDropboxControls(top) {
+  top.innerHTML = `<button class="btn" id="db-ai" title="Copy a prompt to AI-analyse every dropbox idea">✨ AI auto-fill</button>`;
+  $('db-ai').addEventListener('click', copyDropboxPrompt);
+}
+function viewDropbox() {
+  const items = inboxIdeas();
+  return `
+    <p class="prose" style="margin-top:0">A low-friction inbox for quick ideas &amp; doodles. Type or <strong>drop text/images</strong> below, or have an AI agent <strong>dispatch</strong> them. They wait here as quick ideas until you <strong>promote</strong> them onto the board.</p>
+    <div class="db-drop" id="db-drop">
+      <textarea id="db-text" rows="3" placeholder="Dump a quick idea…  (Enter to add · Shift+Enter for a newline)"></textarea>
+      <div class="db-drop-row">
+        <span class="db-hint">…or drop text / image files anywhere in this box</span>
+        <button class="btn btn-primary btn-sm" id="db-add">＋ Add to dropbox</button>
+      </div>
+    </div>
+    <div class="db-dispatch">
+      <strong>🤖 Claude dispatch</strong> — tell Claude: <em>“dispatch idea: &lt;your idea&gt; → idea board”</em>. It appends to
+      <code>claude-ideas/dropbox.json</code> and this dropbox ingests new entries automatically on load.
+      Manual one-off: open with <code>?drop=your%20idea</code>. See <code>AGENT.md</code> for the full agent protocol.
+    </div>
+    <div class="section-title">In the dropbox <small>(${items.length})</small></div>
+    <div class="db-list">${items.map(dropItem).join('') || '<div class="empty-note">Empty. Add a quick idea above, or dispatch one.</div>'}</div>`;
+}
+function dropItem(i) {
+  const img = (i.attachments.files || []).find((f) => f.image && f.dataUrl);
+  return `<div class="db-item">
+    ${img ? `<img class="db-thumb" src="${img.dataUrl}" alt="" />` : '<span class="db-ico">💡</span>'}
+    <div class="db-main" data-open="${i.id}">
+      <strong>${esc(i.title)}</strong>
+      ${i.summary && i.summary !== i.title ? `<small>${esc(i.summary)}</small>` : ''}
+      <small style="opacity:.7">${esc(i.source)} · ${fmtDate(i.createdAt)}</small>
+    </div>
+    <div class="db-actions">
+      <button class="btn btn-sm" data-open="${i.id}">Open</button>
+      <button class="btn btn-sm" data-aiprompt="${i.id}" title="Copy an AI analysis prompt for this idea">✨</button>
+      <button class="btn btn-sm btn-primary" data-promote="${i.id}">→ Board</button>
+      <button class="btn btn-sm" data-dbdel="${i.id}">✕</button>
+    </div>
+  </div>`;
+}
+function bindDropbox() {
+  const ta = $('db-text');
+  const addFromText = () => { const v = ta.value.trim(); if (v) { addQuickIdea(v); ta.value = ''; render(); } };
+  $('db-add').addEventListener('click', addFromText);
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addFromText(); } });
+  const drop = $('db-drop');
+  ['dragover', 'dragenter'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  drop.addEventListener('dragleave', (e) => { if (e.target === drop) drop.classList.remove('over'); });
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); handleDrop(e.dataTransfer); });
+  document.querySelectorAll('.db-list [data-open]').forEach((el) => el.addEventListener('click', () => openIdea(el.dataset.open)));
+  document.querySelectorAll('[data-promote]').forEach((b) => b.addEventListener('click', () => { const i = getIdea(b.dataset.promote); if (i) { promoteIdea(i); render(); } }));
+  document.querySelectorAll('[data-dbdel]').forEach((b) => b.addEventListener('click', () => { DB.ideas = DB.ideas.filter((x) => x.id !== b.dataset.dbdel); saveStore(); render(); }));
+  document.querySelectorAll('[data-aiprompt]').forEach((b) => b.addEventListener('click', () => copyIdeaPrompt(getIdea(b.dataset.aiprompt))));
+}
+function handleDrop(dt) {
+  const text = dt.getData && dt.getData('text/plain');
+  const files = dt.files ? [...dt.files] : [];
+  if (files.length) {
+    files.forEach((file) => {
+      const r = new FileReader();
+      if (file.type.startsWith('image/')) { r.onload = () => { addQuickIdea(file.name, [{ id: uid(), name: file.name, note: 'doodle', image: true, dataUrl: r.result }]); if (currentView === 'dropbox') render(); }; r.readAsDataURL(file); }
+      else { r.onload = () => { addQuickIdea(String(r.result).slice(0, 4000)); if (currentView === 'dropbox') render(); }; r.readAsText(file); }
+    });
+  } else if (text && text.trim()) { addQuickIdea(text.trim()); if (currentView === 'dropbox') render(); }
+}
+/* Ingest agent-dispatched ideas from dropbox.json (deduped by id). */
+function ingestDispatch(cb) {
+  fetch(DISPATCH_FILE, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    if (!d || !Array.isArray(d.dispatch)) { if (cb) cb(0); return; }
+    let seen = {}; try { seen = JSON.parse(localStorage.getItem(DISPATCHED_KEY)) || {}; } catch (e) {}
+    let n = 0;
+    d.dispatch.forEach((entry) => {
+      const id = entry.id || ('t' + (entry.text || '').length + '_' + (entry.ts || ''));
+      if (seen[id]) return;
+      const text = (entry.text || '').trim(); if (!text) return;
+      addQuickIdea(text, null, 'dispatch'); seen[id] = 1; n++;
+    });
+    if (n) { try { localStorage.setItem(DISPATCHED_KEY, JSON.stringify(seen)); } catch (e) {} }
+    if (cb) cb(n);
+  }).catch(() => { if (cb) cb(0); });
+}
+
+/* Ingest a full analysed board written by an agent (board.json), version-guarded so
+ * it applies once per agent write. Upserts by id — never deletes. This is the
+ * hands-off path: an agent fills board.json and it lands in the app on next load. */
+function ingestBoard(cb) {
+  fetch(BOARD_FILE, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    if (!d || !Array.isArray(d.ideas)) { if (cb) cb(0); return; }
+    const ver = String(d.version == null ? '' : d.version);
+    let last = ''; try { last = localStorage.getItem(BOARDVER_KEY) || ''; } catch (e) {}
+    if (ver && ver === last) { if (cb) cb(0); return; }
+    let n = 0;
+    d.ideas.forEach((raw) => { upsertIdea(raw); n++; });
+    if (n) { saveStore(); try { localStorage.setItem(BOARDVER_KEY, ver); } catch (e) {} }
+    if (cb) cb(n);
+  }).catch(() => { if (cb) cb(0); });
+}
+
+/* ------------------------------------------------------------------ AI analysis bridge */
+function analysisInstructions() {
+  return [
+    'You are the Idea Analyst for a lean, Medvi-OS subscription business. Analyse the idea(s) end-to-end and',
+    'return ONLY a JSON object {"ideas":[ … ]} where each idea matches this shape:',
+    '{ "id"?, "title", "summary", "status":"Captured|Researching|Analysed|Validated|Building|Launched|Parked",',
+    '  "inbox": false, "medviOS": true,',
+    '  "gateScores": { "recurring":0-5,"margin":0-5,"retains":0-5,"screenshot":0-5,"ownAcq":0-5,"ownBilling":0-5,"wave":0-5,"aiBuildable":0-5 },',
+    '  "gateReviews": [ { "decision":"Go|Hold|Recycle|Kill", "score":0-100, "rationale":"…", "stage":"…" } ],',
+    '  "brainstorm": [ { "text":"variant / derivative / adjacent market" } ],',
+    '  "experiments": [ { "title", "type":"Interview|Survey|Landing page|Prototype|Smoke test|Tech spike|Other", "status":"Planned", "hypothesis", "metric" } ],',
+    '  "analysis": "competition, pricing headroom, risks", "development": "what to build, positioning, GTM",',
+    '  "aiAnalysis": "your one-paragraph verdict" }',
+    'Score honestly against the five laws (recurring; margin funds distribution; AI collapses cost; outsource regulated/capital-heavy; ride a wave)',
+    'and the two gates (does it compound? would it survive a screenshot?). Choose the decision from the weighted score',
+    '(≥80 Go, 60–79 Hold, 40–59 Recycle, <40 Kill) and set status accordingly. KEEP any provided "id" so it updates in place.',
+  ].join('\n');
+}
+function copyIdeaPrompt(i) {
+  if (!i) return;
+  copyText(analysisInstructions() + '\n\nIDEA:\n' + JSON.stringify({ id: i.id, title: i.title, summary: i.summary }, null, 2) + '\n\nReturn {"ideas":[…]}; then use Import data to apply it (it upserts by id).');
+  toast('AI prompt copied — paste into Claude');
+}
+function copyDropboxPrompt() {
+  const items = inboxIdeas().map((i) => ({ id: i.id, title: i.title, summary: i.summary }));
+  if (!items.length) { toast('Dropbox is empty'); return; }
+  copyText(analysisInstructions() + '\n\nIDEAS (set inbox:false to promote onto the board):\n' + JSON.stringify(items, null, 2) + '\n\nReturn {"ideas":[…]}; then use Import data to apply it (upserts by id).');
+  toast('Auto-fill prompt copied — paste into Claude, then Import the result');
+}
 function avgScore(i) {
   const v = Object.values(i.criteria || {}).filter((n) => typeof n === 'number');
   if (!v.length) return null;
@@ -368,8 +534,10 @@ function viewAbout() {
     <p>The core system that takes an idea from a one-line capture all the way to a product brief and a buildable workflow.</p>
     <h2>How it flows</h2>
     <ul>
+      <li><strong>Dropbox</strong> — a low-friction inbox: type, drop text/images, or have an AI agent <strong>dispatch</strong> ideas (via <code>dropbox.json</code>). They wait as quick ideas until promoted to the board.</li>
+      <li><strong>AI analysis</strong> — the agent is the analysis engine: it scores the Medvi gate, brainstorms, proposes experiments, records a decision and writes it back (<code>AGENT.md</code>). In-app, <strong>✨ AI analyse</strong> copies a ready prompt; <strong>Import</strong> upserts the result.</li>
       <li><strong>Idea Board</strong> — every idea, stored and visible, with quick summaries, status, gate score and tags. Add, search and filter.</li>
-      <li><strong>Research &amp; Launch</strong> — click an idea to review, research, analyse and develop it. Move it along the pipeline: ${STATUSES.join(' → ')}.</li>
+      <li><strong>Research &amp; Launch</strong> — click an idea to review, <strong>brainstorm</strong> (variants, derivatives, adjacent markets — spin any into a new idea), research, analyse and develop it. Move it along the pipeline: ${STATUSES.join(' → ')}.</li>
       <li><strong>Medvi OS gate</strong> — the Medvi operating system <em>is</em> the gate scorecard: score each idea 0–5 on the weighted criteria, then record a <strong>Go / Hold / Recycle / Kill</strong> decision with rationale — kept as an audit history. Decisions move the idea along (or park it).</li>
       <li><strong>Experiments &amp; learnings</strong> — track hypotheses, types, status and outcomes per idea; the <strong>Learnings</strong> tab is a searchable repository across every idea.</li>
       <li><strong>Dashboard analytics</strong> — pipeline counts, kill rate at gates, average days per stage, and stale-item flags.</li>
@@ -420,6 +588,7 @@ function renderDrawer() {
       <div class="dh-main">
         <input class="drawer-title" id="dr-title" value="${esc(i.title)}" />
         <div class="drawer-sub">${esc(i.source)} · updated ${fmtDate(i.updatedAt)}</div>
+        ${i.inbox ? '<div class="dr-inbox">📥 In the dropbox <button class="btn btn-sm btn-primary" id="dr-promote">→ Promote to board</button></div>' : ''}
       </div>
       <button class="icon-btn" id="dr-close" aria-label="Close">✕</button>
     </div>
@@ -447,10 +616,18 @@ function renderDrawer() {
       <div class="field"><label>Review</label><textarea id="dr-review" rows="3" placeholder="First read: what is it, who's it for, why now?">${esc(i.review)}</textarea></div>
 
       <div class="block">
+        <div class="block-head"><h4>💭 Brainstorm</h4></div>
+        <div class="bs-prompts">${BRAINSTORM_PROMPTS.map((p) => `<button class="bs-chip" data-bsp="${esc(p)}">+ ${esc(p)}</button>`).join('')}</div>
+        <div class="bs-add"><input type="text" id="dr-bs-input" placeholder="Variant, derivative, adjacent market, question…" /><button class="btn btn-sm" id="dr-bs-add">Add</button></div>
+        <div class="attach-list" id="dr-bs-list">${renderBrainstorm(i)}</div>
+      </div>
+
+      <div class="block">
         <div class="block-head"><h4>🔎 Research log</h4><button class="btn btn-sm" id="dr-add-research">＋ Entry</button></div>
         <div class="attach-list" id="dr-research-list">${renderResearch(i)}</div>
       </div>
 
+      ${i.aiAnalysis ? `<div class="ai-verdict"><span class="ai-badge">✨ AI</span> ${esc(i.aiAnalysis)}</div>` : ''}
       <div class="field"><label>Analysis</label><textarea id="dr-analysis" rows="3" placeholder="Scoring, competition, risks, pricing headroom…">${esc(i.analysis)}</textarea>${critHtml}</div>
 
       <div class="field"><label>Development → product / opportunity</label><textarea id="dr-development" rows="3" placeholder="What we'd actually build, positioning, GTM.">${esc(i.development)}</textarea></div>
@@ -473,7 +650,10 @@ function renderDrawer() {
     </div>
     <div class="drawer-foot">
       <button class="btn btn-ghost" id="dr-delete" style="color:var(--accent)">🗑 Delete idea</button>
-      <button class="btn btn-primary" id="dr-brief">📄 Generate product brief</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="dr-ai">✨ AI analyse</button>
+        <button class="btn btn-primary" id="dr-brief">📄 Product brief</button>
+      </div>
     </div>`;
 
   bindDrawer(i);
@@ -505,7 +685,7 @@ function renderWorkflows(i) {
   }).join('');
 }
 function renderFilesAgents(i) {
-  const f = i.attachments.files.map((x) => `<div class="attach" data-fid="${x.id}"><span class="a-ico">📄</span><div class="a-main"><strong>${esc(x.name)}</strong><small>${esc(x.note) || 'file'}</small></div><div class="a-actions"><button class="btn btn-sm" data-fdel="${x.id}">✕</button></div></div>`).join('');
+  const f = i.attachments.files.map((x) => `<div class="attach" data-fid="${x.id}">${x.image && x.dataUrl ? `<img class="db-thumb" src="${x.dataUrl}" alt="" />` : '<span class="a-ico">📄</span>'}<div class="a-main"><strong>${esc(x.name)}</strong><small>${esc(x.note) || 'file'}</small></div><div class="a-actions"><button class="btn btn-sm" data-fdel="${x.id}">✕</button></div></div>`).join('');
   const a = i.attachments.agents.map((x) => `<div class="attach" data-aid="${x.id}"><span class="a-ico">🤖</span><div class="a-main"><strong>${esc(x.name)}</strong><small>${esc(x.note) || 'agent'}</small></div><div class="a-actions"><button class="btn btn-sm" data-adel="${x.id}">✕</button></div></div>`).join('');
   return (f + a) || '<small style="color:var(--muted)">No files or agents attached.</small>';
 }
@@ -525,6 +705,23 @@ function renderGateHistory(i) {
     <span class="a-ico" style="color:${decisionColor(r.decision)}">●</span>
     <div class="a-main"><strong>${r.decision}</strong> · ${r.score != null ? r.score + '%' : '—'}<small>${fmtDate(r.ts)} · from ${esc(r.stage)}${r.rationale ? ` — ${esc(r.rationale)}` : ''}</small></div>
   </div>`).join('');
+}
+function renderBrainstorm(i) {
+  if (!i.brainstorm.length) return '<small style="color:var(--muted)">No brainstorm notes yet — capture variants, derivatives and adjacent opportunities.</small>';
+  return i.brainstorm.map((b) => `<div class="bs-item" data-bid="${b.id}">
+    <textarea class="bs-text" data-bk="text" rows="2" placeholder="Brainstorm note…">${esc(b.text)}</textarea>
+    <div class="bs-actions">
+      <button class="btn btn-sm" data-bspin="${b.id}" title="Promote to its own idea">↗ Spin off</button>
+      <button class="btn btn-sm" data-bdel="${b.id}">✕</button>
+    </div>
+  </div>`).join('');
+}
+function spinOff(parent, b) {
+  const text = (b.text || '').trim();
+  if (!text) { toast('Add some text first'); return; }
+  const title = text.length > 60 ? text.slice(0, 57) + '…' : text;
+  const idea = normalizeIdea({ title, summary: text, source: `spun off from “${parent.title}”`, tags: ['spun-off'] });
+  DB.ideas.unshift(idea); saveStore(); toast('Spun off as a new idea');
 }
 function renderExperiments(i) {
   if (!i.experiments.length) return '<small style="color:var(--muted)">No experiments yet. Add one to validate a hypothesis.</small>';
@@ -603,6 +800,20 @@ function bindDrawer(i) {
   });
   document.querySelectorAll('[data-rdel]').forEach((b) => b.addEventListener('click', () => { i.research = i.research.filter((r) => r.id !== b.dataset.rdel); touch(); renderDrawer(); }));
 
+  // brainstorm
+  const addBs = (text) => { i.brainstorm.unshift({ id: uid(), text: text || '', ts: now() }); touch(); renderDrawer(); };
+  const bsInput = $('dr-bs-input');
+  $('dr-bs-add').addEventListener('click', () => { const v = bsInput.value.trim(); if (v) addBs(v); });
+  bsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const v = bsInput.value.trim(); if (v) addBs(v); } });
+  document.querySelectorAll('[data-bsp]').forEach((c) => c.addEventListener('click', () => addBs(c.dataset.bsp + ': ')));
+  $('dr-bs-list').querySelectorAll('[data-bid]').forEach((card) => {
+    const b = i.brainstorm.find((x) => x.id === card.dataset.bid); if (!b) return;
+    const ta = card.querySelector('[data-bk]');
+    if (ta) ta.addEventListener('input', () => { b.text = ta.value; touch(); });
+  });
+  document.querySelectorAll('[data-bspin]').forEach((bt) => bt.addEventListener('click', () => { const b = i.brainstorm.find((x) => x.id === bt.dataset.bspin); if (b) spinOff(i, b); }));
+  document.querySelectorAll('[data-bdel]').forEach((bt) => bt.addEventListener('click', () => { i.brainstorm = i.brainstorm.filter((x) => x.id !== bt.dataset.bdel); touch(); renderDrawer(); }));
+
   // workflows
   $('dr-new-wf').addEventListener('click', () => {
     const name = (prompt('Workflow name:', `${i.title} — build`) || '').trim(); if (!name) return;
@@ -626,7 +837,11 @@ function bindDrawer(i) {
   document.querySelectorAll('[data-fdel]').forEach((b) => b.addEventListener('click', () => { i.attachments.files = i.attachments.files.filter((x) => x.id !== b.dataset.fdel); touch(); renderDrawer(); }));
   document.querySelectorAll('[data-adel]').forEach((b) => b.addEventListener('click', () => { i.attachments.agents = i.attachments.agents.filter((x) => x.id !== b.dataset.adel); touch(); renderDrawer(); }));
 
+  // inbox promote
+  const prom = $('dr-promote'); if (prom) prom.addEventListener('click', () => { promoteIdea(i); renderDrawer(); });
+
   // foot
+  $('dr-ai').addEventListener('click', () => copyIdeaPrompt(i));
   $('dr-delete').addEventListener('click', () => { if (confirm(`Delete “${i.title}”? This can't be undone.`)) { DB.ideas = DB.ideas.filter((x) => x.id !== i.id); saveStore(); closeDrawer(); toast('Idea deleted'); } });
   $('dr-brief').addEventListener('click', () => downloadBrief(i));
 }
@@ -651,6 +866,7 @@ function generateBrief(i) {
   let m = `# ${i.title} — Product Brief\n\n`;
   m += `> ${i.summary || '_(no summary)_'}\n\n`;
   m += `**Status:** ${i.status}  ·  **Source:** ${i.source}  ·  **Tags:** ${i.tags.join(', ') || '—'}\n\n`;
+  if (i.aiAnalysis) m += `## AI verdict\n\n${i.aiAnalysis}\n\n`;
   if (i.medviOS) {
     const pct = gateScore(i);
     m += `## Medvi OS gate — ${pct != null ? pct + '%' : 'not scored'} (${gateVerdict(pct)})\n\n`;
@@ -668,6 +884,7 @@ function generateBrief(i) {
   const crit = Object.entries(i.criteria || {});
   if (crit.length) m += `## Scores\n\n${crit.map(([k, v]) => `- **${k}:** ${v}`).join('\n')}\n\n`;
   if (i.review) m += `## Review\n\n${i.review}\n\n`;
+  if (i.brainstorm.length) m += `## Brainstorm\n\n${i.brainstorm.map((b) => `- ${b.text}`).join('\n')}\n\n`;
   if (i.research.length) m += `## Research\n\n${i.research.map((r) => `- ${r.text}${r.url ? ` — ${r.url}` : ''} _(${fmtDate(r.ts)})_`).join('\n')}\n\n`;
   if (i.analysis) m += `## Analysis\n\n${i.analysis}\n\n`;
   if (i.development) m += `## Development → product / opportunity\n\n${i.development}\n\n`;
@@ -703,7 +920,16 @@ function exportData() {
 }
 function importData(file) {
   const r = new FileReader();
-  r.onload = () => { try { const d = JSON.parse(r.result); if (!d || !Array.isArray(d.ideas)) throw 0; DB = { ideas: d.ideas.map(normalizeIdea) }; saveStore(); render(); toast('Ideas imported'); } catch (e) { toast('Not a valid export file'); } };
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      const incoming = Array.isArray(d) ? d : (d && d.ideas);
+      if (!Array.isArray(incoming)) throw 0;
+      let added = 0, updated = 0;
+      incoming.forEach((raw) => { upsertIdea(raw) === 'updated' ? updated++ : added++; });
+      saveStore(); render(); toast(`Imported — ${added} new, ${updated} updated`);
+    } catch (e) { toast('Not a valid ideas / {"ideas":[…]} file'); }
+  };
   r.readAsText(file);
 }
 
@@ -723,11 +949,20 @@ function init() {
   $('importInput').addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('modal').hidden) closeModal(); else if (!$('ideaDrawer').hidden) closeDrawer(); } });
 
-  // deep links: ?view=<tab> opens a tab; ?idea=<id> opens that idea
+  // dashboard / stat shortcuts
+  $('content').addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) setView(g.dataset.go); });
+
+  // deep links: ?view=<tab> · ?idea=<id> · ?drop=<text> (quick dispatch)
   const params = new URLSearchParams(location.search);
-  const views = ['dashboard', 'ideas', 'medvi', 'learnings', 'workflows', 'about'];
+  const views = ['dashboard', 'dropbox', 'ideas', 'medvi', 'learnings', 'workflows', 'about'];
+  const dropText = params.get('drop');
+  if (dropText) { addQuickIdea(dropText, null, 'dispatch'); history.replaceState({}, '', location.pathname); }
   const v = params.get('view');
-  setView(views.includes(v) ? v : 'dashboard');
+  setView(views.includes(v) ? v : (dropText ? 'dropbox' : 'dashboard'));
   if (params.get('idea')) { setView('ideas'); openIdea(params.get('idea')); }
+
+  // ingest agent output: raw dispatches (dropbox.json) + analysed board (board.json)
+  ingestDispatch((n) => { if (n) { toast(`${n} dispatched idea${n > 1 ? 's' : ''} added`); if (currentView === 'dropbox' || currentView === 'dashboard') render(); } });
+  ingestBoard((n) => { if (n) { toast(`${n} idea${n > 1 ? 's' : ''} synced from the agent`); render(); } });
 }
 document.addEventListener('DOMContentLoaded', init);
