@@ -43,6 +43,7 @@
   const emptyState = $("emptyState");
   const stage = $("stage");
   const fileInput = $("fileInput");
+  const projectInput = $("projectInput");
   const markerList = $("markerList");
 
   // ---- View transform (zoom / pan) ---------------------------------------
@@ -940,6 +941,66 @@
   }
 
   // ====================================================================
+  //  Editable project file (JSON)
+  // ====================================================================
+  // Unlike the flattened PNG / report / CSV exports, a project file keeps the
+  // base image and every annotation as data. Because marks are plain objects
+  // (the same JSON used for undo/redo), a saved project reopens fully editable.
+  const PROJECT_APP = "markup";
+  const PROJECT_VERSION = 1;
+
+  function saveProject() {
+    if (!state.image) { toast("Upload an image first"); return; }
+    state.selectedId = null;
+    const project = {
+      app: PROJECT_APP,
+      version: PROJECT_VERSION,
+      savedAt: new Date().toISOString(),
+      job: jobName(),
+      image: state.image.src,     // data URL — uploads and crops are both data URLs
+      annotations: state.annotations,
+    };
+    const blob = new Blob([JSON.stringify(project)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    downloadURL(url, uniqueFileName("json").replace(/\.json$/, "-project.json"));
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast("Project saved — reopen it any time to keep editing");
+  }
+
+  function openProjectFromFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let project;
+      try { project = JSON.parse(e.target.result); }
+      catch (_) { toast("That file isn't a valid project"); return; }
+      if (!project || project.app !== PROJECT_APP || typeof project.image !== "string") {
+        toast("That isn't a MarkUp project file");
+        return;
+      }
+      if (state.annotations.length &&
+          !confirm("Open this project? It replaces the current image and its annotations.")) return;
+
+      const img = new Image();
+      img.onload = () => {
+        setBaseImage(img);          // swaps in the picture and shows the edit controls
+        state.annotations = Array.isArray(project.annotations) ? project.annotations : [];
+        state.selectedId = null;
+        state.undoStack.length = 0; // a freshly opened project starts a clean history
+        state.redoStack.length = 0;
+        // keep the id counter ahead of everything we just loaded (afterChange fixes numbering)
+        state.nextId = state.annotations.reduce((m, a) => Math.max(m, a.id || 0), 0) + 1;
+        if (typeof project.job === "string") $("jobTitle").value = project.job;
+        afterChange();
+        toast("Project opened");
+      };
+      img.onerror = () => toast("Couldn't load the project's image");
+      img.src = project.image;
+    };
+    reader.readAsText(file);
+  }
+
+  // ====================================================================
   //  Small utilities
   // ====================================================================
   function downloadURL(url, name) {
@@ -1024,6 +1085,13 @@
     $("uploadBtn").addEventListener("click", () => fileInput.click());
     $("uploadBtn2").addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", (e) => { if (e.target.files[0]) loadImageFromFile(e.target.files[0]); });
+
+    $("saveProjectBtn").addEventListener("click", saveProject);
+    $("openProjectBtn").addEventListener("click", () => projectInput.click());
+    projectInput.addEventListener("change", (e) => {
+      if (e.target.files[0]) openProjectFromFile(e.target.files[0]);
+      e.target.value = ""; // let the same file be re-opened later
+    });
 
     document.querySelectorAll(".tool-select").forEach((b) =>
       b.addEventListener("click", () => selectTool(b.dataset.tool)));
