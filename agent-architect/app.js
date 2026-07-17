@@ -567,6 +567,30 @@
         { q: "Any building / fire / accessibility requirements?", tag: "compliance" }
       ],
       guardrails: ["Flag structural, electrical and fire matters for a qualified professional — don't sign them off", "Give cost/lead-time figures as ranges; confirm with suppliers & trades"]
+    },
+    {
+      id: "print",
+      name: "Print / Prepress & Colour",
+      icon: "🖨️",
+      blurb: "Prepress, colour management and print production across offset, digital, flexo & packaging.",
+      keywords: ["print","printing","prepress","pre-press","repro","artwork","colour management","color management","icc","devicelink","delta e","deltae","pantone","spot colour","spot color","cmyk","gamut","proof","offset","litho","flexo","gravure","screening","dot gain","g7","fogra","gracol","iso 12647","separation","toner","substrate"],
+      users: ["Print buyers", "Brand owners", "Repro / prepress teams", "Packaging teams", "Printers"],
+      output: "Summary · Findings / options · Colour & prepress notes · Cost & quality impact · Next actions",
+      caps: [
+        { name: "Artwork & Prepress Preparation", tasks: ["Preflight the file (bleed, trim, safe area, resolution, fonts)", "Check overprint / knockout, rich black and trapping", "Handle die-lines, imposition and PDF/X output standards"] },
+        { name: "Colour Management", tasks: ["Convert colour with ICC / DeviceLink profiles and the right rendering intent", "Standardise to a print condition (ISO 12647, GRACoL, Fogra)", "Set and check a Delta E tolerance (state the formula — ΔE2000 — and measurement condition)"] },
+        { name: "Spot & Brand Colour", tasks: ["Convert Pantone / brand spots to CMYK or extended gamut (CMYKOGV)", "Recreate spot colours accurately and report achievable Delta E", "Keep brand colour consistent across presses & substrates"] },
+        { name: "Print Process & Substrate", tasks: ["Recommend the process (offset/litho, digital, flexo, gravure, screen)", "Advise substrate/ink interaction, dot gain (TVI) and screening", "Flag what each process/substrate demands of the artwork"] },
+        { name: "Proofing & Approval", tasks: ["Specify contract vs. soft proofing and calibration", "Define the approval tolerance and sign-off", "Reconcile proof-to-press expectations"] },
+        { name: "Ink / Toner Optimisation & Cost", tasks: ["Apply GCR / separation optimisation to save ink or toner", "Estimate the cost/coverage impact", "Balance saving against colour stability"] },
+        { name: "Quality Control & Standards", tasks: ["Measure with a spectrophotometer against the reference", "Verify Delta E, TVI and grey balance to G7 / ISO 12647", "Diagnose defects (banding, mis-registration, mottling, ghosting) and corrective actions"] }
+      ],
+      questions: [
+        { q: "What process(es) and substrate(s) — offset, digital, flexo; paper, board, film, label?", tag: "scope" },
+        { q: "What print standard and Delta E tolerance must it hit (e.g. ISO 12647 / G7, ΔE2000 ≤ ?)?", tag: "compliance" },
+        { q: "What colour tools are in use (ICC/DeviceLink profiles, colour server e.g. ZePrA, spectrophotometer)?", tag: "tools" }
+      ],
+      guardrails: ["Recommend a measured contract proof and press verification before the run — never assert a colour match unverified", "Always state the Delta E formula and measurement condition; name the print standard and confirm capability with the printer"]
     }
   ];
 
