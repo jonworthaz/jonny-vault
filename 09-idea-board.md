@@ -159,6 +159,38 @@ grows accurately and evenly.*
   the recurring relationship* even though delivery is physical. Validate refill repeat-
   rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
+### 🟡 #11 — Wallet keepsakes: forever-keeping mementos
+*Turn a small, meaningful thing into a wallet-sized keepsake, built to live in a
+wallet forever — a message, handwriting, a photo, a fingerprint, a date.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 3 | 3 | 4 | 3 | ⚠️ only as gifting-occasion repeat | ✅ |
+
+- **The job:** make a durable, wallet-flat keepsake someone actually keeps for good.
+  The *nice things* that earn a permanent slot behind the cards:
+  - an engraved metal card with a handwritten note, verse, or vow scanned in
+  - a loved one's **actual handwriting** (a text, a signed line) etched to metal
+  - a laminated micro-photo or contact-sheet strip of the people who matter
+  - a fingerprint / handprint or a child's drawing, reduced and engraved
+  - a "the day we met / born on" date, coordinates, or a soundwave of a voice note
+  - a pressed-flower or fabric swatch sealed flat in a wallet-thin card
+- **Recurring angle:** the keepsake itself is a **one-off** (fails law #1 from
+  [02](./02-operating-system.md), like #09). What recurs is the **occasion** —
+  anniversaries, births, memorials, Father's/Mother's Day — so any real repeat comes
+  from owning the *gifting relationship*, not the object.
+- **Affiliate pool:** gift/wedding/memorial creators and sentimental-gift bloggers —
+  reachable, but not the dense, self-promoting pool #01/#02 enjoy.
+- **The tension:** this is a **physical product** — inventory, engraving, fulfilment,
+  shipping, geo-bound — cutting against the vault's *digital, geo-agnostic, ~95%-margin*
+  thesis and the [guardrails](./07-guardrails.md). Margin is thinner and you can't
+  out-pay affiliates the way a digital product can (law #2). Same shape as #10.
+- **How it could still fit:** lead with the **digital layer** — a design/preview app
+  that lets someone lay out and personalise the keepsake, own billing, and prompt the
+  *next* occasion — so you keep the recurring relationship even though delivery is
+  physical. Validate reorder/occasion repeat-rate before any hardware or engraving spend.
+  Until then it stays 🟡 watch, not a lead.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the
