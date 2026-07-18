@@ -159,36 +159,43 @@ grows accurately and evenly.*
   the recurring relationship* even though delivery is physical. Validate refill repeat-
   rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
-### 🟡 #11 — Wallet keepsakes: forever-keeping mementos
-*Turn a small, meaningful thing into a wallet-sized keepsake, built to live in a
-wallet forever — a message, handwriting, a photo, a fingerprint, a date.*
+### 🟡 #11 — Stainless-steel photo cards for the wallet
+*Colourised images printed/engraved onto a wallet-thin **stainless-steel card** —
+a photo of the people who matter, built to sit behind the bank cards forever.*
 
 | Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
 |:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | 3 | 3 | 3 | 4 | 3 | ⚠️ only as gifting-occasion repeat | ✅ |
 
-- **The job:** make a durable, wallet-flat keepsake someone actually keeps for good.
-  The *nice things* that earn a permanent slot behind the cards:
-  - an engraved metal card with a handwritten note, verse, or vow scanned in
-  - a loved one's **actual handwriting** (a text, a signed line) etched to metal
-  - a laminated micro-photo or contact-sheet strip of the people who matter
-  - a fingerprint / handprint or a child's drawing, reduced and engraved
-  - a "the day we met / born on" date, coordinates, or a soundwave of a voice note
-  - a pressed-flower or fabric swatch sealed flat in a wallet-thin card
-- **Recurring angle:** the keepsake itself is a **one-off** (fails law #1 from
+- **The job:** a durable, wallet-flat keepsake someone keeps for good — a **colourised
+  photo on stainless steel**, not a paper print that creases and fades. The material
+  *is* the pitch: bank-card thin, scratch/water-proof, "forever."
+- **The nice things that earn a permanent slot** behind the cards:
+  - a **colourised photo** of a partner, kids, parents, or a pet — the core product
+  - a restored / colourised **old black-and-white photo** (a grandparent, a wedding)
+  - handwriting, a signature, a short note or vow etched alongside the image
+  - a memorial card for someone lost — photo + name + dates
+  - a "the day we met / born on" date, coordinates, or a small map, under the image
+- **Edge / the tech question:** the whole thing lives or dies on **print quality on
+  steel** — full-colour dye-sublimation or UV print vs. laser engraving (which is
+  mono/tonal, not colour). "Colourised" implies real colour, so this leans on a
+  sublimation/UV process; nail a crisp, wallet-durable colour finish and that *is* the
+  moat vs. generic engraved metal cards.
+- **Recurring angle:** the card itself is a **one-off** (fails law #1 from
   [02](./02-operating-system.md), like #09). What recurs is the **occasion** —
   anniversaries, births, memorials, Father's/Mother's Day — so any real repeat comes
   from owning the *gifting relationship*, not the object.
 - **Affiliate pool:** gift/wedding/memorial creators and sentimental-gift bloggers —
   reachable, but not the dense, self-promoting pool #01/#02 enjoy.
-- **The tension:** this is a **physical product** — inventory, engraving, fulfilment,
-  shipping, geo-bound — cutting against the vault's *digital, geo-agnostic, ~95%-margin*
-  thesis and the [guardrails](./07-guardrails.md). Margin is thinner and you can't
-  out-pay affiliates the way a digital product can (law #2). Same shape as #10.
-- **How it could still fit:** lead with the **digital layer** — a design/preview app
-  that lets someone lay out and personalise the keepsake, own billing, and prompt the
-  *next* occasion — so you keep the recurring relationship even though delivery is
-  physical. Validate reorder/occasion repeat-rate before any hardware or engraving spend.
+- **The tension:** this is a **physical product** — steel stock, a print/engrave rig,
+  inventory, fulfilment, shipping, geo-bound — cutting against the vault's *digital,
+  geo-agnostic, ~95%-margin* thesis and the [guardrails](./07-guardrails.md). Margin is
+  thinner and you can't out-pay affiliates the way a digital product can (law #2). Same
+  shape as #10; a print-on-demand/dropship metal partner would de-risk the hardware.
+- **How it could still fit:** lead with the **digital layer** — an upload/colourise/
+  preview app that lays out the card, shows the steel finish, owns billing, and prompts
+  the *next* occasion — so you keep the recurring relationship even though delivery is
+  physical. Validate colour-on-steel quality and reorder repeat-rate before any kit spend.
   Until then it stays 🟡 watch, not a lead.
 
 ## Shortlist into the sprint
