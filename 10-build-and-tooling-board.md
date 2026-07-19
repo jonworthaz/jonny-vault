@@ -166,6 +166,11 @@ physical-product idea can plug into, first applied to [09 #11](./09-idea-board.m
   colour needs **UV flatbed printing directly onto steel**, or **dye-sublimation onto a
   polymer-coated metal** (ChromaLuxe-style; bare stainless won't sublimate). Prove one of
   those two gives a crisp, wallet-durable finish first — the software is worthless without it.
+- **Fulfilment options (researched):** every way to outsource the physical print/pack/ship —
+  POD dropship (Prodigi/Contrado), direct UK-lab white-label (Digitalab/CEWE/Print Photos),
+  white-label commerce platforms, and bulk-blanks + 3PL — with a ranked, phased path and a
+  supplier shortlist, is written up in
+  [`research/steel-wallet-cards-outsourcing.md`](./research/steel-wallet-cards-outsourcing.md).
 
 ---
 
