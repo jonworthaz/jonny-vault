@@ -128,6 +128,45 @@ opinionated and lean rather than copying the doc wholesale:
 **Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
 score editing, multiple workflows per idea, and cloud sync behind a backend.
 
+### 🟡 #03 — Personalisation-to-print commerce flow *(engine for #11 and any custom-goods idea)*
+*One reusable pipeline — **upload → AI colourise/restore → live "on-steel" preview →
+checkout → hand-off to a metal print-on-demand partner** — that any personalised
+physical-product idea can plug into, first applied to [09 #11](./09-idea-board.md) (steel wallet cards).*
+
+| Leverage | Reusability | Build cost | Compounds? |
+|:--:|:--:|:--:|:--:|
+| 4 | 4 (any personalised-goods idea) | Med–high (image pipeline + payments + fulfilment) | ✅ |
+
+- **The idea:** the customer-facing *digital layer* of #11, built as a generic engine
+  rather than a one-off storefront. A buyer uploads a photo, the app colourises/restores
+  it, previews it as a brushed-steel card at true wallet size (ID-1, 85.6 × 54 mm), takes
+  payment, and drops a print-ready file to a fulfilment partner. Swap the substrate/mockup
+  and the same flow sells prints, mugs, ornaments — anything print-on-demand.
+- **Why:** it's the piece that lets a *physical* product still **own billing and the
+  recurring relationship** (the #11 / #10 tension). Build it once, reuse the upload →
+  transform → preview → pay → fulfil spine for every future personalised-goods idea.
+- **v1 shape (smallest useful build):**
+  - **Front end** — static SPA (matches the vault's zero-dependency ethos); client-side
+    crop/zoom to the ID-1 card ratio; a **canvas/WebGL "steel finish" preview** (brushed-
+    metal texture + specular sheen + sublimation-style contrast) so buyers see the result
+    before paying.
+  - **AI transform** — call a hosted image model via a **serverless function** (keys off
+    the client): colourise (DeOldify), face-restore (GFPGAN/CodeFormer), upscale
+    (Real-ESRGAN), chained. Replicate/Fal are the pragmatic hosts.
+  - **Payments** — Stripe Checkout, or **Shopify** (already in the toolset; handles tax/
+    shipping/orders for a physical good) with the customiser as an embedded app that adds
+    the processed image as a custom line item.
+  - **Storage** — signed uploads to object storage (Cloudflare R2 / Supabase); processed
+    file + order metadata kept for the fulfilment feed.
+  - **Fulfilment** — the crux, see the tech note below: a metal print-on-demand/dropship
+    partner (API or CSV order feed), or an in-house **UV flatbed** rig for full colour on
+    steel. **Validate colour-on-steel with physical samples before any of the software.**
+- **The make-or-break (physical, not code):** "colourised on stainless steel" is a
+  *process* claim. **Laser engraving is monochrome/tonal — it can't do colour.** True
+  colour needs **UV flatbed printing directly onto steel**, or **dye-sublimation onto a
+  polymer-coated metal** (ChromaLuxe-style; bare stainless won't sublimate). Prove one of
+  those two gives a crisp, wallet-durable finish first — the software is worthless without it.
+
 ---
 
 ## Adding a new entry
