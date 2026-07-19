@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shelle OS</title>
+  <style>
+    :root{
+      --bg:#0f1419; --panel:#1a212b; --panel2:#222c38; --line:#2c3744;
+      --text:#e6edf3; --muted:#8b97a5; --accent:#ff5a3c; --accent2:#3b82f6; --ok:#22c55e; --purple:#a855f7;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:
+      radial-gradient(1100px 500px at 50% -8%, #1c2430 0%, var(--bg) 60%);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.5;padding:44px 18px 72px}
+    .wrap{max-width:1000px;margin:0 auto}
+    header{text-align:center;margin-bottom:8px}
+    .logo{font-size:38px;color:var(--accent)}
+    h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.5px}
+    h1 small{color:var(--muted);font-weight:600;font-size:34px}
+    .sub{color:var(--muted);font-size:16px;max-width:600px;margin:2px auto 0}
+
+    .section-label{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);
+      margin:34px 4px 12px;font-weight:700}
+
+    /* Hero — Agent Wizard */
+    .hero{background:linear-gradient(180deg,#20160f 0%, var(--panel) 70%);
+      border:1px solid #3a2a24;border-radius:18px;padding:26px 24px;display:flex;gap:22px;
+      align-items:center;flex-wrap:wrap;margin-top:26px}
+    .hero .hicon{font-size:44px;line-height:1}
+    .hero .htext{flex:1;min-width:240px}
+    .hero h2{margin:0 0 4px;font-size:23px}
+    .hero p{margin:0;color:var(--muted);font-size:14.5px;max-width:520px}
+    .hero .actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    .btn{display:inline-block;text-align:center;text-decoration:none;background:var(--accent);
+      color:#fff;font-weight:600;font-size:15px;padding:12px 18px;border-radius:11px;transition:background .12s,transform .06s}
+    .btn:hover{background:#ff6f55}.btn:active{transform:translateY(1px)}
+    .btn.alt{background:var(--accent2)}.btn.alt:hover{background:#5a9bff}
+    .btn.ghost{background:var(--panel2);border:1px solid var(--line)}.btn.ghost:hover{background:#2b3645}
+
+    /* Agent quick-launch grid */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.grid{grid-template-columns:1fr}}
+    a.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+      text-decoration:none;color:var(--text);display:flex;flex-direction:column;gap:6px;transition:border-color .12s,transform .06s}
+    a.tile:hover{border-color:var(--accent2);transform:translateY(-2px)}
+    a.tile .ti{font-size:24px}
+    a.tile h3{margin:2px 0 0;font-size:16px}
+    a.tile p{margin:0;color:var(--muted);font-size:12.5px}
+    a.tile .go{margin-top:6px;color:var(--accent2);font-size:12.5px;font-weight:600}
+    a.tile.more{align-items:flex-start;justify-content:center;border-style:dashed}
+
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:700px){.cards{grid-template-columns:1fr}}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column}
+    .card h3{margin:0 0 3px;font-size:17px}
+    .card .tag{color:var(--muted);font-size:13px;margin-bottom:12px}
+    .spacer{flex:1}
+    .row{display:flex;gap:9px;flex-wrap:wrap}
+
+    footer{margin-top:40px;text-align:center;color:var(--muted);font-size:13px}
+    footer a{color:var(--accent2)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">◆</div>
+      <h1>Shelle<small> OS</small></h1>
+      <p class="sub">Your operating system for building and running AI agents — design one for any role, then launch it.</p>
+    </header>
+
+    <!-- Featured: Agent Wizard -->
+    <div class="hero">
+      <div class="hicon">📐</div>
+      <div class="htext">
+        <h2>Agent Wizard</h2>
+        <p>Turn an objective or a job description into a production-ready agent — best practices baked in.
+        Suggests the right agent from 28 built-in roles, decomposes the tasks, asks the questions, and generates the spec.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="../agent-architect/index.html">Open Agent Wizard</a>
+        <a class="btn ghost" href="../agent-architect-prompt.md">No-UI prompt</a>
+      </div>
+    </div>
+
+    <!-- Quick-launch agents -->
+    <div class="section-label">Quick-launch an agent</div>
+    <div class="grid">
+      <a class="tile" href="../agent-architect/index.html?agent=footwear">
+        <span class="ti">👞</span><h3>Shoemaker</h3>
+        <p>Materials, lasts, construction, production &amp; QC across all shoe types.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../agent-architect/index.html?agent=print">
+        <span class="ti">🖨️</span><h3>Print / Prepress &amp; Colour</h3>
+        <p>Prepress, colour management, ΔE, spot colour, proofing &amp; QC.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../agent-architect/index.html?agent=advisor">
+        <span class="ti">🧠</span><h3>Advisor / Consultant</h3>
+        <p>Review, cost, compliance &amp; troubleshooting (the PackPro pattern).</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../agent-architect/index.html?agent=leathergoods">
+        <span class="ti">👜</span><h3>Leather Goods</h3>
+        <p>Bags &amp; accessories — leather, hardware, construction &amp; QC.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../agent-architect/index.html?agent=procurement">
+        <span class="ti">🛒</span><h3>Procurement / Sourcing</h3>
+        <p>Spec → RFQ, supplier comparison &amp; negotiation prep.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile more" href="../agent-architect/index.html">
+        <span class="ti">＋</span><h3>All 28 roles</h3>
+        <p>Or paste any job description — the wizard lifts capabilities from it.</p>
+        <span class="go">Browse / build →</span>
+      </a>
+    </div>
+
+    <!-- Specs & playbooks -->
+    <div class="section-label">Specs &amp; playbooks</div>
+    <div class="cards">
+      <div class="card">
+        <h3>PackPro AI</h3>
+        <div class="tag">The packaging-consultant agent spec — six capabilities, ready for Copilot Studio / Claude.</div>
+        <div class="spacer"></div>
+        <div class="row"><a class="btn ghost" href="../packaging-consultant-agent.md">Read the spec</a></div>
+      </div>
+      <div class="card">
+        <h3>The Vault playbook</h3>
+        <div class="tag">The lean-subscription operating system, idea boards and roadmap.</div>
+        <div class="spacer"></div>
+        <div class="row"><a class="btn ghost" href="https://github.com/jonworthaz/jonny-vault#readme">Read on GitHub</a></div>
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="section-label">Tools</div>
+    <div class="grid">
+      <a class="tile" href="../claude-ideas/index.html">
+        <span class="ti">💡</span><h3>Claude Ideas</h3>
+        <p>Capture, research, gate-score &amp; develop ideas into products.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../workflow-builder/index.html">
+        <span class="ti">⚒</span><h3>Forge</h3>
+        <p>Visual Claude Code workflow builder — generates real config.</p>
+        <span class="go">Open →</span>
+      </a>
+      <a class="tile" href="../landing/index.html">
+        <span class="ti">🖼️</span><h3>MarkUp</h3>
+        <p>Annotate photos &amp; run damage assessments.</p>
+        <span class="go">Open →</span>
+      </a>
+    </div>
+
+    <footer>Shelle OS · local-first · your data stays in your browser · <a href="https://github.com/jonworthaz/jonny-vault">source</a></footer>
+  </div>
+</body>
+</html>
