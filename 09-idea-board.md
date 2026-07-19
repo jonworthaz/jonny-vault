@@ -159,6 +159,30 @@ grows accurately and evenly.*
   the recurring relationship* even though delivery is physical. Validate refill repeat-
   rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
+### 🟡 #11 — AI / virtual influencer
+*A synthetic, AI-generated persona that posts, grows an audience, and monetises —
+researched in full in [11 — The AI Influencer Play](./11-ai-influencer-play.md).*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 5 | 3 | 2 | 3 | 2 | ⚠️ only via retained subs | ⚠️ only if disclosed + SFW |
+
+- **The wave:** genuinely rising (Fanvue ~$65–100M ARR, AI = ~15% of its revenue;
+  Warner signed an AI act) — but **heavily oversupplied**; the median new persona
+  earns near-zero (**~60% of AI creators make <$500/mo; only ~5% clear $10k**).
+- **The tension (why it's 🟡, not 🟢):** the real money is **NSFW subs + paid
+  chat**, which fails **Gate 2** and collides with [Guardrail #1](./07-guardrails.md)
+  ("no fake personas"). The clean, *disclosed + SFW* version is screenshot-safe
+  but caps around **£1–4k/mo** for a solo.
+- **Are AI accounts blocked?** No blanket ban — platforms punish *hiding* it,
+  *slop*, and *impersonating real people*, not being AI. One hard exclusion
+  (TikTok Creator Rewards); KYC is passed by the **human operator**, not the
+  persona.
+- **How it fits the vault:** not a standalone business, but a strong **top-of-funnel
+  content engine** (the disclosed *Lu do Magalu* mascot pattern) for idea **#01**,
+  or a productised **SFW AI-UGC service**. See [11](./11-ai-influencer-play.md) for
+  the full teardown, gates, and build stack.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the

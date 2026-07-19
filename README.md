@@ -35,6 +35,9 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
 | 09 | [Idea Board](./09-idea-board.md) | Running board of scored product ideas — the on-ramp to the niche sprint |
 | 10 | [Build & Tooling Board](./10-build-and-tooling-board.md) | Internal tooling / Claude Home workflow ideas, scored on leverage |
+| 11 | [The AI Influencer Play](./11-ai-influencer-play.md) | Research: how AI influencers make money in 2026, whether being AI blocks you, and whether it survives the gates |
+| 12 | [The 70/30 AI-Led Channel Playbook](./12-70-30-ai-channel-playbook.md) | Build: a 70% AI / 30% human channel — the paying-trend radar, big-ticket monetisation + gaps, and a phased plan for passive revenue |
+| 13 | [Sectors + the Top 10 Content Concepts](./13-sector-selection-and-top-10.md) | Decision: the best sectors to target and the ten most profitable, rising content concepts to build the channel around |
 
 ## The tools
 
