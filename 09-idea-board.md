@@ -197,6 +197,10 @@ a photo of the people who matter, built to sit behind the bank cards forever.*
   the *next* occasion — so you keep the recurring relationship even though delivery is
   physical. Validate colour-on-steel quality and reorder repeat-rate before any kit spend.
   Until then it stays 🟡 watch, not a lead.
+- **Worked up:** a [high-end site sold in pairs for couples](./couples-cards/index.html),
+  an [outsourcing/fulfilment playbook](./research/steel-wallet-cards-outsourcing.md), and an
+  [advertising & audience playbook](./research/steel-cards-advertising.md) (new-parents,
+  couples, long-distance, memorial) all exist for this idea.
 
 ## Shortlist into the sprint
 
