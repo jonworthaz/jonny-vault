@@ -201,6 +201,12 @@ a photo of the people who matter, built to sit behind the bank cards forever.*
   an [outsourcing/fulfilment playbook](./research/steel-wallet-cards-outsourcing.md), and an
   [advertising & audience playbook](./research/steel-cards-advertising.md) (new-parents,
   couples, long-distance, memorial) all exist for this idea.
+- **Range upgrade — this may fix the recurring gap:** the same print becomes a
+  [product family](./research/steel-cards-product-range.md) — wallet card, **fridge magnet**,
+  and a **magnet wall** (a magnet-receptive steel panel you keep buying photo magnets to
+  fill). The wall is a *platform* and the magnets are *refills*, so it turns memories into a
+  genuinely **recurring** purchase — the same mechanic that made #10's refills interesting.
+  If that repeat-rate proves out, #11 has a real path off 🟡 watch toward a lead.
 
 ## Shortlist into the sprint
 
