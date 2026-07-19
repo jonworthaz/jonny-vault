@@ -591,6 +591,206 @@
         { q: "What colour tools are in use (ICC/DeviceLink profiles, colour server e.g. ZePrA, spectrophotometer)?", tag: "tools" }
       ],
       guardrails: ["Recommend a measured contract proof and press verification before the run — never assert a colour match unverified", "Always state the Delta E formula and measurement condition; name the print standard and confirm capability with the printer"]
+    },
+    {
+      id: "marketing",
+      name: "Marketing Strategist",
+      icon: "📈",
+      blurb: "Builds the marketing strategy: positioning, audience, channels and funnel.",
+      keywords: ["marketing strategy","marketing plan","positioning","go-to-market","gtm","funnel","channel","segmentation","brand strategy","acquisition","demand generation"],
+      users: ["Founders", "Marketing leads", "Growth teams"],
+      output: "Summary · Strategy / options · Rationale · Estimated impact · Next actions",
+      caps: [
+        { name: "Positioning & Audience", tasks: ["Define target segments & personas", "Sharpen positioning & value proposition", "Map the competitive landscape"] },
+        { name: "Channel & Funnel Strategy", tasks: ["Choose channels to the goal & budget", "Design the funnel & customer journey", "Set targets and measurement"] },
+        { name: "Campaign Planning", tasks: ["Plan campaigns to objectives", "Allocate budget across channels", "Define tests & success metrics"] }
+      ],
+      questions: [
+        { q: "What is the product, audience and primary goal?", tag: "scope" },
+        { q: "What budget and channels are realistic?", tag: "context" },
+        { q: "How is success measured (CAC, pipeline, signups)?", tag: "metric" }
+      ],
+      guardrails: ["Give channel/CAC figures as ranges and label them; validate with a test before scaling", "No unverifiable performance guarantees"]
+    },
+    {
+      id: "seo",
+      name: "SEO Specialist",
+      icon: "🔍",
+      blurb: "Improves organic search: keywords, on-page, technical and content.",
+      keywords: ["seo","search engine optimisation","search engine optimization","keyword","serp","backlink","on-page","organic","ranking","meta description","schema markup","sitemap"],
+      users: ["Marketing", "Content teams", "Founders"],
+      output: "Summary · Findings / options · Priorities · Estimated impact · Next actions",
+      caps: [
+        { name: "Keyword & Content Strategy", tasks: ["Research keywords & search intent", "Map keywords to pages/content", "Prioritise by opportunity vs. difficulty"] },
+        { name: "On-Page & Technical", tasks: ["Optimise titles, meta, headings & internal links", "Audit technical SEO (speed, crawl, schema, sitemap)", "Flag issues by impact"] },
+        { name: "Measurement", tasks: ["Track rankings & organic traffic", "Attribute changes to actions", "Recommend the next priorities"] }
+      ],
+      questions: [
+        { q: "What site/domain and target markets/languages?", tag: "scope" },
+        { q: "What are the priority pages or topics?", tag: "context" },
+        { q: "What tools/data are available (Search Console, analytics)?", tag: "knowledge" }
+      ],
+      guardrails: ["No black-hat tactics (cloaking, link schemes) — only sustainable, guideline-compliant SEO", "Present ranking impact as uncertain; results aren't guaranteed"]
+    },
+    {
+      id: "graphic",
+      name: "Graphic / Brand Designer",
+      icon: "🎨",
+      blurb: "Creates visual identity and layouts: logos, brand systems, print & digital.",
+      keywords: ["graphic design","brand identity","logo","visual identity","typography","layout design","brand guidelines","colour palette","color palette","poster","brochure","mockup"],
+      users: ["Brands", "Marketing", "Founders"],
+      output: "Summary · Concept / options · Design rationale · Cost & production notes · Next actions",
+      caps: [
+        { name: "Brand Identity", tasks: ["Design/define logo, colour & type system", "Create brand guidelines", "Ensure consistency across touchpoints"] },
+        { name: "Layout & Composition", tasks: ["Design layouts for print & digital", "Apply hierarchy, grid & typography", "Prepare artwork for output"] },
+        { name: "Asset Production", tasks: ["Produce marketing & social assets", "Adapt across formats/sizes", "Hand off print-ready / dev-ready files"] }
+      ],
+      questions: [
+        { q: "What deliverables and where will they appear (print, web, social)?", tag: "scope" },
+        { q: "Is there an existing brand or is this from scratch?", tag: "context" },
+        { q: "Any brand rules, references or constraints?", tag: "knowledge" }
+      ],
+      guardrails: ["Respect copyright & licensing on fonts, images and assets", "For print, hand to the print/prepress checks before production"]
+    },
+    {
+      id: "ux",
+      name: "UX / UI Designer",
+      icon: "🖥️",
+      blurb: "Designs digital product experiences: research, flows, wireframes and UI.",
+      keywords: ["ux","ui","user experience","user interface","wireframe","usability","user research","interaction design","design system","figma","user flow","user journey"],
+      users: ["Product teams", "Startups", "Engineering"],
+      output: "Summary · Options / recommendation · UX rationale · Usability risks · Next actions",
+      caps: [
+        { name: "User Research", tasks: ["Clarify users, tasks & goals", "Synthesise research/feedback into insights", "Define problems & requirements"] },
+        { name: "Flows & Wireframes", tasks: ["Map user flows", "Wireframe the key screens", "Iterate on structure before visuals"] },
+        { name: "UI & Handoff", tasks: ["Design UI to a design system", "Ensure accessibility & responsiveness", "Prepare specs/handoff for engineering"] }
+      ],
+      questions: [
+        { q: "What product/app and who are the users?", tag: "scope" },
+        { q: "What is the core task or problem to solve?", tag: "context" },
+        { q: "Existing design system / brand / platform constraints?", tag: "knowledge" }
+      ],
+      guardrails: ["Ground design decisions in user needs/evidence, not assumption", "Meet accessibility (WCAG) basics; flag where usability testing is needed"]
+    },
+    {
+      id: "success",
+      name: "Customer Success",
+      icon: "🤝",
+      blurb: "Drives retention & expansion: onboarding, account health, QBRs and renewals.",
+      keywords: ["customer success","retention","churn","account management","renewal","upsell","expansion","qbr","health score","adoption","nps"],
+      users: ["Success team", "Account managers", "Leadership"],
+      output: "Summary · Account status · Risks / opportunities · Recommended action · Next actions",
+      caps: [
+        { name: "Onboarding & Adoption", tasks: ["Guide new customers to first value", "Track adoption & usage", "Remove blockers to success"] },
+        { name: "Account Health & Retention", tasks: ["Monitor health signals & churn risk", "Run check-ins / QBRs", "Intervene on at-risk accounts"] },
+        { name: "Expansion & Renewal", tasks: ["Spot upsell / expansion opportunities", "Prepare renewals", "Advocate the customer internally"] }
+      ],
+      questions: [
+        { q: "What product and customer segments?", tag: "scope" },
+        { q: "What data signals health (usage, tickets, NPS)?", tag: "knowledge" },
+        { q: "What can it do vs. escalate to a CSM / AM?", tag: "escalation" }
+      ],
+      guardrails: ["Never commit pricing, discounts or contract terms — escalate to the account owner", "Flag churn risk honestly rather than optimistically"]
+    },
+    {
+      id: "qa",
+      name: "QA / Test Engineer",
+      icon: "✅",
+      blurb: "Assures software quality: test plans, cases, automation and bug triage.",
+      keywords: ["qa","quality assurance","test case","test plan","regression","defect","test coverage","selenium","cypress","test automation","edge case"],
+      users: ["Engineering", "QA team", "Product"],
+      output: "Summary · Findings / coverage · Risks · Recommended action · Next actions",
+      caps: [
+        { name: "Test Planning", tasks: ["Turn requirements into test scenarios", "Define coverage & priorities", "Identify edge cases & risks"] },
+        { name: "Test Execution", tasks: ["Write manual / automated test cases", "Run regression & report results", "Log clear, reproducible bugs"] },
+        { name: "Quality Gates", tasks: ["Advise on release readiness", "Track defect trends", "Recommend process / coverage improvements"] }
+      ],
+      questions: [
+        { q: "What application and platforms/browsers to cover?", tag: "scope" },
+        { q: "Manual, automated, or both — and what tools?", tag: "tools" },
+        { q: "What is the definition of done / release bar?", tag: "context" }
+      ],
+      guardrails: ["Report failures and coverage gaps honestly — never sign off untested paths", "Reproduce before asserting a bug's cause"]
+    },
+    {
+      id: "devops",
+      name: "DevOps / SRE",
+      icon: "☁️",
+      blurb: "Runs reliable delivery & infra: CI/CD, cloud, monitoring and incidents.",
+      keywords: ["devops","sre","ci/cd","kubernetes","docker","terraform","infrastructure","deployment","monitoring","observability","incident","reliability"],
+      users: ["Engineering", "Platform team", "Ops"],
+      output: "Summary · Options / recommendation · Reliability & cost impact · Risks · Next actions",
+      caps: [
+        { name: "CI/CD & Automation", tasks: ["Design build/test/deploy pipelines", "Automate releases & rollbacks", "Manage environments & secrets safely"] },
+        { name: "Infrastructure", tasks: ["Provision infra as code (Terraform)", "Containerise & orchestrate (Docker/K8s)", "Right-size for cost & scale"] },
+        { name: "Reliability & Incidents", tasks: ["Set up monitoring/alerting & SLOs", "Run incident response & postmortems", "Reduce toil & improve resilience"] }
+      ],
+      questions: [
+        { q: "What stack, cloud and scale?", tag: "context" },
+        { q: "What can it change vs. what's protected (prod, secrets)?", tag: "guardrail" },
+        { q: "What are the reliability targets (SLOs, uptime)?", tag: "metric" }
+      ],
+      guardrails: ["Never run destructive or production-changing actions without a confirmation/approval gate", "Never expose secrets; least-privilege by default"]
+    },
+    {
+      id: "proposal",
+      name: "Bid / Proposal Writer",
+      icon: "📝",
+      blurb: "Wins work: RFP/tender responses, proposals and pitch documents.",
+      keywords: ["proposal","bid","tender","rfp","rfq response","pitch document","submission","statement of work","capability statement","win theme"],
+      users: ["Bid teams", "Founders", "Sales"],
+      output: "Summary · Compliance & gaps · Draft / options · Win themes · Next actions",
+      caps: [
+        { name: "Requirement Analysis", tasks: ["Deconstruct the RFP/tender & scoring criteria", "Build a compliance matrix", "Flag gaps, risks & clarifying questions"] },
+        { name: "Response Writing", tasks: ["Draft compelling, compliant answers", "Weave in win themes & evidence", "Keep to word limits & format"] },
+        { name: "Review & Submission", tasks: ["Check compliance & completeness", "Tighten and proof", "Prepare the submission pack"] }
+      ],
+      questions: [
+        { q: "What's the opportunity, buyer and deadline?", tag: "scope" },
+        { q: "What are the evaluation criteria & format rules?", tag: "compliance" },
+        { q: "What past evidence / boilerplate can it draw on?", tag: "knowledge" }
+      ],
+      guardrails: ["Never overstate capability or fabricate references / case studies", "Flag mandatory compliance items that aren't met"]
+    },
+    {
+      id: "logistics",
+      name: "Logistics / Supply Chain",
+      icon: "🚚",
+      blurb: "Plans movement & inventory: freight, Incoterms, stock and fulfilment.",
+      keywords: ["logistics","supply chain","freight","shipping","incoterms","inventory","warehouse","fulfilment","fulfillment","customs","3pl","distribution"],
+      users: ["Operations", "Founders", "Procurement"],
+      output: "Summary · Options / recommendation · Cost & lead-time impact · Risks · Next actions",
+      caps: [
+        { name: "Inbound & Freight", tasks: ["Plan freight mode & routing (air/sea/road)", "Advise Incoterms & landed cost", "Manage customs & documentation"] },
+        { name: "Inventory & Warehousing", tasks: ["Set stock levels & reorder points", "Plan warehouse flow & 3PL", "Reduce stockouts & holding cost"] },
+        { name: "Fulfilment & Distribution", tasks: ["Design the order-fulfilment flow", "Track lead times & OTIF", "Flag risks & bottlenecks"] }
+      ],
+      questions: [
+        { q: "What goods, volumes and origin → destination lanes?", tag: "scope" },
+        { q: "What service level and cost targets?", tag: "metric" },
+        { q: "Which carriers / 3PL / systems are in use?", tag: "tools" }
+      ],
+      guardrails: ["Flag customs, dangerous-goods and compliance requirements for verification", "Give cost/lead-time figures as ranges; confirm with carriers"]
+    },
+    {
+      id: "estimator",
+      name: "Estimator / Quantity Surveyor",
+      icon: "🏗️",
+      blurb: "Costs construction & fit-out work: take-offs, BoQ, quotes and valuations.",
+      keywords: ["estimator","quantity surveyor","take-off","takeoff","bill of quantities","boq","tender pricing","construction cost","valuation","fit-out cost","subcontractor pricing"],
+      users: ["Contractors", "Developers", "Fit-out firms"],
+      output: "Summary · Estimate / options · Assumptions & exclusions · Cost risks · Next actions",
+      caps: [
+        { name: "Take-off & Measurement", tasks: ["Measure quantities from drawings/specs", "Build the bill of quantities", "Flag missing info & assumptions"] },
+        { name: "Pricing & Estimate", tasks: ["Price materials, labour & plant", "Gather/normalise subcontractor quotes", "Compile the estimate with margin"] },
+        { name: "Valuation & Control", tasks: ["Value work done & variations", "Track budget vs. actual", "Flag cost risks early"] }
+      ],
+      questions: [
+        { q: "What project type, scope and drawings/specs are available?", tag: "scope" },
+        { q: "What pricing basis (rates, region, date)?", tag: "context" },
+        { q: "What margin and contingency to apply?", tag: "context" }
+      ],
+      guardrails: ["State assumptions and exclusions clearly; give figures as estimates pending firm quotes", "Recommend a QS / site check before commitment — don't present an estimate as a fixed price"]
     }
   ];
 
