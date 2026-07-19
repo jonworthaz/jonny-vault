@@ -278,4 +278,4 @@ Build stack: [Magic Hour — character consistency](https://magichour.ai/blog/be
 
 ---
 
-← Back to the [README](./README.md) · Related: [09 — Idea Board](./09-idea-board.md) · [04 — Growth Engine](./04-growth-engine.md) · [07 — Guardrails](./07-guardrails.md)
+← Back to the [README](./README.md) · Related: [12 — The 70/30 AI-Led Channel Playbook](./12-70-30-ai-channel-playbook.md) (the screenshot-safe way to run this at scale) · [09 — Idea Board](./09-idea-board.md) · [04 — Growth Engine](./04-growth-engine.md) · [07 — Guardrails](./07-guardrails.md)
