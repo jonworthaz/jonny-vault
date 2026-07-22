@@ -62,6 +62,18 @@ Assessment). The store opens with **four apps already built**.
    marketing.
 4. **Every app ships with its own landing page + before/after demo** — the
    catalog is also the marketing.
+4b. **🟢 Core function — the AI Bridge (built):** Base Reality is **directly
+   usable by AI assistants** on the user's machine (Claude Desktop, ChatGPT
+   desktop, Gemini CLI, and anything else MCP-capable) via the zero-dependency
+   MCP server in [`base-reality/bridge/`](./base-reality/bridge/bridge.js) —
+   **no cloud API keys, no screen control**. Assistants read/search the user's
+   data and operate the modules (add snippets & prompts, create clients,
+   draft quotes, track renewals) over a local pipe; the app and the bridge
+   share one source of truth (`~/.base-reality/data.json`). Every future
+   module should expose its key actions as bridge tools — "AI can drive it"
+   is part of each module's definition of done. The reverse direction —
+   modules using **locally stored models** (Ollama / LM Studio via localhost)
+   — ships as the *Local Model Link* module (category G).
 5. **Every app ships tagged.** Tags across four dimensions, so the store,
    the in-app shelf and site search can all find it:
    - **Function** — what it does (`pdf`, `prompts`, `time-tracking`, `proofing`,
@@ -210,6 +222,7 @@ vault and seed the store on day one.*
 | Tone Shifter | Rewrite anything in your saved brand voice | £ |
 | Output Checker | Second-pass AI review: contradictions, unsupported claims | £ /m |
 | Model Picker | Task in → recommended model/tool + est. cost out | F |
+| Local Model Link | Connect modules to models running on YOUR machine (Ollama / LM Studio, localhost) — AI features with zero cloud calls | £ |
 | First Result *(flagship)* | Guided path from "new to AI" → first working automation *(the productised form of board [#11](./09-idea-board.md))* | ££ /m |
 
 **G2 — Prompting, teaching & optimising AI use** *(the deep end of the aisle —

@@ -44,6 +44,44 @@ Nothing is uploaded anywhere. Local-first is the product promise.
    `start-windows.bat` / `start-mac-linux.command` (needs Python for the tiny
    local server). Same app, served from your own disk.
 
+## The AI Bridge (core function)
+
+`bridge/bridge.js` gives AI assistants on your computer a **direct connection**
+to Base Reality via **MCP (Model Context Protocol)** — no cloud API keys, no
+screen control, no browser puppeting. The assistant calls real functions over
+a local pipe: read your data, search it, add snippets/prompts/clients, draft
+quotes, track renewals.
+
+Zero dependencies — it's one file, run by Node.
+
+**Connect Claude Desktop** — add to `claude_desktop_config.json`
+(Settings → Developer → Edit Config):
+
+```json
+{ "mcpServers": { "base-reality": {
+    "command": "node",
+    "args": ["/FULL/PATH/TO/base-reality/bridge/bridge.js"] } } }
+```
+
+**Connect ChatGPT desktop** — Settings → Connectors → Advanced → Developer
+mode, add the same command as a local MCP server.
+**Connect Gemini CLI** — add the same command block under `mcpServers` in
+`~/.gemini/settings.json`.
+**Other assistants** — anything MCP-capable works the same way; assistants
+without MCP support have no honest "direct" path (that's a them limitation,
+not a bridge one).
+
+**Sync**: the bridge mirrors the app's store at `~/.base-reality/data.json`
+and serves a loopback sync endpoint (`127.0.0.1:8137`). In the app:
+Settings → AI Bridge → *Sync to bridge* / *Pull from bridge* (or tick
+auto-sync). Run it standalone for sync with `node bridge/bridge.js` — when an
+AI app launches it over stdio it exits with that app; run standalone it stays
+up as a sync server.
+
+**The other direction (planned):** a *Local Model Link* module connecting the
+app to models running **on your machine** (Ollama / LM Studio, localhost
+API) so modules can use local AI with zero cloud calls.
+
 ## Next up (reminders)
 
 - **Recorder & Transcriber module** — audio + video + screen recording with

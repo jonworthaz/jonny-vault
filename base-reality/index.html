@@ -146,9 +146,27 @@
     // Namespaced local store. One source of truth for every module.
     store: {
       get(key, def){ try{ const v = localStorage.getItem('br:'+key); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
-      set(key, val){ localStorage.setItem('br:'+key, JSON.stringify(val)); },
-      del(key){ localStorage.removeItem('br:'+key); },
+      set(key, val){ localStorage.setItem('br:'+key, JSON.stringify(val)); BR.bridge.autoPush(); },
+      del(key){ localStorage.removeItem('br:'+key); BR.bridge.autoPush(); },
       keys(){ return Object.keys(localStorage).filter(k=>k.startsWith('br:')).map(k=>k.slice(3)); }
+    },
+
+    // AI Bridge — direct connection to MCP-capable assistants via bridge/bridge.js.
+    // The bridge holds a mirror of this store at ~/.base-reality/data.json.
+    bridge: {
+      url: 'http://127.0.0.1:8137',
+      async ping(){ try{ const r = await fetch(this.url+'/ping', {signal:AbortSignal.timeout(1200)});
+        return (await r.json()).ok === true; }catch(e){ return false; } },
+      snapshot(){ const d = {}; for(const k of BR.store.keys()) if(k!=='app:bridgeAuto') d[k] = BR.store.get(k); return d; },
+      async push(){ try{ const r = await fetch(this.url+'/data', { method:'POST',
+          headers:{'Content-Type':'application/json'}, body: JSON.stringify(this.snapshot()) });
+        return (await r.json()).ok === true; }catch(e){ return false; } },
+      async pull(){ try{ const r = await fetch(this.url+'/data');
+        const data = await r.json();
+        for(const [k,v] of Object.entries(data)) localStorage.setItem('br:'+k, JSON.stringify(v));
+        return true; }catch(e){ return false; } },
+      autoPush(){ if(!BR.store.get('app:bridgeAuto', false)) return;
+        clearTimeout(this._t); this._t = setTimeout(()=>this.push(), 1500); }
     },
 
     // Shared entities — entered once, used by every module.
@@ -261,6 +279,18 @@
         </div>
         <div class="br-row" style="margin-top:14px"><button class="btn" id="saveProfile">Save profile</button></div>
       </div>
+      <div class="panel"><h2 style="margin-top:0">AI Bridge <span class="pill" style="margin-left:6px">core</span></h2>
+        <p class="sub">Connect AI assistants on this computer (Claude Desktop, ChatGPT desktop, Gemini CLI —
+        anything MCP-capable) <b>directly</b> to Base Reality: no API keys, no screen control.
+        Run the bridge (<code>node bridge/bridge.js</code> — see the README for the one-line AI-app config),
+        then sync. Status: <b id="bridgeStatus">checking…</b></p>
+        <div class="br-row">
+          <button class="btn" id="bridgePush">⬆ Sync to AI bridge</button>
+          <button class="btn ghost" id="bridgePull">⬇ Pull from AI bridge</button>
+          <label class="br-field" style="flex-direction:row;align-items:center;gap:6px">
+            <input type="checkbox" id="bridgeAuto" style="width:auto"> auto-sync on every change</label>
+        </div>
+      </div>
       <div class="panel"><h2 style="margin-top:0">Backup</h2>
         <p class="sub">One backup covers every module — export it anywhere, import it on any device.</p>
         <div class="br-row">
@@ -275,6 +305,23 @@
         phone:s_phone.value.trim(), address:s_address.value, currency:s_currency.value.trim()||'£',
         vatRate:parseFloat(s_vat.value)||0, vatNo:s_vatno.value.trim() });
       BR.toast('Profile saved — all modules will use it');
+    };
+    // AI Bridge wiring
+    const bStatus = document.getElementById('bridgeStatus');
+    BR.bridge.ping().then(ok => {
+      bStatus.textContent = ok ? 'connected ✓' : 'not running';
+      bStatus.className = ok ? 'ok' : 'warn';
+    });
+    document.getElementById('bridgeAuto').checked = BR.store.get('app:bridgeAuto', false);
+    document.getElementById('bridgeAuto').onchange = e => BR.store.set('app:bridgeAuto', e.target.checked);
+    document.getElementById('bridgePush').onclick = async () => {
+      const r = await BR.bridge.push();
+      BR.toast(r ? 'Synced to AI bridge — assistants now see your data' : 'Bridge not reachable — is it running?');
+    };
+    document.getElementById('bridgePull').onclick = async () => {
+      const r = await BR.bridge.pull();
+      BR.toast(r ? 'Pulled from AI bridge' : 'Bridge not reachable — is it running?');
+      if(r) route();
     };
     document.getElementById('exportAll').onclick = () => {
       const data = {}; for(const k of BR.store.keys()) data[k] = BR.store.get(k);
