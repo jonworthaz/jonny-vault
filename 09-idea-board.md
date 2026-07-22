@@ -203,6 +203,28 @@ measurable automation, not another course completion.*
   entry with a near-zero build cost (assets exist). Stays 🟡 until a fake-door
   test says the persona converts — but it should challenge for a Phase-0 slot.
 
+### 🟡 #12 — Base Reality: mini-app catalog & membership store
+*base-reality.com — a storefront of small, inexpensive AI-built apps (personal ·
+business · AI), bundle discounts, and one All-Access membership that compounds.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 4 | 3 | 4 | 4 | 4 | ✅ membership; every new app raises its value | ✅ |
+
+- **Recurring job:** the Setapp-proven shape — singles and bundles acquire,
+  the **All-Access membership** is the business (law #1). Each app is a door;
+  the membership is the house.
+- **Affiliate pool:** deal/LTD communities (AppSumo-style buyers), productivity
+  and AI-tool creators; every app doubles as its own promotable landing page.
+- **Edge:** near-zero marginal build cost via the existing AI pipeline; opens
+  with four already-built apps (MarkUp, Damage Assessment, Architect, Forge)
+  and doubles as a permanent Phase-0 demand-testing machine.
+- **Risk / watch:** breadth vs. excellence — 90 mediocre apps lose to 10 great
+  ones; singles have no switching cost, so retention lives entirely in the
+  membership. Build in scored waves, let sales data pick the aisles.
+- **Full catalog & strategy:** [11 — Base Reality Catalog](./11-base-reality-catalog.md)
+  (~90 candidate apps in 13 categories, pricing architecture, build order).
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the
