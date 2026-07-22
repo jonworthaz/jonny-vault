@@ -181,6 +181,26 @@ vault and seed the store on day one.*
 | Model Picker | Task in → recommended model/tool + est. cost out | F |
 | First Result *(flagship)* | Guided path from "new to AI" → first working automation *(the productised form of board [#11](./09-idea-board.md))* | ££ /m |
 
+**G2 — Prompting, teaching & optimising AI use** *(the deep end of the aisle —
+serves the board-[#11](./09-idea-board.md) persona directly; several reuse
+Architect's 38 role archetypes and the Prompt Vault engine)*
+
+| App | One job | Band |
+|---|---|---|
+| System Prompt Designer | Build a proper system prompt section by section — role, rules, examples, output format — with best practice baked in *(Architect's engine, generalised)* | ££ |
+| Prompt A/B Lab | Run two prompt variants on the same task, compare outputs side by side, keep the winner *(saves winners to Prompt Vault)* | ££ /m |
+| Prompt Debugger | Paste a prompt + the bad output it gave → diagnosis of *why* it failed and a corrected version | ££ |
+| Prompt Chain Builder | Break a big job into a linked sequence of prompts, with each step's output feeding the next *(Forge's pattern, for non-coders)* | ££ /m |
+| Promptlets | Turn any saved prompt into a shareable mini-form — teammates fill the blanks, never see the prompt engineering | ££ /m |
+| Role Prompt Packs | Curated, tested prompt libraries per profession *(seeded from Architect's 38 archetypes; ships into Prompt Vault)* | £ each |
+| AI Skill Drills | 10 minutes a day: graded prompting exercises with streaks — duolingo for AI *(habit + retention engine)* | £ /m |
+| Use-Case Finder | Answer questions about your working week → a ranked list of what to automate first, with recipes | ££ |
+| Context Pack Builder | Assemble reusable context files (about you, your business, your voice) to paste into any AI chat for instantly better output | £ |
+| Custom Instruction Builder | Craft the persistent instructions/memory settings for ChatGPT & Claude — one wizard, both formats | £ |
+| AI ROI Ledger | Log what you used AI for and time saved → a monthly "AI paid for itself ×N" report *(the retention story for the whole membership)* | £ /m |
+| Eval Lite | Score AI outputs against your own rubric — consistency, accuracy, tone — before they ship | ££ /m |
+| Team AI Onboarding | A guided track that takes a small team from zero → daily AI use, with progress tracking *(B2B door for everything above)* | ££ /m |
+
 ### H. Documents & files
 
 | App | One job | Band |
