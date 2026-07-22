@@ -15,6 +15,7 @@ All-Access membership unlocks everything; new modules land inside the same app.
 | **Renewal Radar** | Track subscriptions & renewals — totals, warnings, `.ics` calendar reminders |
 | **Quote Builder** | Branded quotes & estimates — VAT, discounts, print-to-PDF, saved history |
 | **PDF Toolkit** | Merge PDFs, extract pages, images → PDF (vendored [pdf-lib](https://pdf-lib.js.org/), MIT) |
+| **Snippet Deck** | Floating always-on-top quick-button deck — click copies, Ctrl+V pastes anywhere (+ Ctrl+K command palette in the shell) |
 
 ## The shared source of truth
 

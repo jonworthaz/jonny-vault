@@ -1,5 +1,5 @@
 /* Base Reality service worker — precache the whole app so it runs fully offline once installed. */
-const VERSION = 'br-v2';
+const VERSION = 'br-v3';
 const ASSETS = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const ASSETS = [
   'modules/renewal-radar.js',
   'modules/quote-builder.js',
   'modules/pdf-toolkit.js',
+  'modules/snippet-deck.js',
   'vendor/pdf-lib.min.js'
 ];
 

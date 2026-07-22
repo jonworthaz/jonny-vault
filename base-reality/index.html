@@ -83,6 +83,21 @@
     .drop.on{border-color:var(--accent);color:var(--text)}
     #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);
       border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:14px;display:none;z-index:99}
+    /* Ctrl+K command palette */
+    #palette{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:80;
+      align-items:flex-start;justify-content:center;padding-top:12vh}
+    #palette.open{display:flex}
+    .palbox{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);
+      border-radius:14px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+    .palbox input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;
+      background:var(--panel);padding:14px 16px;font-size:16px}
+    .palbox input:focus{outline:none}
+    .palist{max-height:46vh;overflow-y:auto}
+    .palitem{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:14px}
+    .palitem small{color:var(--muted);margin-left:auto;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .palitem.sel,.palitem:hover{background:var(--panel2)}
+    .palletter{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+      font-size:11px;font-weight:800;color:#fff;flex:0 0 auto}
     .tierline{display:flex;gap:12px;flex-wrap:wrap}
     .tier{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
     .tier.hot{border-color:var(--accent)}
@@ -115,8 +130,12 @@
   </div>
 
   <footer>Base Reality · local-first — everything is stored in your browser, nothing is uploaded ·
-    early access: all modules unlocked</footer>
+    early access: all modules unlocked · press <b>Ctrl+K</b> for quick actions</footer>
   <div id="toast"></div>
+  <div id="palette"><div class="palbox">
+    <input id="palInput" placeholder="Jump to a tool, copy a snippet or prompt…" autocomplete="off">
+    <div class="palist" id="palList"></div>
+  </div></div>
 
   <script>
   // ---------- Base Reality shell: registry, shared store, helpers ----------
@@ -158,6 +177,7 @@
   <script src="modules/renewal-radar.js"></script>
   <script src="modules/quote-builder.js"></script>
   <script src="modules/pdf-toolkit.js"></script>
+  <script src="modules/snippet-deck.js"></script>
 
   <script>
   // ---------- Router + views ----------
@@ -301,6 +321,54 @@
   window.addEventListener('hashchange', route);
   route();
   document.getElementById('menuBtn').onclick = () => nav.classList.toggle('open');
+
+  // ---------- Ctrl+K command palette: modules + snippets + prompts + actions ----------
+  const pal = document.getElementById('palette');
+  const palInput = document.getElementById('palInput');
+  const palList = document.getElementById('palList');
+  let palSel = 0, palItems = [];
+
+  function palEntries(q){
+    const ql = q.trim().toLowerCase();
+    const items = [];
+    for(const m of BR.modules)
+      items.push({ label:'Open '+m.name, kind:'tool', letter:m.letter, color:m.color,
+        hay:(m.name+' '+(m.tags||[]).join(' ')).toLowerCase(), run:()=>{ location.hash='#/m/'+m.id; } });
+    for(const s of BR.store.get('snippet-deck:snips', []))
+      items.push({ label:'Copy: '+s.label, kind:'snippet', letter:'D', color:'#38bdf8',
+        hay:(s.label+' '+s.text).toLowerCase(),
+        run:async()=>{ await navigator.clipboard.writeText(s.text); BR.toast('Copied — Ctrl+V to paste'); } });
+    for(const p of BR.store.get('prompt-vault:prompts', []))
+      items.push({ label:'Copy prompt: '+p.title, kind:'prompt', letter:'V', color:'#8b5cf6',
+        hay:(p.title+' '+(p.tags||[]).join(' ')).toLowerCase(),
+        run:async()=>{ await navigator.clipboard.writeText(p.body); BR.toast('Prompt copied'); } });
+    items.push({ label:'Open Settings', kind:'app', letter:'⚙', color:'#64748b', hay:'settings profile backup',
+      run:()=>{ location.hash='#/settings'; } });
+    return items.filter(i=>!ql || i.hay.includes(ql) || i.label.toLowerCase().includes(ql)).slice(0,12);
+  }
+  function palRender(){
+    palItems = palEntries(palInput.value);
+    palSel = Math.min(palSel, Math.max(0, palItems.length-1));
+    palList.innerHTML = palItems.map((i,idx)=>`<div class="palitem${idx===palSel?' sel':''}" data-i="${idx}">
+      <span class="palletter" style="background:${i.color}">${i.letter}</span>
+      <span>${BR.esc(i.label)}</span><small>${i.kind}</small></div>`).join('')
+      || '<div class="palitem muted">No matches</div>';
+    palList.querySelectorAll('.palitem[data-i]').forEach(el => el.onclick = () => palRun(+el.dataset.i));
+  }
+  function palOpen(){ pal.classList.add('open'); palInput.value=''; palSel=0; palRender(); palInput.focus(); }
+  function palClose(){ pal.classList.remove('open'); }
+  function palRun(i){ const it = palItems[i]; if(it){ palClose(); it.run(); } }
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault();
+      pal.classList.contains('open') ? palClose() : palOpen(); return; }
+    if(!pal.classList.contains('open')) return;
+    if(e.key==='Escape') palClose();
+    else if(e.key==='ArrowDown'){ e.preventDefault(); palSel=Math.min(palSel+1, palItems.length-1); palRender(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); palSel=Math.max(palSel-1, 0); palRender(); }
+    else if(e.key==='Enter'){ e.preventDefault(); palRun(palSel); }
+  });
+  palInput.addEventListener('input', ()=>{ palSel=0; palRender(); });
+  pal.addEventListener('click', e => { if(e.target===pal) palClose(); });
 
   // ---------- PWA: install prompt + service worker ----------
   let deferredPrompt = null;

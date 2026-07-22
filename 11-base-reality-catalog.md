@@ -326,6 +326,50 @@ Bluetooth are Chrome-on-Android only; barcode detection needs a small fallback
 library on Safari; iOS allows push only for installed PWAs. Each listing page
 states what works where — no over-claiming.
 
+### O. PC power tools *(overlays, quick buttons, fewer keystrokes)*
+
+*What the web can honestly do today vs. what needs the desktop edition:*
+- **In the PWA now:** always-on-top floating panels (Document
+  Picture-in-Picture, Chrome/Edge), an in-app Ctrl+K command palette,
+  one-click clipboard copy (→ one Ctrl+V paste anywhere).
+- **Needs Base Reality Desktop** *(a thin Tauri wrapper hosting the SAME
+  modules — one codebase, recorded here as the planned vehicle)*: global
+  hotkeys that work while other apps have focus, true system-wide text
+  expansion (type `;addr` → expands in any app), OS clipboard history,
+  launching programs/files.
+
+| App | One job | Band |
+|---|---|---|
+| ✅ **Snippet Deck** *(built)* | Floating always-on-top deck of quick buttons — click = copied, Ctrl+V = pasted | £ /m |
+| ✅ **Command Palette** *(built into the shell)* | Ctrl+K anywhere in the app — jump to tools, copy snippets & prompts | — |
+| Text Expander Pro | Type `;sig` in *any* program → full text expands in place *(desktop edition)* | ££ /m |
+| Clipboard History | Everything you've copied, searchable, pinned favourites *(desktop edition)* | £ /m |
+| Quick Launcher Deck | Stream-deck-style grid: launch apps, files, URLs and multi-step actions *(desktop edition)* | ££ /m |
+| Batch File Renamer | Rename hundreds of files by pattern — dates, numbering, find/replace *(File System Access API — works in PWA)* | £ |
+| Duplicate File Finder | Scan a chosen folder for duplicate files, reclaim space *(PWA, folder-scoped)* | £ |
+| Folder Search | Point at a folder → instant filename + text-content search inside it *(PWA, folder-scoped)* | ££ |
+
+### P. Communication, organisation & more *(captured 2026-07-22 — business ·
+organisation · optimising · communication · saving · image · searching sweep)*
+
+| App | One job | Band |
+|---|---|---|
+| Canned Replies | Your best answers to the questions customers ask forever — searchable, one-click copy *(Snippet Deck's big sibling; shares its store)* | £ /m |
+| Client Update Composer | Bullet points in → polished client status update out, in your voice | £ /m |
+| Complaint Response Writer | Angry message in → calm, de-escalating, honest reply out | ££ |
+| Meeting Scheduler Lite | A share-a-link booking page against your availability *(needs the v2 backend — pairs with Proof Room's)* | ££ /m |
+| Kanban Board Lite | A simple personal/team job board — cards, columns, done *(shares clients/projects with Time Tracker & Quote Builder)* | £ /m |
+| Checklist Runner | Turn any SOP into a tickable run — every run logged, nothing skipped *(SOP Writer's other half)* | £ /m |
+| Asset Register | Every tool, device and licence you own — value, location, service dates *(pairs with NFC Asset Tagger & Home Inventory)* | ££ |
+| Weekly Review | One screen: what happened across every module this week — quotes sent, hours tracked, renewals due | — *(membership glue, free)* |
+| Margin Calculator | Product price − fees − VAT − shipping → true margin, per marketplace | £ |
+| Bill Cutter | Reads your Renewal Radar list → flags what's over-priced and scripts the cancellation/negotiation call | £ /m |
+| Image Compressor & Converter | Batch shrink/convert images (HEIC→JPG, PNG→WebP) — locally | £ |
+| EXIF Stripper | Remove location & metadata from photos before sharing | F |
+| Favicon & App-Icon Maker | One image → every icon size a site/app needs | £ |
+| Background Remover | Cut subjects from images on-device *(heavier — needs a local ML model; stage after the easy image wins)* | ££ /m |
+| Data Search | One search box across everything stored in Base Reality — quotes, clients, snippets, prompts, subs | — *(membership glue, free)* |
+
 ### M. Vertical mini-tools *(each = a testable slice of board [#04](./09-idea-board.md))*
 
 | App | One job | Band |
