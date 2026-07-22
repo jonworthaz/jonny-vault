@@ -91,7 +91,7 @@ vault and seed the store on day one.*
 | Renewal Radar | Tracks subscriptions & renewals, nags before you're charged | £ /m |
 | Paper Cut | Photo of any document → named, filed, searchable | ££ |
 | Life Admin OS | The recurring life checklist — MOT, insurance, passport, boiler | £ |
-| Focus Blocks | Pomodoro + a proper end-of-day shutdown ritual | F |
+| Focus Blocks | Focus timer: pomodoro sessions + a proper end-of-day shutdown ritual *(free sibling of Time Tracker — same timer engine)* | F |
 | Read-Later Digest | Saved articles → one weekly AI summary email | /m |
 | Travel Pack | Booking emails → itinerary + packing checklist | £ |
 
@@ -121,6 +121,7 @@ vault and seed the store on day one.*
 | Stock Count | Bare-bones inventory for micro-retail | £ |
 | Job Sheet | Field job cards — photos, notes, signature *(pairs with Damage Assessment)* | ££ /m |
 | Testimonial Collector | One link → collects, formats and publishes reviews | £ /m |
+| Time Tracker | Toggl-style start/stop timers per client & project → timesheets and billable totals *(shares the client list; feeds Quote Builder & Invoice Chaser)* | ££ /m |
 
 ### E. Sales & marketing
 
@@ -158,6 +159,14 @@ vault and seed the store on day one.*
 > already exists as a Claude desktop build — port it in as a module rather
 > than rebuilding from scratch. Feeds Meeting → Minutes and Show Notes
 > directly. *(Captured 2026-07-22 — next module after Wave 1 hardening.)*
+
+> **📌 Reminder — image annotation is already built (desktop app):** an
+> **image annotation** tool exists as a Claude desktop build, alongside the
+> vault's own web MarkUp tool ([`image-annotator/`](./image-annotator/)).
+> When bringing annotation into the Base Reality app as a module, **port the
+> existing desktop build / reuse MarkUp — do not rebuild from scratch.**
+> Pairs with Screenshot Beautifier, Document Scanner and Site Visit Logger.
+> *(Captured 2026-07-22.)*
 
 | App | One job | Band |
 |---|---|---|

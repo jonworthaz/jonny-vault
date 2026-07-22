@@ -48,6 +48,9 @@ Nothing is uploaded anywhere. Local-first is the product promise.
 - **Recorder & Transcriber module** — audio + video + screen recording with
   transcription. Already built on Claude desktop; **port it in as a module**,
   don't rebuild. (Captured 2026-07-22.)
+- **Image annotation module** — already built on the Claude desktop app (and
+  as the vault's web MarkUp tool, `../image-annotator/`); **port/reuse it as
+  a module**, don't rebuild. (Captured 2026-07-22.)
 
 ## Adding a module
 
