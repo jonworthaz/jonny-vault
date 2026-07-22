@@ -225,6 +225,33 @@ business · AI), bundle discounts, and one All-Access membership that compounds.
 - **Full catalog & strategy:** [11 — Base Reality Catalog](./11-base-reality-catalog.md)
   (~90 candidate apps in 13 categories, pricing architecture, build order).
 
+### 🟡 #13 — Proof Room: artwork & PDF approval
+*Lean artwork/PDF proofing and approval — annotate, version-compare, route for
+sign-off — against incumbents (Ziflow, Filestage, PageProof) priced at
+£40–£50/user/mo.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 4 | 5 | 4 | 3 | ✅ proofs never stop coming | ✅ |
+
+- **Recurring job:** every job an agency, printer, packaging producer or brand
+  ships goes through proof → amend → re-proof → approve, forever. Approval is
+  a standing workflow, not a one-off.
+- **Intent & headroom:** B2B proofing tools carry real CPCs and the incumbents
+  price per-user-per-month with enterprise minimums — a lean tool priced under
+  them for freelancers/small agencies/printers has the whole bottom of the
+  market to itself.
+- **Edge:** (1) assets exist — MarkUp + the desktop annotation build + the
+  Damage Assessment report engine are most of v1; (2) the founder knows this
+  industry (see [packaging-consultant-agent](./packaging-consultant-agent.md)
+  and Architect's prepress archetype) — v3's print/packaging checks (dielines,
+  barcodes, spot colours) are exactly what generic incumbents underserve.
+- **Risk / watch:** real approval flows need a backend (share links,
+  multi-user, audit trail) — the first catalog item that does. Staged build in
+  [11 §D](./11-base-reality-catalog.md) keeps v1 local-first and sellable
+  before any server exists. Incumbents are sticky in mid-market; win the
+  unserved small end first.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the

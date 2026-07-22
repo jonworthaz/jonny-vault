@@ -122,6 +122,24 @@ vault and seed the store on day one.*
 | Job Sheet | Field job cards — photos, notes, signature *(pairs with Damage Assessment)* | ££ /m |
 | Testimonial Collector | One link → collects, formats and publishes reviews | £ /m |
 | Time Tracker | Toggl-style start/stop timers per client & project → timesheets and billable totals *(shares the client list; feeds Quote Builder & Invoice Chaser)* | ££ /m |
+| **Proof Room** — artwork & PDF approval | Upload artwork/PDF → annotate, version, route for approval — the lean, honest cousin of Ziflow / Filestage / PageProof *(scored as its own product on the board: [#13](./09-idea-board.md))* | £££ /m |
+
+> **Proof Room staged build** *(the one catalog entry big enough to earn a
+> backend — staged so each stage is sellable alone):*
+> - **v1 — local proofing (fits the app today):** open artwork or a PDF →
+>   pin-point annotations, markup tools *(reuse MarkUp + the desktop
+>   annotation build — port, don't rebuild)*, side-by-side **version
+>   compare**, checklist gates (spelling ✓ barcode ✓ dielines ✓ colours ✓),
+>   then export a numbered, timestamped **proof report PDF** — the Damage
+>   Assessment report pattern applied to artwork.
+> - **v2 — approval flow (first backend):** share a proof by link (client
+>   needs no login — the incumbents' killer feature), approve / request
+>   changes with comments, approver roles + deadlines + reminders, full
+>   audit trail per version.
+> - **v3 — the vertical edge:** print/packaging-specific checks the generic
+>   incumbents underserve — dieline overlay, barcode/QR verification, spot
+>   colour listing, bleed/safe-area guides *(the vault's prepress archetype
+>   as software)*.
 
 ### E. Sales & marketing
 
