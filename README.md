@@ -25,7 +25,7 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 
 | # | Doc | What it covers |
 |---|---|---|
-| 00 | [CEO Operating Framework](./00-ceo-operating-framework.md) | **How work gets run** — briefs, verification, the single priority, standing rules |
+| 00 | [CEO Operating Framework](./00-ceo-operating-framework.md) | **How work gets run** — briefs, verification, the single priority, standing rules. Installed as live machinery: [`CLAUDE.md`](./CLAUDE.md) + `.claude/` agents & skills + the [`briefs/`](./briefs/) queue |
 | 01 | [Medvi Teardown](./01-medvi-teardown.md) | The research — exactly how Medvi works, deconstructed |
 | 02 | [The Operating System](./02-operating-system.md) | The transferable playbook, abstracted from the vertical |
 | 03 | [Our Business Plan](./03-our-business-plan.md) | Concrete: what we build, who for, pricing, GTM |

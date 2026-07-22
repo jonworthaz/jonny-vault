@@ -159,6 +159,23 @@ These are the entire current work queue. Nothing else is in flight.
 - **Budget:** the cap is set at the weekly board review before spend starts.
 - **Gate:** >10–15% landing→signup on one niche → proceed to Phase 1 build.
 
+## The machinery (this framework, installed)
+
+The framework is not just prose — it is wired into the repo so every Claude
+session boots into it automatically:
+
+| Piece | Where | What it does |
+|---|---|---|
+| CEO boot instructions | [`CLAUDE.md`](./CLAUDE.md) | Loads into every session: role, current priority, the rules, how to commission departments |
+| Departments | `.claude/agents/` | `research` · `build` · `review-qa` · `growth` · `ops` — real spawnable agents, each carrying its department's rules |
+| `/brief` | `.claude/skills/brief/` | Creates a brief and enforces *no brief, no build* |
+| `/verify` | `.claude/skills/verify/` | Runs independent verification via `review-qa` before anything is called done |
+| `/board-review` | `.claude/skills/board-review/` | The weekly board meeting: drift check, gate data, kill/continue, next queue |
+| Work queue | [`briefs/`](./briefs/) | One file per brief; closed briefs move to `briefs/closed/` with their Report |
+
+The three queued briefs below live as real files in `briefs/` — they are the
+entire active pipeline.
+
 ---
 
 > The whole framework in one sentence: **justify it before you build it, verify it
