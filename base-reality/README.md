@@ -43,6 +43,12 @@ Nothing is uploaded anywhere. Local-first is the product promise.
    `start-windows.bat` / `start-mac-linux.command` (needs Python for the tiny
    local server). Same app, served from your own disk.
 
+## Next up (reminders)
+
+- **Recorder & Transcriber module** — audio + video + screen recording with
+  transcription. Already built on Claude desktop; **port it in as a module**,
+  don't rebuild. (Captured 2026-07-22.)
+
 ## Adding a module
 
 Create `modules/<id>.js` that calls `BR.register({id, name, letter, color,

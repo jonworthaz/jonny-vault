@@ -152,8 +152,16 @@ vault and seed the store on day one.*
 
 ### G. AI utilities *(the base-reality.com signature aisle)*
 
+> **📌 Reminder — port from the Claude desktop build:** add a **Recorder &
+> Transcriber** module to the Base Reality app: record **audio and video**
+> in-app (screen/camera/mic) and **transcribe** recordings to text. This
+> already exists as a Claude desktop build — port it in as a module rather
+> than rebuilding from scratch. Feeds Meeting → Minutes and Show Notes
+> directly. *(Captured 2026-07-22 — next module after Wave 1 hardening.)*
+
 | App | One job | Band |
 |---|---|---|
+| Recorder & Transcriber | Record audio/video/screen in-app → text transcript *(port of existing Claude desktop build)* | ££ /m |
 | Prompt Vault | Save, organise, version and share prompts | £ /m |
 | Prompt Improver | Rewrites any prompt to best practice, explains why | £ |
 | Automation Recipe Finder | Describe a chore → a Make/Zapier-ready blueprint | ££ |
