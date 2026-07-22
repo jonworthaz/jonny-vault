@@ -25,6 +25,7 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 
 | # | Doc | What it covers |
 |---|---|---|
+| 00 | [CEO Operating Framework](./00-ceo-operating-framework.md) | **How work gets run** — briefs, verification, the single priority, standing rules |
 | 01 | [Medvi Teardown](./01-medvi-teardown.md) | The research — exactly how Medvi works, deconstructed |
 | 02 | [The Operating System](./02-operating-system.md) | The transferable playbook, abstracted from the vertical |
 | 03 | [Our Business Plan](./03-our-business-plan.md) | Concrete: what we build, who for, pricing, GTM |
@@ -54,4 +55,5 @@ Self-contained, zero-dependency web tools that live alongside the playbook
 > Win distribution by paying affiliates more than anyone else can afford to —
 > which you can only do if your margin is real and your retention is honest.
 
-Start at [01-medvi-teardown.md](./01-medvi-teardown.md), then read in order.
+Start at [00-ceo-operating-framework.md](./00-ceo-operating-framework.md) — it
+governs how everything else gets executed — then read 01 onward in order.
