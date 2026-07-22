@@ -23,6 +23,13 @@ useful apps already beat the price and everything after is free*. Meanwhile
 AppSumo shows the single-purchase market is real but works as **acquisition**,
 not as the business.
 
+> **Platform note:** Setapp is cited *only* as pricing-model evidence — it
+> happens to sell Mac apps; we don't. Every Base Reality app is a **web app**,
+> hosted at base-reality.com, running in any browser on any device (desktop,
+> tablet, phone). That's the same platform-agnostic, geo-agnostic posture as
+> the vault's locked decisions and the existing tools — no app stores, no
+> per-platform builds, no 30% platform tax, instant updates for everyone.
+
 So Base Reality's pricing has three layers, and the discounts you wanted are
 the middle one:
 
