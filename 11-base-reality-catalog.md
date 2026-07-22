@@ -234,11 +234,23 @@ vault and seed the store on day one.*
 
 ## 4. Build order — first two waves
 
-**Wave 1 (weeks 1–4): open the store.** The four ✅ existing apps, plus six
-fast, high-search utilities that need no backend: **PDF Toolkit · CSV Cleaner ·
-Screenshot Beautifier · Prompt Vault · Quote Builder · Renewal Radar**. Ten
-apps is enough shelf for the membership to make sense. Stand up Stripe (single
-+ bundle + membership SKUs) and one landing page per app.
+**Wave 1 (weeks 1–4): open the store. 🟢 built — see [`base-reality/`](./base-reality/).**
+The four ✅ existing apps, plus six fast, high-search utilities that need no
+backend: **PDF Toolkit · CSV Cleaner · Screenshot Beautifier · Prompt Vault ·
+Quote Builder · Renewal Radar**. Ten apps is enough shelf for the membership to
+make sense. Still to do: Stripe (single + bundle + membership SKUs) and one
+landing page per app.
+
+> **Architecture decision (locked at build):** Wave 1 shipped as **one
+> installable app with modules**, not six separate apps. The Base Reality
+> shell is a PWA (install from the browser → local app, fully offline) and
+> every tool is a module sharing **one local data store** — business profile,
+> client list and currency are entered once and used by every module, and one
+> backup covers everything. Commercially this maps 1:1 to the pricing layers:
+> singles = one module unlocked, bundles = several, All-Access = all of them —
+> in one product. New modules land inside the app users already installed,
+> which makes the membership *feel* like it compounds. Downloadable launchers
+> (`start-windows.bat` / `start-mac-linux.command`) cover the fully-local case.
 
 **Wave 2 (weeks 5–8): the money aisles.** The categories AppSumo proves
 convert hardest — marketing, finance, AI writing: **Invoice Chaser · Lead
