@@ -62,6 +62,19 @@ Assessment). The store opens with **four apps already built**.
    marketing.
 4. **Every app ships with its own landing page + before/after demo** — the
    catalog is also the marketing.
+5. **Every app ships tagged.** Tags across four dimensions, so the store,
+   the in-app shelf and site search can all find it:
+   - **Function** — what it does (`pdf`, `prompts`, `time-tracking`, `proofing`,
+     `scanning`, `invoicing`…)
+   - **Role** — who reaches for it (`freelancer`, `founder`, `marketer`,
+     `creator`, `trades`, `designer`, `ops`, `personal`…)
+   - **Sector** — where it's most at home (`agency`, `print-packaging`,
+     `retail`, `property`, `education`, `any`…)
+   - **Device/platform** — when relevant (`camera`, `gps`, `nfc`, `offline`,
+     `mobile-first`)
+   Tags are data, not decoration: the module registry carries them, search
+   matches them, and bundle pages are *built from* them (the "Freelancer
+   Pack" is literally the `freelancer` tag).
 
 ---
 

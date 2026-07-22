@@ -179,7 +179,7 @@
   }
 
   BR.register({
-    id:'quote-builder', name:'Quote Builder', letter:'Q', color:'#ec4899', tag:'Business',
+    id:'quote-builder', name:'Quote Builder', letter:'Q', color:'#ec4899', tag:'Business', tags:['quotes','estimates','sales-documents','vat','clients','pdf','freelancer','trades','agency','services'],
     blurb:'Branded quotes & estimates in minutes — VAT, discounts, print-to-PDF.',
     render(root){
       root.innerHTML = `

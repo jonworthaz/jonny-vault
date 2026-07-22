@@ -175,22 +175,34 @@
     nav.innerHTML = h;
   }
 
-  function renderHome(){
-    document.title = 'Base Reality — one app, many tools';
-    let cards = '';
-    for(const m of BR.modules){
-      cards += `<div class="card">
+  function moduleCards(q){
+    // Search matches name, blurb, category and tags (function / role / sector).
+    const ql = (q||'').trim().toLowerCase();
+    const hits = BR.modules.filter(m => !ql ||
+      [m.name, m.blurb, m.tag, ...(m.tags||[])].join(' ').toLowerCase().includes(ql));
+    if(!hits.length) return `<p class="muted">Nothing matches “${BR.esc(q)}” — try a function
+      (pdf, prompts), a role (freelancer, creator) or a sector.</p>`;
+    return `<div class="grid">` + hits.map(m => `<div class="card">
         <div class="mletter" style="background:${m.color}">${m.letter}</div>
         <span class="pill">${m.tag}</span>
         <h3>${m.name}</h3><p>${m.blurb}</p>
-        <a class="btn" href="#/m/${m.id}">Open</a></div>`;
-    }
+        <div class="br-row" style="gap:4px;flex-wrap:wrap;margin:2px 0 6px">${(m.tags||[]).slice(0,5)
+          .map(t=>`<span class="pill tagchip" data-tag="${BR.esc(t)}" style="cursor:pointer;font-size:10px;padding:1px 7px">${BR.esc(t)}</span>`).join('')}</div>
+        <a class="btn" href="#/m/${m.id}">Open</a></div>`).join('') + `</div>`;
+  }
+
+  function renderHome(){
+    document.title = 'Base Reality — one app, many tools';
     view.innerHTML = `
       <h1>Welcome to Base Reality</h1>
       <p class="sub">Small, sharp tools for personal, business and AI work — in one installable app.
       Everything runs and stays on <b>your</b> device. Set your business details once in
       <a href="#/settings">Settings</a> and every module uses them.</p>
-      <div class="grid">${cards}</div>
+      <div class="br-row" style="margin-bottom:14px">
+        <input id="homeSearch" placeholder="Search tools by name, function, role or sector — try “pdf”, “freelancer”, “prompts”…"
+          style="flex:1;min-width:240px" autocomplete="off">
+      </div>
+      <div id="homeCards">${moduleCards('')}</div>
       <h2>Pricing (early access — everything is unlocked)</h2>
       <div class="tierline">
         <div class="tier"><b>Singles</b><div class="price">£5–£29</div>
@@ -200,6 +212,12 @@
         <div class="tier hot"><b>All-Access</b><div class="price">£12/mo</div>
           <ul><li>Every module, current and future</li><li>New modules land inside the same app</li></ul></div>
       </div>`;
+    const search = view.querySelector('#homeSearch');
+    const cardsEl = view.querySelector('#homeCards');
+    const wireChips = () => cardsEl.querySelectorAll('.tagchip').forEach(ch =>
+      ch.onclick = () => { search.value = ch.dataset.tag; search.dispatchEvent(new Event('input')); });
+    search.oninput = () => { cardsEl.innerHTML = moduleCards(search.value); wireChips(); };
+    wireChips();
   }
 
   function renderSettings(){

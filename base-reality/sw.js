@@ -1,5 +1,5 @@
 /* Base Reality service worker — precache the whole app so it runs fully offline once installed. */
-const VERSION = 'br-v1';
+const VERSION = 'br-v2';
 const ASSETS = [
   './',
   'index.html',

@@ -55,7 +55,10 @@ Nothing is uploaded anywhere. Local-first is the product promise.
 ## Adding a module
 
 Create `modules/<id>.js` that calls `BR.register({id, name, letter, color,
-tag, blurb, render(root), unmount?()})`, add a `<script>` tag in `index.html`
-and the file path in `sw.js`'s `ASSETS`. Use `BR.store` (namespaced), the
+tag, tags, blurb, render(root), unmount?()})`, add a `<script>` tag in
+`index.html` and the file path in `sw.js`'s `ASSETS`. **`tags` is required**
+— an array covering function, role and sector (see catalog doc 11, ground
+rule 5); the home-shelf search matches against it and bundle pages are built
+from it. Use `BR.store` (namespaced), the
 shared profile/clients, and `BR.money/esc/toast/download` helpers. Zero
 dependencies unless vendored into `vendor/`.

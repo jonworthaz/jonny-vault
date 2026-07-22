@@ -92,7 +92,7 @@
   }
 
   BR.register({
-    id:'csv-cleaner', name:'CSV Cleaner', letter:'C', color:'#0ea5e9', tag:'Data',
+    id:'csv-cleaner', name:'CSV Cleaner', letter:'C', color:'#0ea5e9', tag:'Data', tags:['data','csv','spreadsheet','cleaning','dedupe','import','ops','marketer','sales','analyst','any'],
     blurb:'Dedupe, trim, normalise and fix a messy CSV — nothing leaves your machine.',
     render(root){
       root.innerHTML = `

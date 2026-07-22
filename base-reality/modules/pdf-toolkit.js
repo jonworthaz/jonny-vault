@@ -33,7 +33,7 @@
   }
 
   BR.register({
-    id:'pdf-toolkit', name:'PDF Toolkit', letter:'P', color:'#ef4444', tag:'Documents',
+    id:'pdf-toolkit', name:'PDF Toolkit', letter:'P', color:'#ef4444', tag:'Documents', tags:['pdf','documents','merge','pages','images','convert','offline','admin','office','any'],
     blurb:'Merge PDFs, extract pages, turn images into a PDF — locally, no upload.',
     render(root){
       root.innerHTML = `

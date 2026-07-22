@@ -76,7 +76,7 @@
   }
 
   BR.register({
-    id:'renewal-radar', name:'Renewal Radar', letter:'R', color:'#22c55e', tag:'Money',
+    id:'renewal-radar', name:'Renewal Radar', letter:'R', color:'#22c55e', tag:'Money', tags:['money','subscriptions','budgeting','reminders','calendar','personal','founder','finance','any'],
     blurb:'Track every subscription and renewal — totals, warnings, calendar reminders.',
     render(root){
       const today = new Date().toISOString().slice(0,10);

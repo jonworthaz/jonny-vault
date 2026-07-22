@@ -58,7 +58,7 @@
   }
 
   BR.register({
-    id:'prompt-vault', name:'Prompt Vault', letter:'V', color:'#8b5cf6', tag:'AI',
+    id:'prompt-vault', name:'Prompt Vault', letter:'V', color:'#8b5cf6', tag:'AI', tags:['ai','prompts','templates','library','productivity','founder','marketer','creator','developer','any'],
     blurb:'Save, tag, search and reuse your best AI prompts — with {{variable}} filling.',
     render(root){
       root.innerHTML = `

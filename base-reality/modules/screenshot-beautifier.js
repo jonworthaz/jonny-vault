@@ -42,7 +42,7 @@
   let loadBlob = () => {};
 
   BR.register({
-    id:'screenshot-beautifier', name:'Screenshot Beautifier', letter:'S', color:'#f59e0b', tag:'Visual',
+    id:'screenshot-beautifier', name:'Screenshot Beautifier', letter:'S', color:'#f59e0b', tag:'Visual', tags:['images','screenshots','social','visuals','presentation','creator','marketer','designer','any'],
     blurb:'Raw screenshot → framed, padded, gradient-backed visual ready to share.',
     render(root){
       root.innerHTML = `
