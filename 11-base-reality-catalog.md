@@ -227,6 +227,45 @@ vault and seed the store on day one.*
 | Pet Log | Vet dates, meds, weight, insurance in one place | £ |
 | Garden Planner | Beds, seasons, what to sow this week | £ |
 
+### N. Device-interactive apps *(camera · mic · GPS · sensors · NFC — the aisle
+that makes the **installed** app matter)*
+
+*These use the device hardware through standard web APIs, so they still ship as
+modules in the one installable app — no app store needed. They're also the
+strongest install driver: a camera/GPS tool feels wrong in a tab and right as
+an app icon.*
+
+| App | One job | Device APIs | Band |
+|---|---|---|---|
+| Document Scanner | Point camera at paper → cropped, cleaned page → PDF *(feeds PDF Toolkit & Paper Cut)* | Camera | ££ /m |
+| Barcode Stock Scanner | Scan barcodes to count/track inventory *(upgrades Stock Count)* | Camera + barcode detection | ££ /m |
+| Site Visit Logger | Geotagged, timestamped photos + notes per job/site *(pairs with Job Sheet & Damage Assessment — the trades "field pack")* | Camera + GPS | ££ /m |
+| Auto Mileage Tracker | Tap start/stop → GPS-logged trip → HMRC-ready claim *(upgrades Mileage Log)* | GPS | £ /m |
+| Voice Capture | Speak → transcribed note/task/idea, filed instantly | Mic + speech-to-text | £ /m |
+| Teleprompter | Scrolling script with screen-stays-awake — creators film reading it | Wake Lock | £ |
+| Spirit Level & Angle Finder | Phone as level, angle and slope gauge for trades/DIY | Motion sensors | £ |
+| Colour Grabber | Point camera at anything → exact colour + palette *(feeds Palette From Photo)* | Camera | £ |
+| Noise Meter | Live dB readings for venues/workplaces — honest indicative readings, not certified | Mic | £ |
+| Interval Timer | Workout/work timers with vibration + notification cues | Vibration + notifications | F |
+| Time-lapse Maker | Camera shoots on an interval → stitched time-lapse | Camera | £ |
+| Tap Card | Your digital business card — shared by QR or an NFC tap | NFC *(Android)* + QR | £ |
+| NFC Asset Tagger | Write/read NFC tags on tools & equipment — tap to see history | Web NFC *(Android)* | ££ |
+| Read Aloud | Any saved article/doc read out in a chosen voice | Speech synthesis | £ |
+
+**Platform upgrades to existing modules (same aisle):**
+- **Renewal Radar → push notifications** — real renewal alerts on the device
+  (installed PWA push; supported on Android and iOS 16.4+).
+- **Share target** — register Base Reality in the manifest as a share
+  destination, so any photo/file/link on the phone can be sent straight into
+  the right module ("share → Base Reality → Document Scanner").
+- **Recorder & Transcriber** (already queued from the Claude desktop build) —
+  mic, camera *and* screen capture belong to this aisle.
+
+**Support caveats (recorded honestly, per guardrails):** Web NFC and Web
+Bluetooth are Chrome-on-Android only; barcode detection needs a small fallback
+library on Safari; iOS allows push only for installed PWAs. Each listing page
+states what works where — no over-claiming.
+
 ### M. Vertical mini-tools *(each = a testable slice of board [#04](./09-idea-board.md))*
 
 | App | One job | Band |
