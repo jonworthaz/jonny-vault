@@ -6,6 +6,7 @@ name: Deploy MarkUp tools (Pages)
 #   /markup/                   -> v1 single-image annotator (image-annotator/)
 #   /damage-assessment/        -> v2 multi-photo damage assessment (damage-assessment/)
 #   /damage-assessment-large/  -> v3 high-visibility version (damage-assessment-large/)
+#   /markup-mini/              -> mini overlay build (markup-mini/)
 
 on:
   workflow_dispatch:
@@ -41,6 +42,8 @@ jobs:
           cp -r damage-assessment/. _site/damage-assessment/
           mkdir -p _site/damage-assessment-large
           cp -r damage-assessment-large/. _site/damage-assessment-large/
+          mkdir -p _site/markup-mini
+          cp -r markup-mini/. _site/markup-mini/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
