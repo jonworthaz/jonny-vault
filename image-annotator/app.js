@@ -1069,6 +1069,21 @@
     // mobile: items drawer
     const closeDrawer = () => document.body.classList.remove("panel-open");
     $("panelToggle").addEventListener("click", () => document.body.classList.toggle("panel-open"));
+
+    // day / night theme toggle (persisted)
+    const applyTheme = (t) => {
+      document.documentElement.setAttribute("data-theme", t);
+      const tb = $("themeToggle");
+      if (tb) { tb.textContent = t === "light" ? "\u{1F319}" : "\u2600\uFE0F"; tb.title = t === "light" ? "Switch to night" : "Switch to day"; }
+    };
+    let _theme = "dark";
+    try { _theme = localStorage.getItem("markup-theme") || "dark"; } catch (_) {}
+    applyTheme(_theme);
+    $("themeToggle").addEventListener("click", () => {
+      _theme = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      applyTheme(_theme);
+      try { localStorage.setItem("markup-theme", _theme); } catch (_) {}
+    });
     $("panelClose").addEventListener("click", closeDrawer);
     // tap the dimmed backdrop to close
     document.addEventListener("click", (e) => {

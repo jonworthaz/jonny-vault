@@ -657,3 +657,51 @@ body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 @media (pointer: coarse) {
   .tool { padding-top: 9px; padding-bottom: 9px; }
 }
+/* ============================================================
+   DAY / NIGHT THEME
+   Dark is the default (base rules above). Light kicks in when
+   <html data-theme="light">. Toggle button lives in the top bar.
+   ============================================================ */
+.theme-toggle {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.theme-toggle:hover { background: #2b3645; }
+
+:root[data-theme="light"] {
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --panel-2: #eef1f5;
+  --line: #d3dae2;
+  --text: #17202a;
+  --muted: #5a6672;
+  --accent-2: #2563eb;
+  --ok: #16a34a;
+}
+:root[data-theme="light"] .tool:hover,
+:root[data-theme="light"] .zoom-btn:hover,
+:root[data-theme="light"] .vehicle-toggle:hover,
+:root[data-theme="light"] .panel-toggle:hover,
+:root[data-theme="light"] .theme-toggle:hover { background: #e6ebf1; }
+:root[data-theme="light"] .tool-select.active { background: #ffe7e0; color: #8a2c16; }
+:root[data-theme="light"] .canvas-wrap { box-shadow: 0 8px 30px rgba(0,0,0,.18); }
+:root[data-theme="light"] .zoom-controls,
+:root[data-theme="light"] .edit-controls,
+:root[data-theme="light"] .thickness-control { background: rgba(255,255,255,.92); }
+:root[data-theme="light"] .stage {
+  background:
+    linear-gradient(45deg,#e4e9ef 25%,transparent 25%),
+    linear-gradient(-45deg,#e4e9ef 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#e4e9ef 75%),
+    linear-gradient(-45deg,transparent 75%,#e4e9ef 75%);
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+  background-color: #eef1f6;
+}
