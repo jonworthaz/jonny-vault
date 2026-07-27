@@ -125,8 +125,32 @@ opinionated and lean rather than copying the doc wholesale:
   entities, a rules engine, knowledge graph/embeddings, plugins, and a desktop/SQLite
   rebuild. The full review + rationale is in the chat and [SPEC.md §5a](./claude-ideas/SPEC.md).
 
-**Next steps (post-v1):** read seed ideas live from the Markdown boards, in-app
-score editing, multiple workflows per idea, and cloud sync behind a backend.
+**v3 — capture + AI (built).**
+- **Brainstorm** section per idea (variants / derivatives / adjacent markets), with
+  prompt chips and **↗ spin-off** to a new idea.
+- **Idea Dropbox** — a low-friction inbox (type, drop text/images, `?drop=`), plus a
+  **Claude dispatch** channel (`dropbox.json`) the app ingests on load. Quick ideas
+  wait in the dropbox until promoted onto the board.
+- **AI analysis (agent-driven)** — the agent is the analysis engine (see
+  [`AGENT.md`](./claude-ideas/AGENT.md)): score the Medvi gate, brainstorm, propose
+  experiments, decide, write back. The app generates copy-paste prompts and **upserts
+  ideas by id on Import**, so an agent can fill the board **end-to-end without human
+  intervention**. (Local-first: no LLM/key embedded in the app — an optional in-browser
+  API-key mode could be added later for one-click in-app analysis.)
+
+**v4 — built into Claude Code (process + agents).** The board is now first-class Claude
+Code process, not a standalone silo:
+- Root **`CLAUDE.md`** documents the idea → launch process and how Claude operates the board.
+- Agents **`idea-analyst`** (analyse + gate one idea) and **`idea-scout`** (market research)
+  in `.claude/agents/`.
+- Commands **`/dispatch-idea`** (capture → `dropbox.json`) and **`/fill-idea-board`**
+  (autonomous analyse + fill loop) in `.claude/commands/`.
+- New **`board.json`** sync file: the fill loop writes `{ version, ideas }`; the app
+  **auto-upserts by id on load, once per version** — so an agent lands analysed ideas on
+  the board with **no manual Import**. (Desktop-app port still via `claude-ideas/SPEC.md`.)
+
+**Next steps:** read seed ideas live from the Markdown boards, in-app score editing,
+multiple workflows per idea, optional in-app API-key AI mode, and cloud sync.
 
 ---
 

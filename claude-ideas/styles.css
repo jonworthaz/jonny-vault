@@ -240,6 +240,41 @@ button { font-family: inherit; }
 .exp-field { background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 12.5px; font-family: inherit; resize: vertical; }
 .exp-title:focus, .exp-meta:focus, .exp-field:focus { outline: none; border-color: var(--accent-2); }
 
+/* brainstorm */
+.bs-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.bs-chip { background: var(--panel-2); border: 1px dashed var(--line); color: var(--muted); border-radius: 20px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.bs-chip:hover { color: var(--text); border-color: var(--accent-2); }
+.bs-add { display: flex; gap: 6px; margin-bottom: 10px; }
+.bs-add input { flex: 1; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+.bs-add input:focus { outline: none; border-color: var(--accent-2); }
+.bs-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.bs-text { flex: 1; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; resize: vertical; }
+.bs-text:focus { outline: none; border-color: var(--accent-2); }
+.bs-actions { display: flex; flex-direction: column; gap: 4px; }
+
+/* idea dropbox */
+.db-drop { background: var(--panel); border: 1px dashed var(--line); border-radius: var(--radius); padding: 14px; }
+.db-drop.over { border-color: var(--accent); background: rgba(255,90,60,.08); }
+.db-drop textarea { width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; resize: vertical; }
+.db-drop textarea:focus { outline: none; border-color: var(--accent-2); }
+.db-drop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.db-hint { color: var(--muted); font-size: 12px; }
+.db-dispatch { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-top: 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.db-dispatch code { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: 12px; color: var(--text); }
+.db-list { display: flex; flex-direction: column; gap: 10px; }
+.db-item { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.db-ico { font-size: 20px; width: 40px; text-align: center; }
+.db-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); flex: 0 0 40px; }
+.db-main { flex: 1; min-width: 0; cursor: pointer; }
+.db-main strong { font-size: 14px; }
+.db-main small { display: block; color: var(--muted); font-size: 12px; }
+.db-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.dr-inbox { margin-top: 8px; font-size: 12px; color: var(--warn); display: flex; align-items: center; gap: 8px; }
+
+/* AI verdict */
+.ai-verdict { background: #1b2433; border: 1px solid var(--accent-2); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+.ai-badge { font-size: 11px; font-weight: 700; color: var(--accent-2); margin-right: 6px; }
+
 /* learnings repository */
 .learn-list { display: flex; flex-direction: column; gap: 10px; }
 .learn-row { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: border-color .12s; }

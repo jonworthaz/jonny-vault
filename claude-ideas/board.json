@@ -1,0 +1,5 @@
+{
+  "_comment": "Analysed board written by the idea-analyst agent / /fill-idea-board. Claude Ideas upserts these ideas by id on load, once per 'version'. Bump 'version' whenever you change 'ideas'. See AGENT.md.",
+  "version": 0,
+  "ideas": []
+}
