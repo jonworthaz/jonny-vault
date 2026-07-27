@@ -159,6 +159,99 @@ grows accurately and evenly.*
   the recurring relationship* even though delivery is physical. Validate refill repeat-
   rate before any hardware spend. Until then it stays 🟡 watch, not a lead.
 
+### 🟡 #11 — AI results engine for the "stuck at learning" builder
+*For the new AI/automation user who sees the opportunity but hasn't shipped
+anything that ends in results — turns their role or idea into a working,
+measurable automation, not another course completion.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 5 | 4 | 4 | 4 | 5 | ✅ every new use case re-triggers the job | ✅ if honest — that's the edge |
+
+- **The customer:** a professional or aspiring builder who is *new to AI and
+  automation*, wants to use it to support their role or build new things, sees
+  the opportunity clearly — but has consumed content, tinkered, and **never
+  produced a result**. The gap they'll pay to close isn't knowledge; it's the
+  distance between learning and a shipped outcome.
+- **The recurring job:** results, not lessons. First win = one working automation
+  or agent applied to *their* role (a report that writes itself, an inbox that
+  triages itself, a quote that drafts itself). Then the job recurs: every new
+  task in their week is a new candidate to systemise. A course ends; a role
+  never does.
+- **Why we're unusually placed:** the vault has already built the machine for
+  this persona *by accident* — **Architect** (38 role archetypes → agent specs),
+  **Forge** (visual workflow builder that generates real config), and **Claude
+  Ideas** (idea → launch system). What was internal tooling (board 10) becomes
+  the product: pick your role → get your agent → ship your first result in a
+  session. Build cost to a sellable v1 is the lowest on the board.
+- **Affiliate pool:** the strongest on the board — AI-content creators,
+  "learn AI" newsletters and productivity YouTubers reach exactly this person
+  daily, and promote tools for a living. The pool is the watering hole.
+- **Headroom:** courses charge $300–$2k for content that ends at knowledge;
+  cohorts $2k+; consultants more. A results-based subscription sits underneath
+  on price and above on outcome.
+- **Edge (Gate 2 as strategy):** this space is saturated with income-claim
+  grifters. A [07](./07-guardrails.md)-clean offer — honest before/afters of
+  *time saved and things shipped*, no "$10k/mo with AI" — survives the
+  screenshot the whole category fails. The guardrail *is* the positioning.
+- **Risk / watch:** "learning" products churn once the user wins or gives up —
+  it must onboard to a result in the first session and live as an ongoing
+  building system, never a course. Crowded top-of-funnel; win on shipped
+  outcomes and the affiliate auction, not content volume. Overlaps #04's
+  role-based angle — if both advance, they merge rather than compete.
+- **Shortlist note:** scores put it beside the 🟢 leads, and it's the only
+  entry with a near-zero build cost (assets exist). Stays 🟡 until a fake-door
+  test says the persona converts — but it should challenge for a Phase-0 slot.
+
+### 🟡 #12 — Base Reality: mini-app catalog & membership store
+*base-reality.com — a storefront of small, inexpensive AI-built apps (personal ·
+business · AI), bundle discounts, and one All-Access membership that compounds.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 4 | 3 | 4 | 4 | 4 | ✅ membership; every new app raises its value | ✅ |
+
+- **Recurring job:** the Setapp-proven shape — singles and bundles acquire,
+  the **All-Access membership** is the business (law #1). Each app is a door;
+  the membership is the house.
+- **Affiliate pool:** deal/LTD communities (AppSumo-style buyers), productivity
+  and AI-tool creators; every app doubles as its own promotable landing page.
+- **Edge:** near-zero marginal build cost via the existing AI pipeline; opens
+  with four already-built apps (MarkUp, Damage Assessment, Architect, Forge)
+  and doubles as a permanent Phase-0 demand-testing machine.
+- **Risk / watch:** breadth vs. excellence — 90 mediocre apps lose to 10 great
+  ones; singles have no switching cost, so retention lives entirely in the
+  membership. Build in scored waves, let sales data pick the aisles.
+- **Full catalog & strategy:** [11 — Base Reality Catalog](./11-base-reality-catalog.md)
+  (~90 candidate apps in 13 categories, pricing architecture, build order).
+
+### 🟡 #13 — Proof Room: artwork & PDF approval
+*Lean artwork/PDF proofing and approval — annotate, version-compare, route for
+sign-off — against incumbents (Ziflow, Filestage, PageProof) priced at
+£40–£50/user/mo.*
+
+| Demand | Intent | Headroom | Quality | Affiliate fit | Compounds? | Screenshot-safe? |
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| 3 | 4 | 5 | 4 | 3 | ✅ proofs never stop coming | ✅ |
+
+- **Recurring job:** every job an agency, printer, packaging producer or brand
+  ships goes through proof → amend → re-proof → approve, forever. Approval is
+  a standing workflow, not a one-off.
+- **Intent & headroom:** B2B proofing tools carry real CPCs and the incumbents
+  price per-user-per-month with enterprise minimums — a lean tool priced under
+  them for freelancers/small agencies/printers has the whole bottom of the
+  market to itself.
+- **Edge:** (1) assets exist — MarkUp + the desktop annotation build + the
+  Damage Assessment report engine are most of v1; (2) the founder knows this
+  industry (see [packaging-consultant-agent](./packaging-consultant-agent.md)
+  and Architect's prepress archetype) — v3's print/packaging checks (dielines,
+  barcodes, spot colours) are exactly what generic incumbents underserve.
+- **Risk / watch:** real approval flows need a backend (share links,
+  multi-user, audit trail) — the first catalog item that does. Staged build in
+  [11 §D](./11-base-reality-catalog.md) keeps v1 local-first and sellable
+  before any server exists. Incumbents are sticky in mid-market; win the
+  unserved small end first.
+
 ## Shortlist into the sprint
 
 The Phase-0 sprint in [08](./08-roadmap.md) should open with the 🟢 leads and the
@@ -168,6 +261,9 @@ strongest 🟡, then let data choose:
 2. **#02 Sales copilot** — highest intent/monetisation; equally clear promoter pool.
 3. **#04 Vertical GPT** (one profession) — best pricing headroom if a reachable
    affiliate pool exists.
+4. **#11 AI results engine** *(challenger)* — scores beside the leads and the
+   assets already exist (Architect · Forge · Claude Ideas), so its fake-door
+   test is nearly free to run alongside the top three.
 
 Everything else stays parked until one of these fails its gate in
 [06](./06-economics-and-funnel.md), or new demand signal promotes it.

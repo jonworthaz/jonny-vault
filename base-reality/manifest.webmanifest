@@ -1,0 +1,15 @@
+{
+  "name": "Base Reality",
+  "short_name": "Base Reality",
+  "description": "One app, many tools — small, sharp utilities for personal, business and AI work. Local-first: your data stays on your device.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#13111c",
+  "theme_color": "#13111c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base Reality — one app, many tools</title>
+  <meta name="description" content="Base Reality: small, sharp tools for personal, business and AI work — one installable app, one shared data store." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="theme-color" content="#13111c" />
+  <style>
+    :root{
+      --bg:#13111c; --panel:#1c1928; --panel2:#262236; --line:#332e47;
+      --text:#ece9f7; --muted:#9a93b5; --accent:#8b5cf6; --accent-h:#a78bfa;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --blue:#38bdf8;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{background:var(--bg);color:var(--text);line-height:1.5;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      display:flex;flex-direction:column;min-height:100vh}
+    a{color:var(--accent-h)}
+    header{display:flex;align-items:center;gap:12px;padding:10px 16px;
+      border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:20}
+    .logo{width:30px;height:30px;border-radius:8px;flex:0 0 auto;
+      background:linear-gradient(180deg,#8b5cf6,#4c1d95);display:grid;place-items:center;
+      color:#fff;font-weight:800;font-size:17px}
+    .brand{font-weight:700;font-size:17px}
+    .brand small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:-3px}
+    .hspace{flex:1}
+    .btn{border:0;cursor:pointer;background:var(--accent);color:#fff;font-weight:600;font-size:14px;
+      padding:9px 14px;border-radius:9px;text-decoration:none;display:inline-flex;align-items:center;gap:7px;
+      transition:filter .12s}
+    .btn:hover{filter:brightness(1.12)}
+    .btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+    .btn.small{padding:6px 10px;font-size:13px}
+    .btn.danger{background:#7f1d1d}
+    .btn:disabled{opacity:.5;cursor:default}
+    .layout{display:flex;flex:1;min-height:0}
+    nav{width:212px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--panel);
+      padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+    nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;
+      color:var(--text);text-decoration:none;font-size:14px}
+    nav a:hover{background:var(--panel2)}
+    nav a.active{background:var(--panel2);outline:1px solid var(--line)}
+    nav .navletter{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+      font-size:12px;font-weight:800;color:#fff;flex:0 0 auto}
+    nav .navsec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+      padding:12px 10px 4px}
+    main{flex:1;overflow-y:auto;padding:22px;min-width:0}
+    .wrap{max-width:1000px;margin:0 auto}
+    h1{font-size:24px;margin:0 0 4px}
+    h2{font-size:18px;margin:22px 0 10px}
+    .sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+      display:flex;flex-direction:column;gap:8px}
+    .card .mletter{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+      font-weight:800;font-size:18px;color:#fff}
+    .card h3{margin:2px 0 0;font-size:16px}
+    .card p{margin:0;color:var(--muted);font-size:13px;flex:1}
+    .pill{align-self:flex-start;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+      color:var(--muted);background:var(--panel2);border:1px solid var(--line);
+      padding:2px 8px;border-radius:999px}
+    /* shared form / table components for modules */
+    .br-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .br-field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+    input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+      color:var(--text);padding:8px 10px;font-size:14px;font-family:inherit}
+    input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}
+    textarea{resize:vertical}
+    table.br{width:100%;border-collapse:collapse;font-size:14px}
+    table.br th,table.br td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+    table.br th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+    .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+    .stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:130px}
+    .stat b{display:block;font-size:20px}
+    .stat span{font-size:12px;color:var(--muted)}
+    .drop{border:2px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--muted);
+      cursor:pointer;transition:border-color .15s}
+    .drop.on{border-color:var(--accent);color:var(--text)}
+    #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);
+      border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:14px;display:none;z-index:99}
+    /* Ctrl+K command palette */
+    #palette{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:80;
+      align-items:flex-start;justify-content:center;padding-top:12vh}
+    #palette.open{display:flex}
+    .palbox{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);
+      border-radius:14px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+    .palbox input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;
+      background:var(--panel);padding:14px 16px;font-size:16px}
+    .palbox input:focus{outline:none}
+    .palist{max-height:46vh;overflow-y:auto}
+    .palitem{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:14px}
+    .palitem small{color:var(--muted);margin-left:auto;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .palitem.sel,.palitem:hover{background:var(--panel2)}
+    .palletter{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+      font-size:11px;font-weight:800;color:#fff;flex:0 0 auto}
+    .tierline{display:flex;gap:12px;flex-wrap:wrap}
+    .tier{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .tier.hot{border-color:var(--accent)}
+    .tier b{font-size:16px}
+    .tier .price{font-size:22px;font-weight:800;margin:6px 0}
+    .tier ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+    footer{border-top:1px solid var(--line);padding:14px;text-align:center;color:var(--muted);font-size:12px}
+    @media(max-width:760px){
+      nav{position:fixed;left:-230px;top:51px;bottom:0;z-index:30;transition:left .18s}
+      nav.open{left:0}
+      #menuBtn{display:inline-flex}
+    }
+    #menuBtn{display:none}
+    @media(min-width:761px){#menuBtn{display:none!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <button class="btn ghost small" id="menuBtn">☰</button>
+    <div class="logo">B</div>
+    <div class="brand">Base Reality<small>one app · many tools · your data stays local</small></div>
+    <div class="hspace"></div>
+    <button class="btn ghost small" id="installBtn" hidden>⬇ Install app</button>
+    <a class="btn ghost small" href="#/settings">⚙ Settings</a>
+  </header>
+
+  <div class="layout">
+    <nav id="nav"></nav>
+    <main><div class="wrap" id="view"></div></main>
+  </div>
+
+  <footer>Base Reality · local-first — everything is stored in your browser, nothing is uploaded ·
+    early access: all modules unlocked · press <b>Ctrl+K</b> for quick actions</footer>
+  <div id="toast"></div>
+  <div id="palette"><div class="palbox">
+    <input id="palInput" placeholder="Jump to a tool, copy a snippet or prompt…" autocomplete="off">
+    <div class="palist" id="palList"></div>
+  </div></div>
+
+  <script>
+  // ---------- Base Reality shell: registry, shared store, helpers ----------
+  const BR = {
+    modules: [],
+    register(m){ this.modules.push(m); },
+
+    // Namespaced local store. One source of truth for every module.
+    store: {
+      get(key, def){ try{ const v = localStorage.getItem('br:'+key); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
+      set(key, val){ localStorage.setItem('br:'+key, JSON.stringify(val)); BR.bridge.autoPush(); },
+      del(key){ localStorage.removeItem('br:'+key); BR.bridge.autoPush(); },
+      keys(){ return Object.keys(localStorage).filter(k=>k.startsWith('br:')).map(k=>k.slice(3)); }
+    },
+
+    // AI Bridge — direct connection to MCP-capable assistants via bridge/bridge.js.
+    // The bridge holds a mirror of this store at ~/.base-reality/data.json.
+    bridge: {
+      url: 'http://127.0.0.1:8137',
+      async ping(){ try{ const r = await fetch(this.url+'/ping', {signal:AbortSignal.timeout(1200)});
+        return (await r.json()).ok === true; }catch(e){ return false; } },
+      snapshot(){ const d = {}; for(const k of BR.store.keys()) if(k!=='app:bridgeAuto') d[k] = BR.store.get(k); return d; },
+      async push(){ try{ const r = await fetch(this.url+'/data', { method:'POST',
+          headers:{'Content-Type':'application/json'}, body: JSON.stringify(this.snapshot()) });
+        return (await r.json()).ok === true; }catch(e){ return false; } },
+      async pull(){ try{ const r = await fetch(this.url+'/data');
+        const data = await r.json();
+        for(const [k,v] of Object.entries(data)) localStorage.setItem('br:'+k, JSON.stringify(v));
+        return true; }catch(e){ return false; } },
+      autoPush(){ if(!BR.store.get('app:bridgeAuto', false)) return;
+        clearTimeout(this._t); this._t = setTimeout(()=>this.push(), 1500); }
+    },
+
+    // Shared entities — entered once, used by every module.
+    profile(){ return BR.store.get('shared:profile', {business:'',owner:'',email:'',phone:'',address:'',currency:'£',vatRate:20,vatNo:''}); },
+    saveProfile(p){ BR.store.set('shared:profile', p); },
+    clients(){ return BR.store.get('shared:clients', []); },
+    saveClients(c){ BR.store.set('shared:clients', c); },
+
+    money(n){ const cur = BR.profile().currency || '£';
+      return cur + (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); },
+    uid(){ return Math.random().toString(36).slice(2,10); },
+    esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+    toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+      clearTimeout(BR._tt); BR._tt=setTimeout(()=>t.style.display='none', 2200); },
+    download(name, content, type){ const blob = content instanceof Blob ? content : new Blob([content],{type:type||'text/plain'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 5000); }
+  };
+  window.BR = BR;
+  </script>
+
+  <!-- ---------- Modules (each registers itself with BR) ---------- -->
+  <script src="modules/csv-cleaner.js"></script>
+  <script src="modules/prompt-vault.js"></script>
+  <script src="modules/screenshot-beautifier.js"></script>
+  <script src="modules/renewal-radar.js"></script>
+  <script src="modules/quote-builder.js"></script>
+  <script src="modules/pdf-toolkit.js"></script>
+  <script src="modules/snippet-deck.js"></script>
+
+  <script>
+  // ---------- Router + views ----------
+  const view = document.getElementById('view');
+  const nav = document.getElementById('nav');
+  let activeModule = null;
+
+  function buildNav(){
+    let h = `<a href="#/" data-r="/">🏠 <span>Home</span></a><div class="navsec">Modules</div>`;
+    for(const m of BR.modules){
+      h += `<a href="#/m/${m.id}" data-r="/m/${m.id}">
+        <span class="navletter" style="background:${m.color}">${m.letter}</span><span>${m.name}</span></a>`;
+    }
+    h += `<div class="navsec">App</div><a href="#/settings" data-r="/settings">⚙ <span>Settings</span></a>`;
+    nav.innerHTML = h;
+  }
+
+  function moduleCards(q){
+    // Search matches name, blurb, category and tags (function / role / sector).
+    const ql = (q||'').trim().toLowerCase();
+    const hits = BR.modules.filter(m => !ql ||
+      [m.name, m.blurb, m.tag, ...(m.tags||[])].join(' ').toLowerCase().includes(ql));
+    if(!hits.length) return `<p class="muted">Nothing matches “${BR.esc(q)}” — try a function
+      (pdf, prompts), a role (freelancer, creator) or a sector.</p>`;
+    return `<div class="grid">` + hits.map(m => `<div class="card">
+        <div class="mletter" style="background:${m.color}">${m.letter}</div>
+        <span class="pill">${m.tag}</span>
+        <h3>${m.name}</h3><p>${m.blurb}</p>
+        <div class="br-row" style="gap:4px;flex-wrap:wrap;margin:2px 0 6px">${(m.tags||[]).slice(0,5)
+          .map(t=>`<span class="pill tagchip" data-tag="${BR.esc(t)}" style="cursor:pointer;font-size:10px;padding:1px 7px">${BR.esc(t)}</span>`).join('')}</div>
+        <a class="btn" href="#/m/${m.id}">Open</a></div>`).join('') + `</div>`;
+  }
+
+  function renderHome(){
+    document.title = 'Base Reality — one app, many tools';
+    view.innerHTML = `
+      <h1>Welcome to Base Reality</h1>
+      <p class="sub">Small, sharp tools for personal, business and AI work — in one installable app.
+      Everything runs and stays on <b>your</b> device. Set your business details once in
+      <a href="#/settings">Settings</a> and every module uses them.</p>
+      <div class="br-row" style="margin-bottom:14px">
+        <input id="homeSearch" placeholder="Search tools by name, function, role or sector — try “pdf”, “freelancer”, “prompts”…"
+          style="flex:1;min-width:240px" autocomplete="off">
+      </div>
+      <div id="homeCards">${moduleCards('')}</div>
+      <h2>Pricing (early access — everything is unlocked)</h2>
+      <div class="tierline">
+        <div class="tier"><b>Singles</b><div class="price">£5–£29</div>
+          <ul><li>Own one module outright</li><li>Yours forever, updates included</li></ul></div>
+        <div class="tier"><b>Bundles</b><div class="price">25–40% off</div>
+          <ul><li>Pick 3 — 25% off</li><li>Pick 5 — 40% off</li><li>Themed packs</li></ul></div>
+        <div class="tier hot"><b>All-Access</b><div class="price">£12/mo</div>
+          <ul><li>Every module, current and future</li><li>New modules land inside the same app</li></ul></div>
+      </div>`;
+    const search = view.querySelector('#homeSearch');
+    const cardsEl = view.querySelector('#homeCards');
+    const wireChips = () => cardsEl.querySelectorAll('.tagchip').forEach(ch =>
+      ch.onclick = () => { search.value = ch.dataset.tag; search.dispatchEvent(new Event('input')); });
+    search.oninput = () => { cardsEl.innerHTML = moduleCards(search.value); wireChips(); };
+    wireChips();
+  }
+
+  function renderSettings(){
+    document.title = 'Settings — Base Reality';
+    const p = BR.profile();
+    view.innerHTML = `
+      <h1>Settings</h1>
+      <p class="sub">Your shared profile — the single source of truth every module reads from.</p>
+      <div class="panel"><h2 style="margin-top:0">Business / personal profile</h2>
+        <div class="br-row">
+          <label class="br-field">Business / name<input id="s_business" value="${BR.esc(p.business)}"></label>
+          <label class="br-field">Contact name<input id="s_owner" value="${BR.esc(p.owner)}"></label>
+          <label class="br-field">Email<input id="s_email" value="${BR.esc(p.email)}"></label>
+          <label class="br-field">Phone<input id="s_phone" value="${BR.esc(p.phone)}"></label>
+        </div>
+        <div class="br-row" style="margin-top:10px">
+          <label class="br-field">Address<textarea id="s_address" rows="2" style="min-width:280px">${BR.esc(p.address)}</textarea></label>
+          <label class="br-field">Currency symbol<input id="s_currency" value="${BR.esc(p.currency)}" style="width:70px"></label>
+          <label class="br-field">Default VAT %<input id="s_vat" type="number" value="${p.vatRate}" style="width:90px"></label>
+          <label class="br-field">VAT number<input id="s_vatno" value="${BR.esc(p.vatNo)}"></label>
+        </div>
+        <div class="br-row" style="margin-top:14px"><button class="btn" id="saveProfile">Save profile</button></div>
+      </div>
+      <div class="panel"><h2 style="margin-top:0">AI Bridge <span class="pill" style="margin-left:6px">core</span></h2>
+        <p class="sub">Connect AI assistants on this computer (Claude Desktop, ChatGPT desktop, Gemini CLI —
+        anything MCP-capable) <b>directly</b> to Base Reality: no API keys, no screen control.
+        Run the bridge (<code>node bridge/bridge.js</code> — see the README for the one-line AI-app config),
+        then sync. Status: <b id="bridgeStatus">checking…</b></p>
+        <div class="br-row">
+          <button class="btn" id="bridgePush">⬆ Sync to AI bridge</button>
+          <button class="btn ghost" id="bridgePull">⬇ Pull from AI bridge</button>
+          <label class="br-field" style="flex-direction:row;align-items:center;gap:6px">
+            <input type="checkbox" id="bridgeAuto" style="width:auto"> auto-sync on every change</label>
+        </div>
+      </div>
+      <div class="panel"><h2 style="margin-top:0">Backup</h2>
+        <p class="sub">One backup covers every module — export it anywhere, import it on any device.</p>
+        <div class="br-row">
+          <button class="btn ghost" id="exportAll">⬇ Export all data (JSON)</button>
+          <button class="btn ghost" id="importAll">⬆ Import backup</button>
+          <input type="file" id="importFile" accept=".json" hidden>
+          <button class="btn danger" id="wipeAll">Erase all local data</button>
+        </div>
+      </div>`;
+    document.getElementById('saveProfile').onclick = () => {
+      BR.saveProfile({ business:s_business.value.trim(), owner:s_owner.value.trim(), email:s_email.value.trim(),
+        phone:s_phone.value.trim(), address:s_address.value, currency:s_currency.value.trim()||'£',
+        vatRate:parseFloat(s_vat.value)||0, vatNo:s_vatno.value.trim() });
+      BR.toast('Profile saved — all modules will use it');
+    };
+    // AI Bridge wiring
+    const bStatus = document.getElementById('bridgeStatus');
+    BR.bridge.ping().then(ok => {
+      bStatus.textContent = ok ? 'connected ✓' : 'not running';
+      bStatus.className = ok ? 'ok' : 'warn';
+    });
+    document.getElementById('bridgeAuto').checked = BR.store.get('app:bridgeAuto', false);
+    document.getElementById('bridgeAuto').onchange = e => BR.store.set('app:bridgeAuto', e.target.checked);
+    document.getElementById('bridgePush').onclick = async () => {
+      const r = await BR.bridge.push();
+      BR.toast(r ? 'Synced to AI bridge — assistants now see your data' : 'Bridge not reachable — is it running?');
+    };
+    document.getElementById('bridgePull').onclick = async () => {
+      const r = await BR.bridge.pull();
+      BR.toast(r ? 'Pulled from AI bridge' : 'Bridge not reachable — is it running?');
+      if(r) route();
+    };
+    document.getElementById('exportAll').onclick = () => {
+      const data = {}; for(const k of BR.store.keys()) data[k] = BR.store.get(k);
+      BR.download('base-reality-backup.json', JSON.stringify({app:'base-reality',exported:new Date().toISOString(),data},null,2), 'application/json');
+    };
+    document.getElementById('importAll').onclick = () => importFile.click();
+    document.getElementById('importFile').onchange = e => {
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = () => { try{
+          const j = JSON.parse(r.result);
+          if(!j.data) throw new Error('not a Base Reality backup');
+          for(const [k,v] of Object.entries(j.data)) BR.store.set(k, v);
+          BR.toast('Backup imported'); route();
+        }catch(err){ BR.toast('Import failed: '+err.message); } };
+      r.readAsText(f);
+    };
+    document.getElementById('wipeAll').onclick = () => {
+      if(confirm('Erase ALL Base Reality data stored in this browser? This cannot be undone.')){
+        for(const k of BR.store.keys()) BR.store.del(k);
+        BR.toast('All local data erased'); route();
+      }
+    };
+  }
+
+  function route(){
+    if(activeModule && activeModule.unmount) { try{ activeModule.unmount(); }catch(e){} }
+    activeModule = null;
+    const hash = location.hash.replace(/^#/,'') || '/';
+    nav.classList.remove('open');
+    nav.querySelectorAll('a').forEach(a => a.classList.toggle('active', a.dataset.r === hash));
+    if(hash === '/' ) return renderHome();
+    if(hash === '/settings') return renderSettings();
+    const mm = hash.match(/^\/m\/(.+)$/);
+    if(mm){
+      const m = BR.modules.find(x=>x.id===mm[1]);
+      if(m){ document.title = m.name + ' — Base Reality';
+        view.innerHTML = ''; activeModule = m; m.render(view); return; }
+    }
+    renderHome();
+  }
+
+  buildNav();
+  window.addEventListener('hashchange', route);
+  route();
+  document.getElementById('menuBtn').onclick = () => nav.classList.toggle('open');
+
+  // ---------- Ctrl+K command palette: modules + snippets + prompts + actions ----------
+  const pal = document.getElementById('palette');
+  const palInput = document.getElementById('palInput');
+  const palList = document.getElementById('palList');
+  let palSel = 0, palItems = [];
+
+  function palEntries(q){
+    const ql = q.trim().toLowerCase();
+    const items = [];
+    for(const m of BR.modules)
+      items.push({ label:'Open '+m.name, kind:'tool', letter:m.letter, color:m.color,
+        hay:(m.name+' '+(m.tags||[]).join(' ')).toLowerCase(), run:()=>{ location.hash='#/m/'+m.id; } });
+    for(const s of BR.store.get('snippet-deck:snips', []))
+      items.push({ label:'Copy: '+s.label, kind:'snippet', letter:'D', color:'#38bdf8',
+        hay:(s.label+' '+s.text).toLowerCase(),
+        run:async()=>{ await navigator.clipboard.writeText(s.text); BR.toast('Copied — Ctrl+V to paste'); } });
+    for(const p of BR.store.get('prompt-vault:prompts', []))
+      items.push({ label:'Copy prompt: '+p.title, kind:'prompt', letter:'V', color:'#8b5cf6',
+        hay:(p.title+' '+(p.tags||[]).join(' ')).toLowerCase(),
+        run:async()=>{ await navigator.clipboard.writeText(p.body); BR.toast('Prompt copied'); } });
+    items.push({ label:'Open Settings', kind:'app', letter:'⚙', color:'#64748b', hay:'settings profile backup',
+      run:()=>{ location.hash='#/settings'; } });
+    return items.filter(i=>!ql || i.hay.includes(ql) || i.label.toLowerCase().includes(ql)).slice(0,12);
+  }
+  function palRender(){
+    palItems = palEntries(palInput.value);
+    palSel = Math.min(palSel, Math.max(0, palItems.length-1));
+    palList.innerHTML = palItems.map((i,idx)=>`<div class="palitem${idx===palSel?' sel':''}" data-i="${idx}">
+      <span class="palletter" style="background:${i.color}">${i.letter}</span>
+      <span>${BR.esc(i.label)}</span><small>${i.kind}</small></div>`).join('')
+      || '<div class="palitem muted">No matches</div>';
+    palList.querySelectorAll('.palitem[data-i]').forEach(el => el.onclick = () => palRun(+el.dataset.i));
+  }
+  function palOpen(){ pal.classList.add('open'); palInput.value=''; palSel=0; palRender(); palInput.focus(); }
+  function palClose(){ pal.classList.remove('open'); }
+  function palRun(i){ const it = palItems[i]; if(it){ palClose(); it.run(); } }
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault();
+      pal.classList.contains('open') ? palClose() : palOpen(); return; }
+    if(!pal.classList.contains('open')) return;
+    if(e.key==='Escape') palClose();
+    else if(e.key==='ArrowDown'){ e.preventDefault(); palSel=Math.min(palSel+1, palItems.length-1); palRender(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); palSel=Math.max(palSel-1, 0); palRender(); }
+    else if(e.key==='Enter'){ e.preventDefault(); palRun(palSel); }
+  });
+  palInput.addEventListener('input', ()=>{ palSel=0; palRender(); });
+  pal.addEventListener('click', e => { if(e.target===pal) palClose(); });
+
+  // ---------- PWA: install prompt + service worker ----------
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; installBtn.hidden = false; });
+  installBtn.onclick = async () => { if(!deferredPrompt) return;
+    deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.hidden = true; };
+  window.addEventListener('appinstalled', () => BR.toast('Base Reality installed — it now works offline'));
+  if('serviceWorker' in navigator && location.protocol !== 'file:')
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  </script>
+</body>
+</html>
