@@ -1,0 +1,123 @@
+/* Base Reality — platform chrome (the generated sites style themselves) */
+:root{
+  --bg:#0f1419; --panel:#1a212b; --panel2:#222c38; --line:#2c3744;
+  --text:#e6edf3; --muted:#8b97a5; --accent:#ff5a3c; --accent2:#3b82f6; --ok:#22c55e;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+
+/* ---------- login / building ---------- */
+.mode-login{display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(900px 500px at 50% -10%, #1c2430 0%, var(--bg) 60%)}
+.login-wrap{width:100%;max-width:460px;padding:24px;text-align:center}
+.login-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:38px 30px;
+  box-shadow:0 20px 60px rgb(0 0 0 / .45)}
+.br-mark{font-size:40px;color:var(--accent)}
+.login-card h1{margin:10px 0 2px;font-size:30px;letter-spacing:-.5px}
+.login-card h1 span{color:var(--accent)}
+.strap{margin:0;color:var(--text);font-size:17px;font-weight:600}
+.hint{margin:14px 0 20px;color:var(--muted);font-size:14px}
+#loginForm{display:flex;flex-direction:column;gap:10px}
+#codeInput{background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--text);
+  font-size:20px;letter-spacing:3px;text-align:center;text-transform:uppercase;padding:14px;outline:none;
+  font-family:ui-monospace,Menlo,Consolas,monospace}
+#codeInput:focus{border-color:var(--accent2)}
+#loginForm button{background:var(--accent);border:none;border-radius:12px;color:#fff;font-size:16px;
+  font-weight:700;padding:14px;cursor:pointer;transition:background .12s}
+#loginForm button:hover{background:#ff6f55}
+.err{color:#f87171;font-size:13.5px;margin:14px 0 0}
+.fine{color:var(--muted);font-size:12px;margin:18px 0 0}
+.foot{color:var(--muted);font-size:12.5px;margin-top:18px}
+
+/* building animation */
+.build-logo{width:64px;height:64px;border-radius:14px}
+.build-name{font-size:24px !important}
+.bar{background:var(--panel2);border-radius:99px;height:10px;margin:22px 0 12px;overflow:hidden}
+.bar-fill{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;width:8%;
+  border-radius:99px;transition:width .6s ease}
+.step{color:var(--muted);font-size:13.5px;min-height:20px}
+
+/* ---------- preview ---------- */
+.mode-preview #app{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px}
+.tb-left{display:flex;align-items:center;gap:14px;min-width:0}
+.br-mini{color:var(--accent);font-weight:800;white-space:nowrap}
+.tb-note{color:var(--muted);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-note b{color:var(--text)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.devices{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.devices button{background:none;border:none;color:var(--muted);font-size:15px;padding:7px 11px;cursor:pointer}
+.devices button.on{background:var(--accent2);color:#fff}
+.claim{background:var(--ok);border:none;border-radius:10px;color:#06290f;font-weight:800;font-size:14.5px;
+  padding:10px 18px;cursor:pointer;transition:filter .12s}
+.claim:hover{filter:brightness(1.1)}
+.stage{flex:1;display:flex;justify-content:center;background:#0a0e12;overflow:hidden;padding:14px}
+.frame-wrap{width:100%;height:100%;transition:width .25s ease;box-shadow:0 8px 40px rgb(0 0 0 / .5);
+  border-radius:10px;overflow:hidden;background:#fff}
+.frame-wrap.mobile{width:390px}
+#siteFrame{width:100%;height:100%;border:none;display:block}
+.bottom-note{background:var(--panel);border-top:1px solid var(--line);color:var(--muted);
+  font-size:12.5px;text-align:center;padding:8px 14px}
+.bottom-note a{color:var(--accent2);margin-left:10px}
+
+/* ---------- claim modal ---------- */
+.modal-back{position:fixed;inset:0;background:rgb(0 0 0 / .65);display:flex;align-items:center;
+  justify-content:center;padding:18px;z-index:50;overflow:auto}
+.modal-back[hidden]{display:none}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:820px;width:100%;
+  padding:30px 28px;position:relative;max-height:92vh;overflow:auto}
+.modal .x{position:absolute;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);
+  color:var(--muted);border-radius:8px;padding:6px 10px;cursor:pointer}
+.modal h2{margin:0 0 6px;font-size:24px}
+.msub{color:var(--muted);margin:0 0 20px;font-size:14.5px}
+.msub b{color:var(--text)}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.tier{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:18px 16px;
+  cursor:pointer;position:relative;transition:border-color .12s}
+.tier:hover{border-color:var(--accent2)}
+.tier.sel{border-color:var(--ok)}
+.tier .badge{position:absolute;top:-10px;right:12px;background:var(--ok);color:#06290f;font-size:11px;
+  font-weight:800;padding:3px 9px;border-radius:99px}
+.tier h3{margin:0;font-size:16px}
+.tier .price{font-size:26px;font-weight:800;margin:4px 0}
+.tier .price small{font-size:13px;color:var(--muted);font-weight:600}
+.tier .head{color:var(--muted);font-size:13px;margin:0 0 10px}
+.tier ul{margin:0;padding-left:16px;font-size:12.5px;color:var(--muted)}
+.tier li{margin:3px 0}
+#claimForm{display:flex;flex-direction:column;gap:10px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.frow{grid-template-columns:1fr}}
+#claimForm input,#claimForm textarea{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  color:var(--text);font-size:14.5px;padding:12px;outline:none;font-family:inherit;resize:vertical}
+#claimForm input:focus,#claimForm textarea:focus{border-color:var(--accent2)}
+#claimForm button{background:var(--ok);border:none;border-radius:11px;color:#06290f;font-weight:800;
+  font-size:15.5px;padding:13px;cursor:pointer}
+#claimForm .fine{margin:2px 0 0;text-align:center}
+.mailbtn{display:inline-block;background:var(--accent2);color:#fff;text-decoration:none;font-weight:700;
+  padding:12px 20px;border-radius:10px;margin-top:6px}
+
+/* ---------- ops ---------- */
+.mode-ops{padding:36px 18px;display:block}
+.ops-wrap{max-width:1080px;margin:0 auto}
+.ops-wrap h1{font-size:26px;margin:0 0 4px}
+.ops-sub{color:var(--muted);margin:0 0 22px;font-size:14px}
+.ops-note{font-size:12px;opacity:.75}
+.ops-wrap table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;font-size:14px}
+.ops-wrap th{text-align:left;background:var(--panel2);padding:11px 14px;font-size:12px;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ops-wrap td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
+.ops-wrap td small{color:var(--muted)}
+.ops-wrap code{background:var(--panel2);padding:3px 8px;border-radius:7px;font-size:13px}
+.st{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st.sent{background:var(--panel2);color:var(--muted)}
+.st.viewed{background:#1e3a5f;color:#93c5fd}
+.st.claimed{background:#14351f;color:var(--ok)}
+.acts{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.acts a{color:var(--accent2);font-size:13px}
+.acts button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;
+  font-size:12.5px;padding:5px 10px;cursor:pointer}
+.acts button:hover{border-color:var(--accent2)}
+.ops-foot a{color:var(--accent2)}
