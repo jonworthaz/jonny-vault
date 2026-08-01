@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quick Summary — offline text summariser</title>
+<style>
+  /* Self-contained corner-docked text summariser. A launcher button sits at the
+     bottom-right; clicking it pops up a compact panel so you can summarise text
+     while still using other apps (non-blocking — no full-screen backdrop).
+     Maximise (⤢) grows it to a desktop-sized panel. Shares the markup-dock
+     shell; accent swapped to violet. The built-in extractive summariser runs
+     fully OFFLINE (pure JS). An optional, user-triggered local-AI path is the
+     only thing that ever touches the network. Namespaced under su* ids / su-
+     classes so it can coexist with sibling modules on one page. */
+  :root{
+    --su-bg:#0f1419; --su-panel:#1a212b; --su-panel2:#222c38; --su-line:#2c3744;
+    --su-text:#e6edf3; --su-muted:#8b97a5; --su-accent:#8b5cf6; --su-accent2:#a279f7;
+    --su-ok:#22c55e; --su-warn:#e0407b; --su-chip:#2a3340;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* page is click-through; only the widget itself catches clicks */
+  html,body{background:transparent;pointer-events:none}
+
+  .su-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99997;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .su-overlay > *{pointer-events:auto}
+
+  .su-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--su-accent);color:#fff;border:none;cursor:pointer;
+    font-size:24px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .su-fab:hover{background:var(--su-accent2)}
+
+  .su-panel{
+    display:flex; flex-direction:column;
+    width:min(400px,92vw); height:min(560px,84vh);
+    background:rgba(26,33,43,.94);
+    color:var(--su-text);
+    border:1px solid var(--su-line); border-radius:14px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .16s ease, opacity .16s ease, width .16s ease, height .16s ease;
+  }
+  .su-overlay.expanded .su-panel{ width:min(920px,96vw); height:min(680px,90vh); }
+  .su-overlay.collapsed .su-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .su-head{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--su-line);
+    background:rgba(20,26,34,.6); flex:0 0 auto;
+  }
+  .su-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px}
+  .su-title .dot{color:var(--su-accent);font-size:16px}
+  .su-x{background:none;border:none;color:var(--su-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .su-x:hover{color:#fff;background:var(--su-panel2)}
+  .su-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--su-panel2);border:1px solid var(--su-line);color:var(--su-text);
+    border-radius:7px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .su-hb:hover{background:#2b3645}
+
+  /* scrolling body */
+  .su-body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:10px; }
+
+  .su-section{ display:flex; flex-direction:column; gap:7px; }
+  .su-lbl{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--su-muted); }
+
+  /* input */
+  .su-drop{ position:relative; }
+  .su-drop.dragover::after{
+    content:"Drop text file"; position:absolute; inset:0; border-radius:10px;
+    border:2px dashed var(--su-accent); background:rgba(139,92,246,.12);
+    display:flex; align-items:center; justify-content:center; color:var(--su-accent2);
+    font-size:14px; font-weight:700; pointer-events:none;
+  }
+  .su-ta{
+    width:100%; min-height:118px; resize:vertical;
+    background:var(--su-panel2); border:1px solid var(--su-line); color:var(--su-text);
+    border-radius:10px; padding:10px 11px; font-size:13px; line-height:1.5; outline:none;
+    font-family:inherit;
+  }
+  .su-overlay.expanded .su-ta{ min-height:180px; }
+  .su-ta:focus{ border-color:var(--su-accent); }
+  .su-ta::placeholder{ color:var(--su-muted); }
+
+  .su-inbar{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .su-count{ font-size:11.5px; color:var(--su-muted); margin-right:auto; font-variant-numeric:tabular-nums; }
+  .su-sb{
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--su-panel2); border:1px solid var(--su-line); color:var(--su-text);
+    border-radius:7px; padding:6px 10px; font-size:12px; cursor:pointer; line-height:1;
+  }
+  .su-sb:hover{ background:#2b3645; }
+
+  /* controls */
+  .su-len{ display:flex; gap:6px; }
+  .su-lb{
+    flex:1 1 0; background:var(--su-panel2); border:1px solid var(--su-line); color:var(--su-text);
+    border-radius:8px; padding:8px 6px; font-size:12px; font-weight:600; cursor:pointer; line-height:1;
+  }
+  .su-lb:hover{ background:#2b3645; }
+  .su-lb.on{ border-color:var(--su-accent); background:#2a2440; color:#fff; }
+  .su-sliderrow{ display:flex; align-items:center; gap:9px; }
+  .su-sliderrow input[type=range]{ flex:1 1 auto; accent-color:var(--su-accent); }
+  .su-slval{ font-size:11.5px; color:var(--su-muted); white-space:nowrap; font-variant-numeric:tabular-nums; min-width:118px; text-align:right; }
+
+  .su-airow{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .su-toggle{ display:inline-flex; align-items:center; gap:7px; font-size:12.5px; cursor:pointer; user-select:none; }
+  .su-toggle input{ accent-color:var(--su-accent); cursor:pointer; width:16px; height:16px; }
+  .su-toggle.disabled{ opacity:.55; cursor:not-allowed; }
+  .su-toggle.disabled input{ cursor:not-allowed; }
+  .su-link{ background:none; border:none; color:var(--su-accent2); font-size:11.5px; cursor:pointer; padding:2px 4px; text-decoration:underline; }
+  .su-note{ font-size:11px; color:var(--su-muted); flex:1 1 100%; line-height:1.4; }
+  .su-note.err{ color:var(--su-warn); }
+  .su-note.ok{ color:var(--su-ok); }
+
+  .su-aiopts{ display:none; flex-direction:column; gap:6px; padding:8px; border:1px solid var(--su-line); border-radius:9px; background:rgba(20,26,34,.4); }
+  .su-aiopts.show{ display:flex; }
+  .su-field{ display:flex; align-items:center; gap:7px; }
+  .su-field span{ font-size:11px; color:var(--su-muted); width:62px; flex:0 0 auto; }
+  .su-in{
+    flex:1 1 auto; min-width:0;
+    background:var(--su-panel2); border:1px solid var(--su-line); color:var(--su-text);
+    border-radius:7px; padding:6px 9px; font-size:12px; outline:none; font-family:inherit;
+  }
+  .su-in:focus{ border-color:var(--su-accent); }
+
+  .su-run{
+    background:var(--su-accent); border:1px solid var(--su-accent); color:#fff;
+    border-radius:9px; padding:11px 20px; font-size:14px; font-weight:700; cursor:pointer; line-height:1;
+  }
+  .su-run:hover{ background:var(--su-accent2); }
+  .su-run:disabled{ opacity:.6; cursor:default; }
+
+  /* output */
+  .su-out{ display:none; flex-direction:column; gap:8px; border-top:1px solid var(--su-line); padding-top:10px; }
+  .su-out.show{ display:flex; }
+  .su-outhead{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .su-src{
+    font-size:10.5px; font-weight:600; margin-right:auto;
+    background:var(--su-chip); color:var(--su-accent2); border:1px solid var(--su-line);
+    border-radius:20px; padding:2px 9px;
+  }
+  .su-src.ai{ color:var(--su-ok); }
+  .su-summary{
+    background:var(--su-panel2); border:1px solid var(--su-line); border-radius:10px;
+    padding:11px 12px; font-size:13.5px; line-height:1.6; white-space:pre-wrap; word-wrap:break-word;
+  }
+  .su-keys{ display:flex; flex-wrap:wrap; gap:6px; }
+  .su-key{
+    background:var(--su-chip); color:var(--su-accent2); border:1px solid var(--su-line);
+    border-radius:20px; padding:3px 10px; font-size:11.5px; font-weight:600;
+  }
+  .su-stats{ display:flex; flex-wrap:wrap; gap:5px 14px; font-size:11.5px; color:var(--su-muted); font-variant-numeric:tabular-nums; }
+  .su-stats b{ color:var(--su-text); }
+
+  .su-empty{ color:var(--su-muted); text-align:center; font-size:13px; padding:8px 12px; line-height:1.6; }
+
+  /* light theme */
+  :root[data-theme="light"] .su-panel{background:rgba(255,255,255,.94);color:#17202a;border-color:#d3dae2}
+  :root[data-theme="light"] .su-head{border-color:#d3dae2;background:rgba(240,243,247,.7)}
+  :root[data-theme="light"] .su-out{border-color:#d3dae2}
+  :root[data-theme="light"] .su-hb{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .su-hb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .su-x:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .su-ta,:root[data-theme="light"] .su-in{background:#f4f6f9;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .su-ta::placeholder{color:#8b97a5}
+  :root[data-theme="light"] .su-sb,:root[data-theme="light"] .su-lb{background:#f4f6f9;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .su-sb:hover,:root[data-theme="light"] .su-lb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .su-lb.on{border-color:var(--su-accent);background:#efe9fd;color:#5b3fc4}
+  :root[data-theme="light"] .su-aiopts{background:rgba(240,243,247,.6)}
+  :root[data-theme="light"] .su-summary{background:#f4f6f9;border-color:#d3dae2}
+  :root[data-theme="light"] .su-src,:root[data-theme="light"] .su-key{background:#efe9fd;border-color:#dcd2f7;color:#5b3fc4}
+  :root[data-theme="light"] .su-src.ai{color:#158a3a}
+  :root[data-theme="light"] .su-stats b{color:#17202a}
+</style>
+</head>
+<body>
+  <div class="su-overlay collapsed" id="suOverlay">
+    <div class="su-panel" role="dialog" aria-label="Quick Summary">
+      <div class="su-head">
+        <span class="su-title"><span class="dot">❖</span> Quick Summary</span>
+        <button class="su-hb" id="suExport" title="Export prefs (.json)">⤓</button>
+        <button class="su-hb" id="suImport" title="Import prefs (.json)">⤒</button>
+        <input type="file" id="suPrefsFile" accept="application/json,.json" hidden />
+        <button class="su-hb" id="suTheme" title="Day / night">☀️</button>
+        <button class="su-hb" id="suMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="su-x" id="suClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="su-body">
+        <!-- INPUT -->
+        <div class="su-section su-drop" id="suDrop">
+          <textarea class="su-ta" id="suInput" placeholder="Paste text here, or drop / upload a .txt .md .csv .log .json file…" spellcheck="false"></textarea>
+          <div class="su-inbar">
+            <span class="su-count" id="suCount">0 words · 0 characters</span>
+            <button class="su-sb" id="suPaste" title="Paste from clipboard">📋 Paste</button>
+            <button class="su-sb" id="suUpload" title="Upload a text file">⬆ File</button>
+            <input type="file" id="suTextFile" accept=".txt,.md,.markdown,.csv,.log,.json,.text,text/*" hidden />
+            <button class="su-sb" id="suClear" title="Clear input">✕ Clear</button>
+          </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="su-section">
+          <span class="su-lbl">Summary length</span>
+          <div class="su-len">
+            <button class="su-lb" id="suShort" data-mode="short">Short</button>
+            <button class="su-lb on" id="suMed" data-mode="medium">Medium</button>
+            <button class="su-lb" id="suLong" data-mode="long">Long</button>
+          </div>
+          <div class="su-sliderrow">
+            <input type="range" id="suSlider" min="1" max="10" value="3" title="Exact sentence count" />
+            <span class="su-slval" id="suSlVal">3 of 10 sentences · ~25%</span>
+          </div>
+        </div>
+
+        <!-- AI -->
+        <div class="su-section">
+          <div class="su-airow">
+            <label class="su-toggle" id="suAIlbl"><input type="checkbox" id="suAIchk" /> Use local AI</label>
+            <button class="su-link" id="suAIopts">AI options</button>
+            <span class="su-note" id="suAInote">Built-in offline summariser is ready. Local AI is optional.</span>
+          </div>
+          <div class="su-aiopts" id="suAIpanel">
+            <div class="su-field"><span>Endpoint</span><input class="su-in" id="suEndpoint" type="text" spellcheck="false" placeholder="http://localhost:11434/api/generate" /></div>
+            <div class="su-field"><span>Model</span><input class="su-in" id="suModel" type="text" spellcheck="false" placeholder="llama3.2" /></div>
+            <div class="su-field"><span></span><button class="su-sb" id="suTest">Test connection</button></div>
+          </div>
+        </div>
+
+        <button class="su-run" id="suRun">Summarise</button>
+
+        <!-- OUTPUT -->
+        <div class="su-out" id="suOut">
+          <div class="su-outhead">
+            <span class="su-src" id="suSrc">Local (offline)</span>
+            <button class="su-sb" id="suCopy" title="Copy summary">⧉ Copy</button>
+            <button class="su-sb" id="suDlTxt" title="Download .txt">↓ .txt</button>
+            <button class="su-sb" id="suDlMd" title="Download .md">↓ .md</button>
+          </div>
+          <div class="su-summary" id="suSummary"></div>
+          <div class="su-section" id="suKeysWrap" style="gap:6px">
+            <span class="su-lbl">Key points</span>
+            <div class="su-keys" id="suKeys"></div>
+          </div>
+          <div class="su-stats" id="suStats"></div>
+        </div>
+      </div>
+    </div>
+    <button class="su-fab" id="suFab" title="Quick Summary" aria-label="Open Quick Summary">❖</button>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const KEY = "quick-summary:v1";
+  const THEME_KEY = "quick-summary:theme";
+
+  // ---- preferences state (the only thing persisted) ----
+  const prefs = {
+    mode: "medium",              // short | medium | long | custom
+    exact: null,                 // explicit sentence count (overrides mode %)
+    useAI: false,
+    endpoint: "http://localhost:11434/api/generate",
+    model: "llama3.2"
+  };
+  const PCT = { short:0.10, medium:0.25, long:0.40 };
+
+  function loadPrefs(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const d = JSON.parse(raw);
+        if(d && typeof d === "object"){ const p = ("data" in d && d.data) ? d.data : d;
+          if(["short","medium","long","custom"].includes(p.mode)) prefs.mode = p.mode;
+          if(typeof p.exact === "number") prefs.exact = p.exact;
+          if(typeof p.useAI === "boolean") prefs.useAI = p.useAI;
+          if(typeof p.endpoint === "string" && p.endpoint) prefs.endpoint = p.endpoint;
+          if(typeof p.model === "string" && p.model) prefs.model = p.model;
+        }
+      }
+    }catch(_){}
+  }
+  let save = function(){
+    try{ localStorage.setItem(KEY, JSON.stringify({ mode:prefs.mode, exact:prefs.exact, useAI:prefs.useAI, endpoint:prefs.endpoint, model:prefs.model })); }catch(_){}
+  };
+
+  // =========================================================================
+  //  OFFLINE EXTRACTIVE SUMMARISER (pure JS — no network, no dependencies)
+  // =========================================================================
+  const STOP = new Set(("a about above after again against all am an and any are aren't as at be because been "+
+    "before being below between both but by can can't cannot could couldn't did didn't do does doesn't doing "+
+    "don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's "+
+    "her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its "+
+    "itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves "+
+    "out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their "+
+    "theirs them themselves then there there's these they they'd they'll they're they've this those through to too "+
+    "under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's "+
+    "which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours "+
+    "yourself yourselves also just get got make made many much may might us via upon per").split(/\s+/));
+
+  const ABBR = ["mr","mrs","ms","dr","prof","sr","jr","st","vs","etc","e.g","i.e","inc","ltd","co","corp","dept",
+    "fig","no","vol","pp","al","approx","est","gen","gov","hon","rev","messrs","mt","ave","blvd","rd",
+    "jan","feb","mar","apr","jun","jul","aug","sep","sept","oct","nov","dec"];
+  const abbrRe = new RegExp("(?:^|\\s)(" + ABBR.map(a=>a.replace(/\./g,"\\.")).join("|") + ")\\.$", "i");
+
+  function tokens(s){ return (s.toLowerCase().match(/[a-z0-9][a-z0-9'\-]*/g) || []); }
+
+  // Split text into sentences. Handles ., !, ?, newlines, ellipses and common
+  // abbreviations reasonably (extractive quality, not perfect NLP).
+  function splitSentences(text){
+    const out = [];
+    const blocks = String(text).split(/\n+/);
+    for(const block of blocks){
+      const b = block.replace(/\s+/g, " ").trim();
+      if(!b) continue;
+      const parts = b.match(/[^.!?]+(?:[.!?]+(?=["')\]]?\s|$)|$)/g) || [b];
+      let buf = "";
+      for(const raw of parts){
+        const p = raw.trim();
+        if(!p) continue;
+        buf = buf ? (buf + " " + p) : p;
+        if(abbrRe.test(buf)) continue;         // ended on an abbreviation — keep going
+        out.push(buf.trim());
+        buf = "";
+      }
+      if(buf.trim()) out.push(buf.trim());
+    }
+    return out.filter(s => s.replace(/[^a-z0-9]/gi,"").length > 0);
+  }
+
+  function wordCount(text){ const m = String(text).trim().match(/\S+/g); return m ? m.length : 0; }
+
+  // target number of summary sentences given the document sentence total
+  function targetCount(total){
+    if(prefs.exact != null) return Math.min(Math.max(1, prefs.exact), total);
+    const pct = PCT[prefs.mode] != null ? PCT[prefs.mode] : PCT.medium;
+    return Math.min(Math.max(1, Math.round(total * pct)), total);
+  }
+
+  // Frequency / TF scoring with light position boost + length normalisation.
+  function summariseLocal(text, count){
+    const sentences = splitSentences(text);
+    if(sentences.length <= count) return { picked: sentences.map((_,i)=>i), sentences };
+
+    const freq = Object.create(null);
+    for(const s of sentences){
+      for(const w of tokens(s)){ if(w.length > 1 && !STOP.has(w)) freq[w] = (freq[w]||0) + 1; }
+    }
+    let max = 1; for(const k in freq) if(freq[k] > max) max = freq[k];
+
+    const scored = sentences.map((s,i) => {
+      const ws = tokens(s).filter(w => w.length > 1 && !STOP.has(w));
+      if(!ws.length) return { i, score:0 };
+      let sum = 0; for(const w of ws) sum += freq[w] / max;
+      let score = sum / Math.sqrt(ws.length);           // length-normalised weight
+      const pos = i / sentences.length;                  // small lead boost
+      if(pos < 0.10) score *= 1.16; else if(pos < 0.20) score *= 1.07;
+      if(ws.length < 3) score *= 0.6;                    // damp fragments
+      return { i, score };
+    });
+
+    const picked = scored.slice().sort((a,b)=> b.score - a.score || a.i - b.i)
+      .slice(0, count).map(x => x.i).sort((a,b)=> a - b);
+    return { picked, sentences };
+  }
+
+  // Key phrases: top unigrams + frequent bigrams of non-stopwords.
+  function keyPoints(text, n){
+    const sentences = splitSentences(text);
+    const uni = Object.create(null), bi = Object.create(null);
+    for(const s of sentences){
+      const ws = tokens(s).filter(w => w.length > 2 && !STOP.has(w));
+      ws.forEach((w,i) => { uni[w] = (uni[w]||0) + 1; if(i>0){ const b = ws[i-1] + " " + w; bi[b] = (bi[b]||0) + 1; } });
+    }
+    const cand = [];
+    for(const b in bi) if(bi[b] >= 2) cand.push([b, bi[b] * 2.2]);
+    for(const u in uni) cand.push([u, uni[u]]);
+    cand.sort((a,b)=> b[1] - a[1]);
+    const seen = new Set(), out = [];
+    for(const [p] of cand){
+      if(out.length >= n) break;
+      const parts = p.split(" ");
+      if(parts.length === 1 && seen.has(p)) continue;         // already inside a phrase
+      if(parts.every(w => seen.has(w)) && parts.length > 1) continue;
+      out.push(p); parts.forEach(w => seen.add(w));
+    }
+    return out.map(p => p.replace(/\b[a-z]/g, c => c.toUpperCase()));
+  }
+
+  function readStr(words){
+    const secs = Math.round(words / 200 * 60);
+    if(words === 0) return "0s";
+    if(secs < 60) return Math.max(1, secs) + "s";
+    return Math.round(secs / 60) + " min";
+  }
+
+  // =========================================================================
+  //  OPTIONAL LOCAL AI (off by default; only ever called on explicit action)
+  // =========================================================================
+  let aiKind = null; // null | "bridge" | "ollama"
+
+  function tagsUrl(){
+    const e = ($("suEndpoint").value || prefs.endpoint || "").trim();
+    try{ const u = new URL(e); return u.origin + "/api/tags"; }
+    catch(_){ return e.replace(/\/api\/.*/, "") + "/api/tags"; }
+  }
+
+  async function probeAI(){
+    if(window.ToggleAI && typeof window.ToggleAI.summarise === "function"){ aiKind = "bridge"; return { ok:true, kind:"bridge" }; }
+    try{
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 1800);
+      const r = await fetch(tagsUrl(), { method:"GET", signal:ctrl.signal });
+      clearTimeout(to);
+      if(r.ok){ aiKind = "ollama"; return { ok:true, kind:"ollama" }; }
+      return { ok:false, reason:"HTTP " + r.status };
+    }catch(err){
+      return { ok:false, reason: (err && err.name === "AbortError") ? "timed out" : "unreachable" };
+    }
+  }
+
+  async function summariseAI(text, mode){
+    if(aiKind === "bridge" && window.ToggleAI && window.ToggleAI.summarise){
+      const out = await window.ToggleAI.summarise(text, { length: mode });
+      return String(out || "").trim();
+    }
+    const endpoint = ($("suEndpoint").value || prefs.endpoint).trim();
+    const model = ($("suModel").value || prefs.model).trim() || "llama3.2";
+    const words = mode === "short" ? "2-3 sentences" : mode === "long" ? "8-10 sentences" : "4-6 sentences";
+    const prompt = "Summarise the following text in " + words + ". Return only the summary, no preamble.\n\n" + text;
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 60000);
+    const r = await fetch(endpoint, {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ model, prompt, stream:false }), signal:ctrl.signal
+    });
+    clearTimeout(to);
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const out = (j && (j.response || j.text || (j.message && j.message.content))) || "";
+    if(!out.trim()) throw new Error("empty response");
+    return String(out).trim();
+  }
+
+  // =========================================================================
+  //  UI wiring
+  // =========================================================================
+  let lastOutput = null; // { summary, keys, source }
+
+  function note(text, cls){ const el = $("suAInote"); el.textContent = text; el.className = "su-note" + (cls ? " " + cls : ""); }
+
+  function updateCount(){
+    const t = $("suInput").value;
+    const w = wordCount(t), c = t.length;
+    $("suCount").textContent = w + " word" + (w===1?"":"s") + " · " + c.toLocaleString() + " character" + (c===1?"":"s");
+    updateSlider();
+  }
+
+  let totalSentences = 0;
+  function updateSlider(){
+    totalSentences = splitSentences($("suInput").value).length;
+    const sl = $("suSlider");
+    const maxS = Math.max(1, totalSentences);
+    sl.max = String(maxS);
+    let val = prefs.exact != null ? prefs.exact : targetCount(maxS);
+    val = Math.min(Math.max(1, val), maxS);
+    sl.value = String(val);
+    const pct = totalSentences ? Math.round(val / totalSentences * 100) : 0;
+    $("suSlVal").textContent = val + " of " + totalSentences + " sentence" + (totalSentences===1?"":"s") + " · ~" + pct + "%";
+  }
+
+  function setMode(mode){
+    prefs.mode = mode; prefs.exact = null;
+    ["suShort","suMed","suLong"].forEach(id => $(id).classList.toggle("on", $(id).dataset.mode === mode));
+    updateSlider(); save();
+  }
+
+  function renderOutput(summary, source, originalText){
+    const inW = wordCount(originalText), outW = wordCount(summary);
+    const comp = inW ? Math.max(0, Math.round((1 - outW / inW) * 100)) : 0;
+    $("suSrc").textContent = source;
+    $("suSrc").classList.toggle("ai", source.indexOf("AI") >= 0);
+    $("suSummary").textContent = summary || "(no summary produced)";
+    const keys = keyPoints(originalText, 8);
+    const kw = $("suKeys"); kw.innerHTML = "";
+    if(keys.length){
+      keys.forEach(k => { const s = document.createElement("span"); s.className = "su-key"; s.textContent = k; kw.appendChild(s); });
+      $("suKeysWrap").style.display = "flex";
+    } else { $("suKeysWrap").style.display = "none"; }
+    $("suStats").innerHTML =
+      'words <b>' + inW + '</b> → <b>' + outW + '</b>' +
+      '&nbsp;&nbsp;·&nbsp;&nbsp;compression <b>' + comp + '%</b>' +
+      '&nbsp;&nbsp;·&nbsp;&nbsp;read <b>' + readStr(inW) + '</b> → <b>' + readStr(outW) + '</b>';
+    lastOutput = { summary, keys, source };
+    $("suOut").classList.add("show");
+  }
+
+  async function run(){
+    const text = $("suInput").value;
+    if(!text.trim()){ note("Paste or upload some text first.", "err"); return; }
+
+    const btn = $("suRun");
+    btn.disabled = true;
+
+    if(prefs.useAI){
+      btn.textContent = "Summarising with AI…";
+      try{
+        if(!aiKind){ const p = await probeAI(); if(!p.ok) throw new Error(p.reason || "no AI"); }
+        const out = await summariseAI(text, prefs.mode);
+        renderOutput(out, "Local AI", text);
+        note("Summarised with local AI (" + aiKind + ").", "ok");
+      }catch(err){
+        const total = splitSentences(text).length;
+        const local = summariseLocal(text, targetCount(total));
+        renderOutput(local.picked.map(i => local.sentences[i]).join(" "), "Local (offline)", text);
+        note("Local AI failed (" + (err && err.message || "error") + ") — used the built-in summariser.", "err");
+      }
+    } else {
+      btn.textContent = "Summarising…";
+      // yield a frame so the button state paints before heavy work on huge text
+      await new Promise(r => setTimeout(r, 0));
+      const total = splitSentences(text).length;
+      const local = summariseLocal(text, targetCount(total));
+      renderOutput(local.picked.map(i => local.sentences[i]).join(" "), "Local (offline)", text);
+    }
+    btn.disabled = false; btn.textContent = "Summarise";
+  }
+
+  // ---- input helpers ----
+  function readTextFile(f){
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { $("suInput").value = String(r.result || ""); updateCount(); note("Loaded “" + f.name + "”.", "ok"); };
+    r.onerror = () => note("Could not read that file.", "err");
+    r.readAsText(f);
+  }
+
+  $("suInput").addEventListener("input", updateCount);
+  $("suClear").onclick = () => { $("suInput").value = ""; updateCount(); $("suOut").classList.remove("show"); $("suInput").focus(); };
+  $("suUpload").onclick = () => $("suTextFile").click();
+  $("suTextFile").onchange = (ev) => { const f = ev.target.files[0]; if(f) readTextFile(f); ev.target.value = ""; };
+  $("suPaste").onclick = async () => {
+    if(!(navigator.clipboard && navigator.clipboard.readText)){ note("Clipboard read isn’t available in this browser.", "err"); return; }
+    try{ const t = await navigator.clipboard.readText(); if(t){ $("suInput").value = t; updateCount(); note("Pasted from clipboard.", "ok"); } else note("Clipboard was empty.", ""); }
+    catch(_){ note("Clipboard permission denied.", "err"); }
+  };
+
+  // drag & drop text files onto the input area
+  const drop = $("suDrop");
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("dragover"); }));
+  ["dragleave","dragend"].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove("dragover")));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("dragover"); const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) readTextFile(f); });
+
+  // ---- length controls ----
+  $("suShort").onclick = () => setMode("short");
+  $("suMed").onclick = () => setMode("medium");
+  $("suLong").onclick = () => setMode("long");
+  $("suSlider").addEventListener("input", () => {
+    prefs.exact = parseInt($("suSlider").value, 10) || 1; prefs.mode = "custom";
+    ["suShort","suMed","suLong"].forEach(id => $(id).classList.remove("on"));
+    const pct = totalSentences ? Math.round(prefs.exact / totalSentences * 100) : 0;
+    $("suSlVal").textContent = prefs.exact + " of " + totalSentences + " sentence" + (totalSentences===1?"":"s") + " · ~" + pct + "%";
+    save();
+  });
+
+  // ---- AI controls ----
+  function setAIFields(){ $("suEndpoint").value = prefs.endpoint; $("suModel").value = prefs.model; }
+  $("suAIopts").onclick = () => $("suAIpanel").classList.toggle("show");
+  $("suEndpoint").addEventListener("change", () => { prefs.endpoint = $("suEndpoint").value.trim() || prefs.endpoint; aiKind = null; save(); });
+  $("suModel").addEventListener("change", () => { prefs.model = $("suModel").value.trim() || prefs.model; save(); });
+
+  $("suAIchk").onchange = async () => {
+    if($("suAIchk").checked){
+      note("Checking for local AI…", "");
+      const p = await probeAI();
+      if(p.ok){ prefs.useAI = true; note("Local AI detected (" + p.kind + "). It will be used when you Summarise.", "ok"); }
+      else { $("suAIchk").checked = false; prefs.useAI = false; $("suAIpanel").classList.add("show");
+        note("No local AI detected (" + (p.reason||"unreachable") + ") — using the built-in summariser. Check the endpoint in AI options.", "err"); }
+    } else { prefs.useAI = false; note("Using the built-in offline summariser.", ""); }
+    save();
+  };
+  $("suTest").onclick = async () => {
+    aiKind = null; note("Testing connection…", "");
+    const p = await probeAI();
+    note(p.ok ? ("Connection OK — local AI available (" + p.kind + ").") : ("No AI at that endpoint (" + (p.reason||"unreachable") + ")."), p.ok ? "ok" : "err");
+  };
+
+  $("suRun").onclick = run;
+
+  // ---- output actions ----
+  function summaryMd(){
+    if(!lastOutput) return "";
+    let md = "# Summary\n\n" + lastOutput.summary + "\n";
+    if(lastOutput.keys && lastOutput.keys.length){ md += "\n## Key points\n\n" + lastOutput.keys.map(k => "- " + k).join("\n") + "\n"; }
+    md += "\n---\n_Source: " + lastOutput.source + " · Quick Summary_\n";
+    return md;
+  }
+  function summaryTxt(){
+    if(!lastOutput) return "";
+    let t = lastOutput.summary + "\n";
+    if(lastOutput.keys && lastOutput.keys.length){ t += "\nKey points:\n" + lastOutput.keys.map(k => "  • " + k).join("\n") + "\n"; }
+    return t;
+  }
+  function stamp(){ const d = new Date(), p = n => String(n).padStart(2,"0"); return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes()); }
+  function download(text, ext, mime){
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "summary-" + stamp() + "." + ext;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $("suCopy").onclick = async () => {
+    if(!lastOutput) return;
+    const text = summaryTxt();
+    try{ await navigator.clipboard.writeText(text); note("Summary copied.", "ok"); }
+    catch(_){
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;left:-9999px;opacity:0";
+      document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); note("Summary copied.", "ok"); }catch(e){ note("Copy failed.", "err"); } ta.remove();
+    }
+  };
+  $("suDlTxt").onclick = () => { if(lastOutput) download(summaryTxt(), "txt", "text/plain"); };
+  $("suDlMd").onclick = () => { if(lastOutput) download(summaryMd(), "md", "text/markdown"); };
+
+  // ---- open / close / maximise ----
+  const overlay = $("suOverlay");
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("suFab").style.display = open ? "none" : "block";
+    if(window.parent !== window) window.parent.postMessage({ type: open ? "quicksummary:open" : "quicksummary:close" }, "*");
+    post({ type: open ? "open" : "close" });
+    if(open) $("suInput").focus();
+  };
+  $("suFab").onclick = () => setOpen(true);
+  $("suClose").onclick = () => setOpen(false);
+
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("suMax").textContent = exp ? "⤡" : "⤢";
+    $("suMax").title = exp ? "Restore" : "Maximise";
+  }
+  $("suMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+
+  // ---- theme ----
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("suTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("suTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  /* =========================================================================
+     MODULE CONTRACT — portability layer shared across Toggle modules.
+     Lets a host app (iframe via postMessage, or same-page via window.ToggleModules)
+     drive the panel, swap theme, and export/import prefs.
+     ========================================================================= */
+  const MODULE_ID = "quick-summary";
+  const MODULE_NAME = "Quick Summary";
+  const MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#8b5cf6";
+  const MSG_NS = "toggle-module";
+
+  function exportData(){
+    return {
+      module: MODULE_ID,
+      version: MODULE_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: { mode:prefs.mode, exact:prefs.exact, useAI:prefs.useAI, endpoint:prefs.endpoint, model:prefs.model }
+    };
+  }
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    const d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    let touched = false;
+    if(["short","medium","long","custom"].includes(d.mode)){ prefs.mode = d.mode; touched = true; }
+    if(typeof d.exact === "number" || d.exact === null){ prefs.exact = d.exact; touched = true; }
+    if(typeof d.useAI === "boolean"){ prefs.useAI = d.useAI; touched = true; }
+    if(typeof d.endpoint === "string" && d.endpoint){ prefs.endpoint = d.endpoint; touched = true; }
+    if(typeof d.model === "string" && d.model){ prefs.model = d.model; touched = true; }
+    if(!touched) return false;
+    save();
+    // reflect into the UI
+    if(prefs.mode !== "custom") setMode(prefs.mode); else updateSlider();
+    setAIFields(); $("suAIchk").checked = false; aiKind = null;
+    return true;
+  }
+
+  // change notifications — wrap save() so every pref change fans out
+  const _save = save;
+  save = function(){ _save(); notifyChange(); };
+  let _notifyPending = false;
+  function notifyChange(){
+    if(_notifyPending) return; _notifyPending = true;
+    Promise.resolve().then(() => {
+      _notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module: MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping"].includes(t)) return;
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY, m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data: exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+    }
+  });
+
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id: MODULE_ID, name: MODULE_NAME, version: MODULE_VERSION, accent: MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); },
+    importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  // Export / Import prefs UI affordances
+  $("suExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = MODULE_ID + "-prefs.json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  };
+  $("suImport").onclick = () => $("suPrefsFile").click();
+  $("suPrefsFile").onchange = (ev) => {
+    const f = ev.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try{ if(!importData(JSON.parse(r.result))) throw 0; note("Preferences imported.", "ok"); }catch(_){ note("Could not read that file — expected Quick Summary JSON.", "err"); } };
+    r.readAsText(f); ev.target.value = "";
+  };
+
+  // ---- boot ----
+  loadPrefs();
+  setAIFields();
+  if(prefs.mode !== "custom"){ ["suShort","suMed","suLong"].forEach(id => $(id).classList.toggle("on", $(id).dataset.mode === prefs.mode)); }
+  else { ["suShort","suMed","suLong"].forEach(id => $(id).classList.remove("on")); }
+  updateCount();
+  // Toggle reflects saved intent but AI is never auto-called; a probe happens on
+  // the next explicit Summarise (or when the user re-checks the box).
+  $("suAIchk").checked = false;
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);      // start docked/minimised — just the launcher shows
+  postReady();         // announce module to any host
+})();
+</script>
+</body>
+</html>
