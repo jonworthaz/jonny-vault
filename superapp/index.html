@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Super App — modular mini apps</title>
 <style>
-  :root{
-    --bg:#0f1419; --panel:#1a212b; --panel2:#222c38; --line:#2c3744;
-    --text:#e6edf3; --muted:#8b97a5; --accent:#ff5a3c; --ok:#22c55e;
-  }
+  :root{--bg:#0f1419;--panel:#1a212b;--panel2:#222c38;--line:#2c3744;--text:#e6edf3;--muted:#8b97a5;--accent:#ff5a3c;--ok:#22c55e}
   :root[data-theme="light"]{--bg:#f3f5f8;--panel:#fff;--panel2:#eef1f5;--line:#d3dae2;--text:#17202a;--muted:#5a6672}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -17,32 +14,26 @@
   .top{display:flex;align-items:center;gap:8px;padding:0 14px;height:56px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
   .brand{display:flex;align-items:center;gap:9px;margin-right:auto}
   .brand .logo{font-size:22px}
-  .brand strong{font-size:15px}
-  .brand small{color:var(--muted);font-size:11px;display:block;line-height:1}
+  .brand strong{font-size:15px} .brand small{color:var(--muted);font-size:11px;display:block;line-height:1}
   .btn{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 11px;font-size:13px;cursor:pointer}
   .btn:hover{filter:brightness(1.12)}
-  .btn .k{width:12px;height:12px;border-radius:3px;display:inline-block}
-  .btn.on{border-color:currentColor}
-  .btn.mk.on{color:#ff5a3c} .btn.tk.on{color:#e0407b} .btn.pl.on{color:#5b6ffa}
   .btn.ghost{background:none}
 
   .main{flex:1;min-height:0;overflow:auto;padding:26px 22px}
-  .wrap{max-width:900px;margin:0 auto}
+  .wrap{max-width:1040px;margin:0 auto}
   h1{margin:0 0 6px;font-size:24px}
-  .lede{color:var(--muted);margin:0 0 22px;font-size:15px;line-height:1.5;max-width:640px}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  @media(max-width:760px){.cards{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .lede{color:var(--muted);margin:0 0 22px;font-size:15px;line-height:1.5;max-width:680px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column}
   .card .ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;margin-bottom:10px}
-  .card h3{margin:0 0 4px;font-size:16px}
-  .card p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
+  .card h3{margin:0 0 4px;font-size:15px}
+  .card p{margin:0 0 14px;color:var(--muted);font-size:12.5px;line-height:1.5;flex:1}
   .card .open{width:100%;justify-content:center}
+  .card .open.on{color:#fff}
   .note{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:13px;color:var(--muted);line-height:1.55}
-  .note b{color:var(--text)}
-  code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .note b{color:var(--text)} code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
 
-  /* hosted module iframes — bottom-right corner, one active at a time */
-  .frame{position:fixed;right:0;bottom:0;width:min(460px,96vw);height:min(660px,88vh);border:0;background:transparent;z-index:900;display:none}
+  .frame{position:fixed;right:0;bottom:0;width:min(1080px,98vw);height:min(760px,92vh);border:0;background:transparent;z-index:900;display:none}
   .frame.show{display:block}
   #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--line);padding:9px 16px;border-radius:999px;font-size:13px;z-index:2000;opacity:0;transition:opacity .18s;pointer-events:none}
   #toast.show{opacity:1}
@@ -51,10 +42,6 @@
 <body>
   <header class="top">
     <div class="brand"><span class="logo">🧩</span><div><strong>Super App</strong><small>modular mini apps</small></div></div>
-    <button class="btn mk" data-mod="markup"><span class="k" style="background:#ff5a3c"></span>Markup</button>
-    <button class="btn tk" data-mod="toggle-track"><span class="k" style="background:#e0407b"></span>Track</button>
-    <button class="btn pl" data-mod="toggle-plan"><span class="k" style="background:#5b6ffa"></span>Plan</button>
-    <span style="width:10px"></span>
     <button class="btn ghost" id="expAll" title="Export data from all modules">⤓ Export all</button>
     <button class="btn ghost" id="impAll" title="Import data into modules">⤒ Import all</button>
     <input type="file" id="impFile" accept="application/json" hidden />
@@ -64,90 +51,88 @@
   <main class="main">
     <div class="wrap">
       <h1>One shell, many mini apps</h1>
-      <p class="lede">Each module is a small, fast, self-contained app that snaps into the bottom-right corner so you can use it while you work. They all share the same dock container and speak a common module protocol, so they can be embedded, controlled, and have their data exported / imported by a host — like this super app.</p>
-
-      <div class="cards">
-        <div class="card">
-          <div class="ico" style="background:#ff5a3c">✎</div>
-          <h3>Quick MarkUp</h3>
-          <p>Annotate an image — circle, arrow, highlight, text &amp; numbers. Copy or save the result.</p>
-          <button class="btn open mk" data-mod="markup">Open Markup</button>
-        </div>
-        <div class="card">
-          <div class="ico" style="background:#e0407b">⏱</div>
-          <h3>Toggle Track</h3>
-          <p>One-tap time tracking with a live timer, project chips and a running daily total.</p>
-          <button class="btn open tk" data-mod="toggle-track">Open Track</button>
-        </div>
-        <div class="card">
-          <div class="ico" style="background:#5b6ffa">✓</div>
-          <h3>Toggle Plan</h3>
-          <p>Quick task planning grouped by day — Today, Tomorrow, upcoming and overdue.</p>
-          <button class="btn open pl" data-mod="toggle-plan">Open Plan</button>
-        </div>
-      </div>
-
+      <p class="lede">Each module is a small, fast, self-contained app that snaps into the corner so you can use it while you work. They share the same dock container and a common module protocol, so any host — like this super app — can embed, control, and export/import their data. Each keeps its own colour.</p>
+      <div class="cards" id="cards"></div>
       <div class="note">
         <b>How the modules plug in.</b> Each is hosted here in an <code>&lt;iframe&gt;</code> and driven over <code>postMessage</code>:
         the super app sends <code>module:open</code> / <code>module:close</code> / <code>module:setTheme</code>, and — for portability —
-        <code>module:export</code> (the module returns its data as JSON) and <code>module:import</code> (the host injects data back in).
-        <b>Export all</b> gathers the JSON from Track &amp; Plan into one file; <b>Import all</b> pushes it back. Drop these same
-        modules into any other app the same way. Each keeps its own colour scheme.
+        <code>module:export</code> (a module returns its data as JSON) and <code>module:import</code> (the host injects it back).
+        <b>Export all</b> gathers JSON from every module into one file; <b>Import all</b> pushes it back. Drop any of these modules into another app the same way.
       </div>
     </div>
   </main>
-
-  <!-- hosted modules -->
-  <iframe class="frame" id="f-markup"        src="../markup-dock/"    allow="clipboard-write" title="Quick MarkUp"></iframe>
-  <iframe class="frame" id="f-toggle-track"  src="../toggle-track/"   title="Toggle Track"></iframe>
-  <iframe class="frame" id="f-toggle-plan"   src="../toggle-plan/"    title="Toggle Plan"></iframe>
+  <div id="frames"></div>
   <div id="toast"></div>
 
 <script>
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const MODS = ["markup","toggle-track","toggle-plan"];
-  const frame = (id) => $("f-" + id);
-  const post = (id, msg) => { const f = frame(id); if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*"); };
+  const MODS = [
+    { id:"markup",          folder:"markup-dock",     name:"Quick MarkUp",     icon:"✎", accent:"#ff5a3c", desc:"Annotate an image — circle, arrow, highlight, text & numbers. Copy or save." },
+    { id:"quick-crop",      folder:"quick-crop",      name:"Quick Crop",       icon:"✂", accent:"#2bb673", desc:"Paste & crop to any shape (incl. circle); copy or save PNG/JPEG/WEBP/GIF." },
+    { id:"file-converter",  folder:"file-converter",  name:"File Converter",   icon:"🔄", accent:"#f59e0b", desc:"Detects a file and offers conversions — images, text/data, audio/video, 3D." },
+    { id:"video-stabiliser",folder:"video-stabiliser",name:"Video Stabiliser", icon:"🎬", accent:"#12b5a6", desc:"Detect shake, stabilise, and compare before/after. Saves a library." },
+    { id:"quick-summary",   folder:"quick-summary",   name:"Quick Summary",    icon:"📝", accent:"#8b5cf6", desc:"Summarise text offline (or with local AI). Key points + stats." },
+    { id:"toggle-track",    folder:"toggle-track",    name:"Toggle Track",     icon:"⏱", accent:"#e0407b", desc:"One-tap time tracking with a live timer, project chips and a daily total." },
+    { id:"toggle-plan",     folder:"toggle-plan",     name:"Toggle Plan",      icon:"✓", accent:"#5b6ffa", desc:"Quick task planning grouped by Today / Tomorrow / upcoming / overdue." },
+    { id:"breathe",         folder:"breathe",         name:"Breathe & Chill",  icon:"🌿", accent:"#38bdf8", desc:"Guided breathing (box, 4-7-8…) with synthesised zen audio." },
+  ];
+  const byId = Object.fromEntries(MODS.map(m => [m.id, m]));
   const open = {};
 
+  // build cards + iframes
+  const cards = $("cards"), frames = $("frames");
+  MODS.forEach(m => {
+    const c = document.createElement("div"); c.className = "card";
+    c.innerHTML = '<div class="ico" style="background:'+m.accent+'">'+m.icon+'</div>'
+      + '<h3>'+m.name+'</h3><p>'+m.desc+'</p>'
+      + '<button class="btn open" data-mod="'+m.id+'">Open</button>';
+    c.querySelector(".open").style.borderColor = m.accent;
+    cards.appendChild(c);
+    const f = document.createElement("iframe");
+    f.className = "frame"; f.id = "f-" + m.id; f.title = m.name;
+    f.src = "../" + m.folder + "/";
+    if (m.id === "markup") f.setAttribute("allow", "clipboard-write");
+    if (m.id === "video-stabiliser" || m.id === "quick-crop") f.setAttribute("allow", "clipboard-write");
+    frames.appendChild(f);
+  });
+
+  const frame = (id) => $("f-" + id);
+  const post = (id, msg) => { const f = frame(id); if (f && f.contentWindow) f.contentWindow.postMessage(msg, "*"); };
   function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2200); }
 
   function setActive(id, on){
     open[id] = on;
     frame(id).classList.toggle("show", on);
     post(id, { type: on ? "module:open" : "module:close" });
-    document.querySelectorAll('[data-mod="'+id+'"]').forEach(b => b.classList.toggle("on", on));
+    document.querySelectorAll('[data-mod="'+id+'"]').forEach(b => { b.classList.toggle("on", on); b.style.background = on ? byId[id].accent : ""; b.textContent = on ? "Close" : "Open"; });
   }
   function toggle(id){
     const willOpen = !open[id];
-    if (willOpen) MODS.forEach(m => { if (m !== id && open[m]) setActive(m, false); }); // one at a time
+    if (willOpen) MODS.forEach(m => { if (m.id !== id && open[m.id]) setActive(m.id, false); }); // one at a time
     setActive(id, willOpen);
   }
-  document.querySelectorAll("[data-mod]").forEach(b => b.addEventListener("click", () => toggle(b.dataset.mod)));
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-mod]"); if (b) toggle(b.dataset.mod); });
 
   // theme (sync to every module)
-  let theme = "dark";
-  try { theme = localStorage.getItem("markup-theme") || "dark"; } catch(_) {}
+  let theme = "dark"; try { theme = localStorage.getItem("markup-theme") || "dark"; } catch(_) {}
   function applyTheme(t){
     document.documentElement.setAttribute("data-theme", t);
     $("theme").textContent = t === "light" ? "🌙" : "☀️";
-    MODS.forEach(id => post(id, { type: "module:setTheme", theme: t }));
+    MODS.forEach(m => post(m.id, { type: "module:setTheme", theme: t }));
     try { localStorage.setItem("markup-theme", t); } catch(_) {}
   }
   applyTheme(theme);
   $("theme").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
 
-  // ---- Export all ----
+  // Export all — ask every module for its data
   $("expAll").onclick = () => {
-    const targets = ["toggle-track","toggle-plan"]; // JSON-data modules
-    const got = {}; let pending = targets.length;
+    const got = {}; let pending = MODS.length;
     const onMsg = (e) => {
       const d = e && e.data;
-      if (d && d.source === "toggle-module" && d.type === "export" && targets.includes(d.module)) {
-        got[d.module] = d.data;
-        if (--pending <= 0) { window.removeEventListener("message", onMsg); finish(); }
+      if (d && d.source === "toggle-module" && d.type === "export" && byId[d.module]) {
+        got[d.module] = d.data; if (--pending <= 0) { window.removeEventListener("message", onMsg); finish(); }
       }
     };
     const finish = () => {
@@ -159,31 +144,28 @@
       toast("Exported "+Object.keys(got).length+" module(s)");
     };
     window.addEventListener("message", onMsg);
-    targets.forEach(id => post(id, { type:"module:export" }));
-    setTimeout(() => { window.removeEventListener("message", onMsg); if (pending > 0) finish(); }, 1000);
+    MODS.forEach(m => post(m.id, { type:"module:export" }));
+    setTimeout(() => { window.removeEventListener("message", onMsg); finish(); }, 1200);
   };
 
-  // ---- Import all ----
+  // Import all
   $("impAll").onclick = () => $("impFile").click();
   $("impFile").onchange = (e) => {
     const file = e.target.files[0]; if (!file) return;
     const r = new FileReader();
     r.onload = () => {
       let obj; try { obj = JSON.parse(r.result); } catch(_) { toast("Not valid JSON"); return; }
-      const mods = (obj && obj.modules) ? obj.modules : obj;
-      let n = 0;
-      ["toggle-track","toggle-plan"].forEach(id => { if (mods && mods[id] != null) { post(id, { type:"module:import", data: mods[id] }); n++; } });
+      const mods = (obj && obj.modules) ? obj.modules : obj; let n = 0;
+      MODS.forEach(m => { if (mods && mods[m.id] != null) { post(m.id, { type:"module:import", data: mods[m.id] }); n++; } });
       toast(n ? ("Imported into "+n+" module(s)") : "Nothing matching to import");
     };
-    r.readAsText(file);
-    e.target.value = "";
+    r.readAsText(file); e.target.value = "";
   };
 
-  // relay module events (open/close from a module's own controls) into button state
+  // reflect a module closing/opening itself
   window.addEventListener("message", (e) => {
-    const d = e && e.data; if (!d || d.source !== "toggle-module") return;
+    const d = e && e.data; if (!d || d.source !== "toggle-module" || !byId[d.module]) return;
     if (d.type === "close" && open[d.module]) setActive(d.module, false);
-    if (d.type === "open") { document.querySelectorAll('[data-mod="'+d.module+'"]').forEach(b => b.classList.add("on")); }
   });
 })();
 </script>

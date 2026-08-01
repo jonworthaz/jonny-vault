@@ -1,0 +1,9 @@
+{
+  "id": "file-converter",
+  "name": "File Converter",
+  "version": "1.0",
+  "accent": "#f59e0b",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme"],
+  "messageNamespace": "toggle-module"
+}
