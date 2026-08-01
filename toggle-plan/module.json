@@ -1,0 +1,9 @@
+{
+  "id": "toggle-plan",
+  "name": "Toggle Plan",
+  "version": "1.0",
+  "accent": "#5b6ffa",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme", "export", "import"],
+  "messageNamespace": "toggle-module"
+}
