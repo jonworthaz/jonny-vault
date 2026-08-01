@@ -1,0 +1,9 @@
+{
+  "id": "quick-summary",
+  "name": "Quick Summary",
+  "version": "1.0",
+  "accent": "#8b5cf6",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme", "export", "import"],
+  "messageNamespace": "toggle-module"
+}

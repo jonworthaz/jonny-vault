@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Video Stabiliser — mini video de-shake</title>
+<style>
+  /* Self-contained corner-docked video stabiliser. A launcher button sits at the
+     bottom-right; clicking it pops up a compact panel. Maximise (⤢) grows it to a
+     large working panel because video needs room. Shares the markup-dock shell;
+     accent swapped to teal. Namespaced under vs* ids / vs- classes so it can
+     coexist with sibling modules on one page.
+
+     Shake DETECTION is pure offline JS (canvas frame diffing). STABILISATION uses
+     ffmpeg.wasm, lazy-loaded from a CDN the first time you click Stabilise — that
+     is the ONLY external dependency and the ONLY network call the app ever makes. */
+  :root{
+    --vs-bg:#0f1419; --vs-panel:#1a212b; --vs-panel2:#222c38; --vs-line:#2c3744;
+    --vs-text:#e6edf3; --vs-muted:#8b97a5; --vs-accent:#12b5a6; --vs-accent2:#19d1c0;
+    --vs-ok:#22c55e; --vs-warn:#e0b341; --vs-bad:#ef6b5c; --vs-chip:#2a3340;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* page is click-through; only the widget itself catches clicks */
+  html,body{background:transparent;pointer-events:none}
+
+  .vs-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99997;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .vs-overlay > *{pointer-events:auto}
+
+  .vs-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--vs-accent);color:#fff;border:none;cursor:pointer;
+    font-size:24px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .vs-fab:hover{background:var(--vs-accent2)}
+
+  .vs-panel{
+    display:flex; flex-direction:column;
+    width:min(400px,92vw); height:min(560px,82vh);
+    background:rgba(26,33,43,.95);
+    color:var(--vs-text);
+    border:1px solid var(--vs-line); border-radius:14px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .16s ease, opacity .16s ease, width .16s ease, height .16s ease;
+  }
+  .vs-overlay.expanded .vs-panel{ width:min(1040px,96vw); height:min(720px,90vh); }
+  .vs-overlay.collapsed .vs-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .vs-head{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--vs-line);
+    background:rgba(20,26,34,.6); flex:0 0 auto;
+  }
+  .vs-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px}
+  .vs-title .dot{color:var(--vs-accent);font-size:16px}
+  .vs-x{background:none;border:none;color:var(--vs-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .vs-x:hover{color:#fff;background:var(--vs-panel2)}
+  .vs-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--vs-panel2);border:1px solid var(--vs-line);color:var(--vs-text);
+    border-radius:7px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .vs-hb:hover{background:#2b3645}
+  .vs-hb[disabled]{opacity:.4;cursor:not-allowed}
+
+  /* scrolling body */
+  .vs-body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:12px; }
+  .vs-body::-webkit-scrollbar{width:9px}
+  .vs-body::-webkit-scrollbar-thumb{background:var(--vs-line);border-radius:6px}
+
+  /* drop / load zone */
+  .vs-drop{
+    border:1.5px dashed var(--vs-line); border-radius:12px;
+    padding:26px 18px; text-align:center; color:var(--vs-muted);
+    font-size:13.5px; line-height:1.6; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .vs-drop:hover{ border-color:var(--vs-accent); }
+  .vs-drop.drag{ border-color:var(--vs-accent); background:rgba(18,181,166,.08); color:var(--vs-text); }
+  .vs-drop .em{ font-size:34px; display:block; margin-bottom:8px; }
+  .vs-drop b{ color:var(--vs-text); }
+
+  .vs-section{ margin-top:14px; }
+  .vs-section.hide{ display:none; }
+  .vs-slabel{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--vs-muted); margin:0 0 7px 2px;
+  }
+
+  /* video cards */
+  .vs-vwrap{ position:relative; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--vs-line); }
+  .vs-vwrap video{ display:block; width:100%; max-height:44vh; background:#000; }
+  .vs-vtag{
+    position:absolute; top:8px; left:8px; z-index:2;
+    background:rgba(0,0,0,.66); color:#fff; font-size:10.5px; font-weight:700;
+    letter-spacing:.4px; padding:3px 9px; border-radius:20px; text-transform:uppercase;
+  }
+  .vs-vtag.after{ background:rgba(18,181,166,.85); }
+
+  .vs-meta{
+    display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:8px;
+    font-size:12px; color:var(--vs-muted);
+  }
+  .vs-meta b{ color:var(--vs-text); font-weight:600; }
+
+  /* detection result */
+  .vs-detect{
+    margin-top:12px; background:var(--vs-panel2); border:1px solid var(--vs-line);
+    border-radius:11px; padding:12px;
+  }
+  .vs-drow{ display:flex; align-items:center; gap:12px; }
+  .vs-gauge{
+    flex:0 0 auto; width:58px; height:58px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; color:#fff;
+    background:conic-gradient(var(--vs-accent) 0deg, var(--vs-line) 0deg);
+    position:relative;
+  }
+  .vs-gauge span{
+    position:relative; z-index:1; width:44px; height:44px; border-radius:50%;
+    background:var(--vs-panel2); display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .vs-dmain{ flex:1 1 auto; min-width:0; }
+  .vs-verdict{ font-size:13.5px; font-weight:600; color:var(--vs-text); line-height:1.4; }
+  .vs-verdict.good{ color:var(--vs-ok); }
+  .vs-verdict.warn{ color:var(--vs-warn); }
+  .vs-verdict.bad{ color:var(--vs-bad); }
+  .vs-dsub{ font-size:11.5px; color:var(--vs-muted); margin-top:3px; }
+  .vs-spark{
+    display:flex; align-items:flex-end; gap:2px; height:34px; margin-top:10px;
+    padding:4px 2px 0; border-top:1px solid var(--vs-line);
+  }
+  .vs-spark i{ flex:1 1 auto; background:var(--vs-accent); border-radius:2px 2px 0 0; min-height:2px; opacity:.85; }
+
+  .vs-progress{
+    height:8px; border-radius:6px; background:var(--vs-line); overflow:hidden; margin-top:10px;
+  }
+  .vs-progress i{ display:block; height:100%; width:0%; background:var(--vs-accent); transition:width .15s linear; }
+  .vs-phint{ font-size:11.5px; color:var(--vs-muted); margin-top:6px; }
+  .vs-phint.err{ color:var(--vs-bad); }
+  .vs-phint.ok{ color:var(--vs-ok); }
+
+  /* buttons */
+  .vs-btnrow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .vs-btn{
+    background:var(--vs-accent); border:1px solid var(--vs-accent); color:#fff;
+    border-radius:9px; padding:10px 18px; font-size:13.5px; font-weight:700; cursor:pointer;
+    line-height:1; display:inline-flex; align-items:center; gap:8px;
+  }
+  .vs-btn:hover{ background:var(--vs-accent2); }
+  .vs-btn[disabled]{ opacity:.5; cursor:not-allowed; }
+  .vs-btn.ghost{ background:transparent; color:var(--vs-text); border-color:var(--vs-line); }
+  .vs-btn.ghost:hover{ background:var(--vs-panel2); }
+  .vs-btn.ai{ background:transparent; color:var(--vs-accent2); border-color:var(--vs-accent); }
+  .vs-btn.ai:hover{ background:rgba(18,181,166,.1); }
+  .vs-spin{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.35); border-top-color:#fff;
+    animation:vsspin .7s linear infinite; display:inline-block;
+  }
+  @keyframes vsspin{ to{ transform:rotate(360deg); } }
+
+  /* synced comparison transport */
+  .vs-compare{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:720px){ .vs-compare{ grid-template-columns:1fr; } }
+  .vs-transport{
+    display:flex; align-items:center; gap:10px; margin-top:10px;
+    background:var(--vs-panel2); border:1px solid var(--vs-line); border-radius:9px; padding:8px 10px;
+  }
+  .vs-tb{
+    background:var(--vs-accent); border:none; color:#fff; width:34px; height:34px; border-radius:8px;
+    font-size:15px; cursor:pointer; flex:0 0 auto; line-height:1;
+  }
+  .vs-tb:hover{ background:var(--vs-accent2); }
+  .vs-seek{ flex:1 1 auto; accent-color:var(--vs-accent); }
+  .vs-time{ font-size:11.5px; color:var(--vs-muted); font-variant-numeric:tabular-nums; flex:0 0 auto; min-width:78px; text-align:right; }
+
+  /* library */
+  .vs-lib{ display:flex; flex-direction:column; gap:8px; }
+  .vs-libitem{
+    display:flex; align-items:center; gap:10px; padding:8px;
+    background:var(--vs-panel2); border:1px solid transparent; border-radius:10px;
+  }
+  .vs-libitem:hover{ border-color:var(--vs-line); }
+  .vs-thumb{
+    flex:0 0 auto; width:64px; height:40px; border-radius:6px; object-fit:cover;
+    background:#000; border:1px solid var(--vs-line); cursor:pointer;
+  }
+  .vs-libmain{ flex:1 1 auto; min-width:0; cursor:pointer; }
+  .vs-libname{ font-size:13px; color:var(--vs-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vs-libmeta{ font-size:11px; color:var(--vs-muted); margin-top:2px; }
+  .vs-ib{
+    background:none; border:none; color:var(--vs-muted); cursor:pointer;
+    font-size:15px; padding:5px 7px; border-radius:6px; line-height:1; flex:0 0 auto;
+  }
+  .vs-ib:hover{ color:#fff; background:#2b3645; }
+  .vs-ib.del:hover{ color:var(--vs-bad); }
+
+  .vs-empty{ color:var(--vs-muted); text-align:center; font-size:12.5px; padding:16px; line-height:1.6; }
+  .vs-empty b{ color:var(--vs-text); }
+
+  .vs-ai{
+    margin-top:10px; background:var(--vs-panel2); border:1px solid var(--vs-line);
+    border-radius:10px; padding:10px 12px; font-size:12px; color:var(--vs-muted); line-height:1.5;
+  }
+  .vs-ai b{ color:var(--vs-text); }
+  .vs-note{ font-size:11px; color:var(--vs-muted); margin-top:6px; line-height:1.5; }
+
+  /* light theme */
+  :root[data-theme="light"] .vs-panel{background:rgba(255,255,255,.95);color:#17202a;border-color:#d3dae2}
+  :root[data-theme="light"] .vs-head{border-color:#d3dae2;background:rgba(240,243,247,.7)}
+  :root[data-theme="light"] .vs-hb{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .vs-hb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .vs-x:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .vs-drop{border-color:#cdd5de;color:#5b6672}
+  :root[data-theme="light"] .vs-drop b{color:#17202a}
+  :root[data-theme="light"] .vs-detect,:root[data-theme="light"] .vs-transport,
+  :root[data-theme="light"] .vs-libitem,:root[data-theme="light"] .vs-ai{background:#f4f6f9;border-color:#d3dae2}
+  :root[data-theme="light"] .vs-gauge span{background:#f4f6f9}
+  :root[data-theme="light"] .vs-verdict{color:#17202a}
+  :root[data-theme="light"] .vs-meta b,:root[data-theme="light"] .vs-libname,:root[data-theme="light"] .vs-ai b{color:#17202a}
+  :root[data-theme="light"] .vs-btn.ghost{color:#17202a}
+  :root[data-theme="light"] .vs-btn.ghost:hover{background:#e6ebf1}
+  :root[data-theme="light"] .vs-progress{background:#e2e7ee}
+  :root[data-theme="light"] .vs-ib:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .vs-empty b{color:#17202a}
+</style>
+</head>
+<body>
+  <div class="vs-overlay collapsed" id="vsOverlay">
+    <div class="vs-panel" role="dialog" aria-label="Video Stabiliser">
+      <div class="vs-head">
+        <span class="vs-title"><span class="dot">◉</span> Video Stabiliser</span>
+        <button class="vs-hb" id="vsExport" title="Export library index (.json)">⤓</button>
+        <button class="vs-hb" id="vsImport" title="Import library index (.json)">⤒</button>
+        <input type="file" id="vsImpFile" accept="application/json,.json" hidden />
+        <button class="vs-hb" id="vsTheme" title="Day / night">☀️</button>
+        <button class="vs-hb" id="vsMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="vs-x" id="vsClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="vs-body" id="vsBody">
+
+        <!-- load -->
+        <div class="vs-drop" id="vsDrop">
+          <span class="em">🎬</span>
+          <b>Drop a video here, or click to choose</b><br />
+          mp4 · webm · mov · m4v … · or paste from clipboard
+        </div>
+        <input type="file" id="vsFile" accept="video/*" hidden />
+
+        <!-- source / original -->
+        <div class="vs-section hide" id="vsSrcSection">
+          <div class="vs-slabel">Source clip</div>
+          <div class="vs-vwrap">
+            <span class="vs-vtag">Original</span>
+            <video id="vsSrcVideo" controls playsinline preload="metadata"></video>
+          </div>
+          <div class="vs-meta" id="vsSrcMeta"></div>
+
+          <!-- detection -->
+          <div class="vs-detect" id="vsDetect">
+            <div class="vs-drow">
+              <div class="vs-gauge" id="vsGauge"><span id="vsGaugeNum">–</span></div>
+              <div class="vs-dmain">
+                <div class="vs-verdict" id="vsVerdict">Analysing motion…</div>
+                <div class="vs-dsub" id="vsDsub">Sampling frames offline — no network needed.</div>
+              </div>
+            </div>
+            <div class="vs-spark" id="vsSpark"></div>
+          </div>
+
+          <div class="vs-btnrow">
+            <button class="vs-btn" id="vsStabilise" title="Stabilise with ffmpeg.wasm">✨ Stabilise</button>
+            <button class="vs-btn ai" id="vsAi" style="display:none" title="AI assist">✨ AI assist</button>
+            <button class="vs-btn ghost" id="vsReset">Load another</button>
+          </div>
+          <div class="vs-ai" id="vsAiBox" style="display:none"></div>
+
+          <!-- stabilise progress -->
+          <div class="vs-section hide" id="vsProgSection" style="margin-top:12px">
+            <div class="vs-progress"><i id="vsProgBar"></i></div>
+            <div class="vs-phint" id="vsProgHint">Preparing…</div>
+          </div>
+        </div>
+
+        <!-- comparison -->
+        <div class="vs-section hide" id="vsCmpSection">
+          <div class="vs-slabel">Before / After — synced</div>
+          <div class="vs-compare">
+            <div class="vs-vwrap">
+              <span class="vs-vtag">Before</span>
+              <video id="vsBefore" playsinline preload="metadata" muted></video>
+            </div>
+            <div class="vs-vwrap">
+              <span class="vs-vtag after">After</span>
+              <video id="vsAfter" playsinline preload="metadata"></video>
+            </div>
+          </div>
+          <div class="vs-transport">
+            <button class="vs-tb" id="vsPlay" title="Play / pause both">▶</button>
+            <input type="range" class="vs-seek" id="vsSeek" min="0" max="1000" value="0" />
+            <span class="vs-time" id="vsTime">0:00 / 0:00</span>
+          </div>
+          <div class="vs-btnrow">
+            <button class="vs-btn" id="vsSave" title="Save to library (IndexedDB)">💾 Save result</button>
+            <button class="vs-btn ghost" id="vsDownload" title="Download stabilised file">⬇ Download</button>
+          </div>
+          <div class="vs-phint" id="vsSaveHint"></div>
+        </div>
+
+        <!-- library -->
+        <div class="vs-section" id="vsLibSection">
+          <div class="vs-slabel">Saved results (library)</div>
+          <div class="vs-lib" id="vsLib"></div>
+        </div>
+
+        <div class="vs-note" id="vsFootNote">
+          Detection &amp; comparison run fully offline. Stabilisation loads ffmpeg.wasm from a CDN on
+          first use (needs internet once, best on short clips).
+        </div>
+
+      </div>
+    </div>
+    <button class="vs-fab" id="vsFab" title="Video Stabiliser" aria-label="Open Video Stabiliser">◉</button>
+  </div>
+
+  <!-- hidden sampling canvas for offline shake detection -->
+  <canvas id="vsSample" width="160" height="90" style="display:none"></canvas>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  // ffmpeg.wasm CDN endpoints — the ONLY external resources, lazy-loaded on first Stabilise click.
+  const FFMPEG_UMD = "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js";
+  const FFMPEG_CORE = "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js";
+
+  const THEME_KEY = "video-stabiliser:theme";
+  const DB_NAME = "video-stabiliser";
+  const DB_STORE = "results";
+
+  // ---- state ----
+  const st = {
+    srcFile:null, srcURL:null, srcName:"", srcExt:"mp4",
+    beforeURL:null, afterURL:null, afterBlob:null, afterOrigName:"",
+    motion:[], shakeScore:null,
+    ffmpeg:null, ffmpegLoading:false, running:false, cancelRequested:false,
+    library:[], memoryOnly:false,
+    aiEnabled:false, aiParams:null
+  };
+
+  // =====================================================================
+  //  LOAD VIDEO
+  // =====================================================================
+  const VIDEO_RE = /\.(mp4|webm|mov|m4v|avi|mkv|ogv|3gp)$/i;
+  function isVideo(f){ return f && (f.type.startsWith("video/") || VIDEO_RE.test(f.name || "")); }
+
+  function loadFile(f){
+    if(!isVideo(f)){ setProgHint("That doesn't look like a video file.", "err"); return; }
+    resetForNew();
+    st.srcFile = f;
+    st.srcName = f.name || "clip.mp4";
+    const m = st.srcName.match(/\.([a-z0-9]+)$/i);
+    st.srcExt = m ? m[1].toLowerCase() : "mp4";
+    st.srcURL = URL.createObjectURL(f);
+    const v = $("vsSrcVideo");
+    v.src = st.srcURL;
+    show("vsSrcSection", true);
+    $("vsDrop").style.display = "none";
+    v.onloadedmetadata = () => {
+      renderSrcMeta(v, f);
+      startDetection(v);
+    };
+    notifyChange();
+  }
+
+  function renderSrcMeta(v, f){
+    const dur = fmtTime(v.duration);
+    const res = (v.videoWidth && v.videoHeight) ? v.videoWidth + "×" + v.videoHeight : "—";
+    const size = fmtBytes(f.size);
+    $("vsSrcMeta").innerHTML =
+      '<span title="'+esc(st.srcName)+'">📄 <b>'+esc(trunc(st.srcName,30))+'</b></span>' +
+      '<span>⏱ <b>'+dur+'</b></span>' +
+      '<span>🖥 <b>'+res+'</b></span>' +
+      '<span>💾 <b>'+size+'</b></span>';
+  }
+
+  // =====================================================================
+  //  OFFLINE SHAKE DETECTION (pure JS, canvas frame diffing, no network)
+  // =====================================================================
+  const canvas = $("vsSample"), cctx = canvas.getContext("2d", { willReadFrequently:true });
+
+  async function startDetection(v){
+    st.motion = []; st.shakeScore = null;
+    setGauge(null); $("vsVerdict").textContent = "Analysing motion…";
+    $("vsVerdict").className = "vs-verdict";
+    $("vsDsub").textContent = "Sampling frames offline — no network needed.";
+    $("vsSpark").innerHTML = "";
+
+    const dur = v.duration;
+    if(!isFinite(dur) || dur <= 0){
+      $("vsVerdict").textContent = "Couldn't read duration — skipping analysis.";
+      return;
+    }
+    // aspect-correct the sampling canvas
+    const cw = 160, ch = Math.max(48, Math.round(cw * (v.videoHeight||9) / (v.videoWidth||16)));
+    canvas.width = cw; canvas.height = ch;
+
+    const N = Math.min(40, Math.max(24, Math.round(dur * 3))); // 24–40 samples
+    const t0 = Math.min(0.05, dur*0.02), t1 = Math.max(t0, dur - Math.min(0.1, dur*0.02));
+    const stamps = [];
+    for(let i=0;i<N;i++) stamps.push(t0 + (t1-t0)*(i/(N-1)));
+
+    let prev = null;
+    const diffs = [];
+    const wasMuted = v.muted, wasControls = v.controls;
+    v.muted = true;
+    try{
+      for(let i=0;i<stamps.length;i++){
+        if(st.srcFile == null) return; // aborted (loaded another)
+        await seekTo(v, stamps[i]);
+        cctx.drawImage(v, 0, 0, cw, ch);
+        let cur;
+        try{ cur = cctx.getImageData(0,0,cw,ch).data; }
+        catch(e){ // e.g. tainted canvas — should not happen for local files
+          $("vsVerdict").textContent = "Frame analysis unavailable for this clip.";
+          $("vsDsub").textContent = "You can still stabilise it directly.";
+          v.muted = wasMuted; return;
+        }
+        if(prev){
+          diffs.push(meanAbsLumaDiff(prev, cur, cw*ch));
+          // progressive verdict text as a lightweight progress indicator
+          $("vsDsub").textContent = "Sampling frames… " + Math.round((i/(stamps.length-1))*100) + "%";
+        }
+        prev = cur;
+      }
+    } finally {
+      v.muted = wasMuted; v.controls = wasControls;
+      try{ v.currentTime = 0; }catch(_){}
+    }
+    st.motion = diffs;
+    finishDetection(diffs);
+    notifyChange();
+  }
+
+  function seekTo(v, t){
+    return new Promise((resolve) => {
+      let done = false;
+      const ok = () => { if(done) return; done = true; v.removeEventListener("seeked", ok); resolve(); };
+      v.addEventListener("seeked", ok);
+      try{ v.currentTime = Math.min(t, (v.duration||t)); }catch(_){ ok(); }
+      setTimeout(ok, 1200); // safety timeout so a stubborn seek can't hang analysis
+    });
+  }
+
+  // mean absolute difference of luma between two RGBA frames
+  function meanAbsLumaDiff(a, b, px){
+    let sum = 0;
+    for(let i=0;i<px;i++){
+      const j = i*4;
+      const la = (a[j]*0.299 + a[j+1]*0.587 + a[j+2]*0.114);
+      const lb = (b[j]*0.299 + b[j+1]*0.587 + b[j+2]*0.114);
+      sum += Math.abs(la - lb);
+    }
+    return sum / px; // 0..255
+  }
+
+  function finishDetection(diffs){
+    if(!diffs.length){
+      $("vsVerdict").textContent = "Not enough frames to analyse.";
+      setGauge(null);
+      return;
+    }
+    // Robust score: mean of per-interval motion, plus a jitter term (std-dev) that
+    // captures shake rather than smooth pans. Mapped to 0..100 with a soft knee.
+    const mean = avg(diffs);
+    const variance = avg(diffs.map(d => (d-mean)*(d-mean)));
+    const std = Math.sqrt(variance);
+    const raw = mean * 0.7 + std * 1.6;      // weight jitter a bit heavier
+    const score = Math.max(0, Math.min(100, Math.round(raw * 5.2)));
+    st.shakeScore = score;
+    setGauge(score);
+    drawSpark(diffs);
+
+    const vEl = $("vsVerdict"), sEl = $("vsDsub");
+    if(score >= 55){
+      vEl.textContent = "⚠️ Significant camera shake detected — stabilising recommended";
+      vEl.className = "vs-verdict bad";
+    } else if(score >= 28){
+      vEl.textContent = "◐ Some movement / handheld wobble — stabilising may help";
+      vEl.className = "vs-verdict warn";
+    } else {
+      vEl.textContent = "✓ Looks fairly stable";
+      vEl.className = "vs-verdict good";
+    }
+    sEl.textContent = "Shake score " + score + "/100 · analysed " + diffs.length + " intervals offline.";
+  }
+
+  function setGauge(score){
+    const g = $("vsGauge"), n = $("vsGaugeNum");
+    if(score == null){
+      g.style.background = "conic-gradient(var(--vs-line) 0deg, var(--vs-line) 360deg)";
+      n.textContent = "…"; return;
+    }
+    const deg = Math.round(score/100*360);
+    const col = score >= 55 ? "var(--vs-bad)" : score >= 28 ? "var(--vs-warn)" : "var(--vs-ok)";
+    g.style.background = "conic-gradient("+col+" "+deg+"deg, var(--vs-line) "+deg+"deg)";
+    n.textContent = score;
+  }
+
+  function drawSpark(diffs){
+    const wrap = $("vsSpark");
+    wrap.innerHTML = "";
+    const max = Math.max(0.001, Math.max.apply(null, diffs));
+    diffs.forEach(d => {
+      const bar = document.createElement("i");
+      const h = Math.max(2, Math.round(d/max*30));
+      bar.style.height = h + "px";
+      const rel = d/max;
+      bar.style.background = rel > 0.66 ? "var(--vs-bad)" : rel > 0.33 ? "var(--vs-warn)" : "var(--vs-accent)";
+      wrap.appendChild(bar);
+    });
+  }
+
+  // =====================================================================
+  //  STABILISE (ffmpeg.wasm — lazy-loaded on first click)
+  // =====================================================================
+  function loadScript(src){
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("script load failed: " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureFFmpeg(){
+    if(st.ffmpeg) return st.ffmpeg;
+    if(st.ffmpegLoading) throw new Error("busy");
+    st.ffmpegLoading = true;
+    try{
+      setProgHint("Loading stabilisation engine (ffmpeg.wasm) — first use needs internet…");
+      if(!window.FFmpeg){
+        await loadScript(FFMPEG_UMD);
+      }
+      if(!window.FFmpeg || typeof window.FFmpeg.createFFmpeg !== "function"){
+        throw new Error("ffmpeg UMD unavailable");
+      }
+      const { createFFmpeg } = window.FFmpeg;
+      const ff = createFFmpeg({ log:false, corePath:FFMPEG_CORE });
+      ff.setProgress(({ ratio }) => {
+        if(typeof ratio === "number" && ratio >= 0 && ratio <= 1){
+          setProg(Math.round(ratio*100));
+        }
+      });
+      await ff.load();
+      st.ffmpeg = ff;
+      return ff;
+    } finally {
+      st.ffmpegLoading = false;
+    }
+  }
+
+  async function stabilise(){
+    if(st.running || !st.srcFile) return;
+    st.running = true; st.cancelRequested = false;
+    const btn = $("vsStabilise");
+    setBtnBusy(btn, true, "Stabilising…");
+    show("vsProgSection", true);
+    setProg(0);
+    try{
+      const ff = await ensureFFmpeg();
+      if(st.cancelRequested) throw new Error("cancelled");
+
+      const { fetchFile } = window.FFmpeg;
+      const inName = "in." + st.srcExt;
+      const outName = "out.mp4";
+      setProgHint("Reading video into engine…");
+      ff.FS("writeFile", inName, await fetchFile(st.srcFile));
+
+      setProgHint("Running deshake filter… (single-threaded — short clips are quickest)");
+      // Try audio copy first; if the muxer rejects it, retry with AAC re-encode.
+      let ranOK = false;
+      try{
+        await ff.run("-i", inName, "-vf", "deshake", "-preset", "ultrafast", "-c:a", "copy", outName);
+        ranOK = true;
+      }catch(e1){
+        if(st.cancelRequested) throw new Error("cancelled");
+        setProgHint("Re-encoding audio track (AAC) and retrying…");
+        try{ ff.FS("unlink", outName); }catch(_){}
+        await ff.run("-i", inName, "-vf", "deshake", "-preset", "ultrafast", "-c:a", "aac", outName);
+        ranOK = true;
+      }
+      if(!ranOK) throw new Error("stabilisation produced no output");
+      if(st.cancelRequested) throw new Error("cancelled");
+
+      const data = ff.FS("readFile", outName);
+      const blob = new Blob([data.buffer], { type:"video/mp4" });
+      // cleanup FS
+      try{ ff.FS("unlink", inName); }catch(_){}
+      try{ ff.FS("unlink", outName); }catch(_){}
+
+      setAfter(blob, st.srcName);
+      setProg(100);
+      setProgHint("✓ Stabilised — compare below, then save or download.", "ok");
+      setTimeout(() => show("vsProgSection", false), 1500);
+    }catch(err){
+      const msg = String(err && err.message || err);
+      if(msg === "cancelled"){
+        setProgHint("Cancelled.", "err");
+      } else if(/script load failed|ffmpeg UMD unavailable|Failed to fetch|network|load/i.test(msg)){
+        setProgHint("Stabilisation engine couldn't load — needs internet the first time. Detection, comparison and your library still work offline.", "err");
+      } else {
+        setProgHint("Stabilisation failed: " + trunc(msg, 120) + " — try a shorter clip.", "err");
+      }
+    } finally {
+      st.running = false;
+      setBtnBusy(btn, false, "✨ Stabilise");
+    }
+  }
+
+  function setAfter(blob, origName){
+    if(st.afterURL) URL.revokeObjectURL(st.afterURL);
+    st.afterBlob = blob;
+    st.afterOrigName = origName;
+    st.afterURL = URL.createObjectURL(blob);
+
+    // before = source, after = stabilised
+    if(st.beforeURL && st.beforeURL !== st.srcURL) URL.revokeObjectURL(st.beforeURL);
+    st.beforeURL = st.srcURL;
+    $("vsBefore").src = st.beforeURL;
+    $("vsAfter").src = st.afterURL;
+    show("vsCmpSection", true);
+    $("vsSaveHint").textContent = "";
+    resetTransport();
+    notifyChange();
+  }
+
+  // =====================================================================
+  //  SYNCED BEFORE/AFTER TRANSPORT
+  // =====================================================================
+  let seeking = false;
+  function bothVideos(){ return [$("vsBefore"), $("vsAfter")]; }
+  function cmpDuration(){
+    const ds = bothVideos().map(v => v.duration).filter(d => isFinite(d) && d>0);
+    return ds.length ? Math.min.apply(null, ds) : 0;
+  }
+  function resetTransport(){
+    $("vsPlay").textContent = "▶";
+    $("vsSeek").value = 0;
+    bothVideos().forEach(v => { try{ v.pause(); v.currentTime = 0; }catch(_){} });
+    updateTime();
+  }
+  function playPause(){
+    const a = $("vsBefore");
+    if(a.paused){
+      bothVideos().forEach(v => { v.play().catch(()=>{}); });
+      $("vsPlay").textContent = "⏸";
+    } else {
+      bothVideos().forEach(v => v.pause());
+      $("vsPlay").textContent = "▶";
+    }
+  }
+  function onSeekInput(){
+    const dur = cmpDuration();
+    if(!dur) return;
+    seeking = true;
+    const t = (+$("vsSeek").value / 1000) * dur;
+    bothVideos().forEach(v => { try{ v.currentTime = t; }catch(_){} });
+    updateTime(t);
+    seeking = false;
+  }
+  function onTimeUpdate(){
+    if(seeking) return;
+    const dur = cmpDuration();
+    const t = $("vsBefore").currentTime;
+    if(dur) $("vsSeek").value = Math.round(t/dur*1000);
+    // keep after aligned to before if they drift > 0.25s
+    const after = $("vsAfter");
+    if(Math.abs(after.currentTime - t) > 0.25){ try{ after.currentTime = t; }catch(_){} }
+    updateTime(t);
+  }
+  function updateTime(t){
+    const dur = cmpDuration();
+    const cur = t == null ? $("vsBefore").currentTime : t;
+    $("vsTime").textContent = fmtTime(cur) + " / " + fmtTime(dur);
+  }
+
+  // =====================================================================
+  //  LIBRARY — IndexedDB (guarded; degrades to in-memory + download-only)
+  // =====================================================================
+  function openDB(){
+    return new Promise((resolve, reject) => {
+      if(!("indexedDB" in window) || !window.indexedDB){ reject(new Error("no-idb")); return; }
+      let req;
+      try{ req = indexedDB.open(DB_NAME, 1); }catch(e){ reject(e); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath:"id" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error("idb-open-failed"));
+    });
+  }
+  async function dbPut(rec){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).put(rec);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+  async function dbDelete(id){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).delete(id);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+  async function dbGetAll(){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readonly");
+      const req = tx.objectStore(DB_STORE).getAll();
+      req.onsuccess = () => { db.close(); resolve(req.result || []); };
+      req.onerror = () => { db.close(); reject(req.error); };
+    });
+  }
+
+  async function makeThumb(blob){
+    // grab a frame ~10% in as a small JPEG data URL for the library
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(blob);
+      const v = document.createElement("video");
+      v.muted = true; v.playsInline = true; v.preload = "metadata"; v.src = url;
+      let done = false;
+      const finish = (dataURL) => { if(done) return; done = true; URL.revokeObjectURL(url); resolve(dataURL); };
+      v.onloadedmetadata = () => { try{ v.currentTime = Math.min(0.1*(v.duration||1), (v.duration||1)); }catch(_){ finish(""); } };
+      v.onseeked = () => {
+        try{
+          const w = 128, h = Math.max(48, Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)));
+          const c = document.createElement("canvas"); c.width=w; c.height=h;
+          c.getContext("2d").drawImage(v,0,0,w,h);
+          finish(c.toDataURL("image/jpeg", 0.6));
+        }catch(_){ finish(""); }
+      };
+      v.onerror = () => finish("");
+      setTimeout(() => finish(""), 2500);
+    });
+  }
+
+  async function saveResult(){
+    if(!st.afterBlob){ return; }
+    $("vsSaveHint").textContent = "Saving…";
+    const thumb = await makeThumb(st.afterBlob);
+    const rec = {
+      id: uid(),
+      name: "stabilised-" + baseName(st.afterOrigName) + ".mp4",
+      origName: st.afterOrigName,
+      createdAt: new Date().toISOString(),
+      size: st.afterBlob.size,
+      thumbnailDataURL: thumb,
+      blob: st.afterBlob
+    };
+    if(st.memoryOnly){
+      st.library.unshift(rec);
+      renderLib();
+      $("vsSaveHint").textContent = "Saved (in memory only — storage unavailable, use Download to keep it).";
+      notifyChange();
+      return;
+    }
+    try{
+      await dbPut(rec);
+      // keep blob in memory copy too for immediate reuse
+      st.library.unshift(rec);
+      renderLib();
+      $("vsSaveHint").className = "vs-phint ok";
+      $("vsSaveHint").textContent = "✓ Saved to library.";
+      notifyChange();
+    }catch(err){
+      st.memoryOnly = true;
+      st.library.unshift(rec);
+      renderLib();
+      $("vsSaveHint").className = "vs-phint err";
+      $("vsSaveHint").textContent = "Couldn't write to storage — kept in memory. Use Download to save the file.";
+    }
+  }
+
+  async function loadLibrary(){
+    try{
+      const rows = await dbGetAll();
+      rows.sort((a,b) => (a.createdAt < b.createdAt ? 1 : -1));
+      st.library = rows;
+    }catch(err){
+      st.memoryOnly = true;
+      st.library = st.library || [];
+    }
+    renderLib();
+  }
+
+  function renderLib(){
+    const wrap = $("vsLib");
+    wrap.innerHTML = "";
+    if(!st.library.length){
+      const e = document.createElement("div");
+      e.className = "vs-empty";
+      e.innerHTML = "<b>No saved results yet.</b><br>Stabilise a clip, then hit <b>Save result</b> to keep it here across reloads.";
+      wrap.appendChild(e);
+      return;
+    }
+    st.library.forEach(rec => wrap.appendChild(libItemEl(rec)));
+  }
+
+  function libItemEl(rec){
+    const row = document.createElement("div");
+    row.className = "vs-libitem";
+
+    const img = document.createElement("img");
+    img.className = "vs-thumb"; img.alt = "thumbnail";
+    if(rec.thumbnailDataURL) img.src = rec.thumbnailDataURL;
+    img.title = "Load into After slot";
+    img.onclick = () => openFromLib(rec);
+
+    const main = document.createElement("div");
+    main.className = "vs-libmain";
+    main.onclick = () => openFromLib(rec);
+    const nm = document.createElement("div");
+    nm.className = "vs-libname"; nm.textContent = rec.name; nm.title = rec.name;
+    const meta = document.createElement("div");
+    meta.className = "vs-libmeta";
+    meta.textContent = fmtDate(rec.createdAt) + " · " + fmtBytes(rec.size);
+    main.appendChild(nm); main.appendChild(meta);
+
+    const dl = document.createElement("button");
+    dl.className = "vs-ib"; dl.title = "Download"; dl.textContent = "⬇";
+    dl.onclick = (e) => { e.stopPropagation(); downloadBlob(rec.blob, rec.name); };
+
+    const del = document.createElement("button");
+    del.className = "vs-ib del"; del.title = "Delete"; del.textContent = "✕";
+    del.onclick = (e) => { e.stopPropagation(); deleteFromLib(rec); };
+
+    row.appendChild(img); row.appendChild(main); row.appendChild(dl); row.appendChild(del);
+    return row;
+  }
+
+  function openFromLib(rec){
+    if(!rec.blob) return;
+    // load into After slot for viewing/comparison. If no source loaded, mirror it into Before too.
+    if(st.afterURL) URL.revokeObjectURL(st.afterURL);
+    st.afterBlob = rec.blob;
+    st.afterOrigName = rec.origName || rec.name;
+    st.afterURL = URL.createObjectURL(rec.blob);
+    $("vsAfter").src = st.afterURL;
+    if(!st.beforeURL){
+      st.beforeURL = st.afterURL;
+      $("vsBefore").src = st.afterURL;
+    }
+    show("vsCmpSection", true);
+    resetTransport();
+    $("vsSaveHint").className = "vs-phint";
+    $("vsSaveHint").textContent = "Loaded “" + trunc(rec.name,40) + "” into the After slot.";
+    $("vsCmpSection").scrollIntoView({ behavior:"smooth", block:"nearest" });
+  }
+
+  async function deleteFromLib(rec){
+    st.library = st.library.filter(r => r.id !== rec.id);
+    renderLib();
+    if(!st.memoryOnly){ try{ await dbDelete(rec.id); }catch(_){} }
+    notifyChange();
+  }
+
+  function downloadBlob(blob, name){
+    if(!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name || "stabilised.mp4";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  // =====================================================================
+  //  AI-OPTIONAL HOOK (default OFF; never fakes AI)
+  // =====================================================================
+  function aiBridgePresent(){
+    return !!(window.ToggleAI && typeof window.ToggleAI.analyse === "function") || st.aiEnabled;
+  }
+  function refreshAiUI(){
+    const btn = $("vsAi");
+    if(aiBridgePresent()){
+      btn.style.display = "inline-flex";
+    } else {
+      btn.style.display = "none";
+    }
+  }
+  async function runAi(){
+    const box = $("vsAiBox");
+    box.style.display = "block";
+    if(!(window.ToggleAI && typeof window.ToggleAI.analyse === "function")){
+      box.innerHTML = "<b>AI not connected</b> — using local tools only. No AI results are invented.";
+      return;
+    }
+    box.innerHTML = "<b>✨ AI assist</b> — analysing…";
+    try{
+      const result = await window.ToggleAI.analyse({
+        module: "video-stabiliser",
+        shakeScore: st.shakeScore,
+        motion: st.motion.slice(),
+        duration: $("vsSrcVideo").duration || null,
+        resolution: { w:$("vsSrcVideo").videoWidth||null, h:$("vsSrcVideo").videoHeight||null }
+      });
+      if(result && typeof result === "object"){
+        st.aiParams = result;
+        const rec = result.recommendation || result.summary || JSON.stringify(result);
+        box.innerHTML = "<b>✨ AI assist</b> — " + esc(String(rec));
+      } else {
+        box.innerHTML = "<b>✨ AI assist</b> — no recommendation returned.";
+      }
+    }catch(err){
+      box.innerHTML = "<b>AI assist failed</b> — " + esc(trunc(String(err && err.message || err),120)) + ". Local tools still work.";
+    }
+  }
+
+  // =====================================================================
+  //  HELPERS / UI
+  // =====================================================================
+  function show(id, on){ $(id).classList.toggle("hide", !on); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  function trunc(s, n){ s = String(s); return s.length > n ? s.slice(0, n-1) + "…" : s; }
+  function baseName(s){ return String(s||"clip").replace(/\.[a-z0-9]+$/i, "").replace(/[^\w.-]+/g,"_").slice(0,40) || "clip"; }
+  function avg(a){ return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0; }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function fmtTime(sec){ if(!isFinite(sec)||sec<0) sec=0; const m=Math.floor(sec/60), s=Math.floor(sec%60); return m+":"+pad(s); }
+  function fmtBytes(b){ if(!b && b!==0) return "—"; if(b<1024) return b+" B"; if(b<1048576) return (b/1024).toFixed(0)+" KB"; return (b/1048576).toFixed(1)+" MB"; }
+  function fmtDate(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }catch(_){ return iso; } }
+
+  function setProg(pct){ $("vsProgBar").style.width = Math.max(0,Math.min(100,pct)) + "%"; }
+  function setProgHint(msg, kind){ const el=$("vsProgHint"); el.textContent = msg; el.className = "vs-phint" + (kind ? " "+kind : ""); }
+  function setBtnBusy(btn, busy, label){
+    btn.disabled = busy;
+    btn.innerHTML = busy ? '<span class="vs-spin"></span> ' + esc(label) : esc(label);
+  }
+
+  function resetForNew(){
+    if(st.srcURL){ /* keep until replaced by before slot logic */ }
+    st.afterBlob = null; st.motion = []; st.shakeScore = null;
+    show("vsCmpSection", false);
+    show("vsProgSection", false);
+    $("vsAiBox").style.display = "none";
+    $("vsSaveHint").textContent = "";
+  }
+  function resetAll(){
+    st.srcFile = null;
+    if(st.srcURL){ URL.revokeObjectURL(st.srcURL); }
+    if(st.afterURL){ URL.revokeObjectURL(st.afterURL); }
+    st.srcURL = st.afterURL = st.beforeURL = null; st.afterBlob = null;
+    $("vsSrcVideo").removeAttribute("src"); $("vsSrcVideo").load();
+    show("vsSrcSection", false);
+    show("vsCmpSection", false);
+    $("vsDrop").style.display = "";
+    setProgHint("Preparing…");
+  }
+
+  // =====================================================================
+  //  OPEN / CLOSE / MAXIMISE / THEME
+  // =====================================================================
+  const overlay = $("vsOverlay");
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("vsFab").style.display = open ? "none" : "block";
+    if(window.parent !== window) window.parent.postMessage({ type: open ? "videostabiliser:open" : "videostabiliser:close" }, "*");
+    post({ type: open ? "open" : "close" });
+  };
+  $("vsFab").onclick = () => setOpen(true);
+  $("vsClose").onclick = () => setOpen(false);
+
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("vsMax").textContent = exp ? "⤡" : "⤢";
+    $("vsMax").title = exp ? "Restore" : "Maximise";
+  }
+  $("vsMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("vsTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("vsTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  // =====================================================================
+  //  WIRE UP CONTROLS
+  // =====================================================================
+  $("vsDrop").onclick = () => $("vsFile").click();
+  $("vsFile").onchange = (e) => { if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ""; };
+  $("vsReset").onclick = () => { resetAll(); };
+  $("vsStabilise").onclick = stabilise;
+  $("vsAi").onclick = runAi;
+
+  $("vsSave").onclick = saveResult;
+  $("vsDownload").onclick = () => downloadBlob(st.afterBlob, "stabilised-" + baseName(st.afterOrigName) + ".mp4");
+
+  $("vsPlay").onclick = playPause;
+  $("vsSeek").oninput = onSeekInput;
+  $("vsBefore").addEventListener("timeupdate", onTimeUpdate);
+  $("vsBefore").addEventListener("ended", () => { $("vsPlay").textContent = "▶"; bothVideos().forEach(v=>v.pause()); });
+
+  // drag & drop onto the drop zone AND anywhere on the panel body
+  const dz = $("vsBody");
+  ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); $("vsDrop").classList.add("drag"); }));
+  ["dragleave","dragend"].forEach(ev => dz.addEventListener(ev, () => $("vsDrop").classList.remove("drag")));
+  dz.addEventListener("drop", (e) => {
+    e.preventDefault(); $("vsDrop").classList.remove("drag");
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) loadFile(f);
+  });
+  // paste a video file
+  window.addEventListener("paste", (e) => {
+    if(overlay.classList.contains("collapsed")) return;
+    for(const it of (e.clipboardData && e.clipboardData.items || [])){
+      if(it.kind === "file"){ const f = it.getAsFile(); if(isVideo(f)){ loadFile(f); break; } }
+    }
+  });
+
+  // =====================================================================
+  //  MODULE CONTRACT — shared across Toggle modules
+  // =====================================================================
+  const MODULE_ID = "video-stabiliser";
+  const MODULE_NAME = "Video Stabiliser";
+  const MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#12b5a6";
+  const MSG_NS = "toggle-module";
+
+  // exportData/importData operate on the library INDEX (metadata only — blobs are
+  // heavy binary and stay in IndexedDB; the JSON stays portable and small).
+  function exportData(){
+    return {
+      module: MODULE_ID,
+      version: MODULE_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: {
+        library: st.library.map(r => ({
+          id:r.id, name:r.name, origName:r.origName, createdAt:r.createdAt,
+          size:r.size, thumbnailDataURL:r.thumbnailDataURL
+        }))
+      }
+    };
+  }
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    const d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    if(!Array.isArray(d.library)) return false;
+    // merge index entries we don't already have (metadata only — no blob to restore)
+    const have = new Set(st.library.map(r => r.id));
+    d.library.forEach(r => {
+      if(r && typeof r === "object" && r.id && !have.has(r.id)){
+        st.library.push({
+          id:r.id, name:r.name||"result.mp4", origName:r.origName||"", createdAt:r.createdAt||new Date().toISOString(),
+          size:+r.size||0, thumbnailDataURL:r.thumbnailDataURL||"", blob:null
+        });
+      }
+    });
+    st.library.sort((a,b) => (a.createdAt < b.createdAt ? 1 : -1));
+    renderLib();
+    return true;
+  }
+
+  let _notifyPending = false;
+  function notifyChange(){
+    if(_notifyPending) return; _notifyPending = true;
+    Promise.resolve().then(() => {
+      _notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module: MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping","ai:available"].includes(t)) return;
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY, m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data: exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+      case "ai:available": st.aiEnabled = true; refreshAiUI(); break;
+    }
+  });
+
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id: MODULE_ID, name: MODULE_NAME, version: MODULE_VERSION, accent: MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); },
+    importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  // export / import UI (library index JSON)
+  $("vsExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = MODULE_ID + "-library-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  };
+  $("vsImport").onclick = () => $("vsImpFile").click();
+  $("vsImpFile").onchange = (ev) => {
+    const f = ev.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try{ importData(JSON.parse(r.result)); }catch(_){ alert("Could not read that file — expected Video Stabiliser library JSON."); } };
+    r.readAsText(f); ev.target.value = "";
+  };
+
+  // =====================================================================
+  //  BOOT
+  // =====================================================================
+  loadLibrary();
+  refreshAiUI();
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);   // start docked/minimised — just the launcher shows
+  postReady();      // announce module to any host
+})();
+</script>
+</body>
+</html>
