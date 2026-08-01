@@ -7,6 +7,7 @@ name: Deploy MarkUp tools (Pages)
 #   /damage-assessment/        -> v2 multi-photo damage assessment (damage-assessment/)
 #   /damage-assessment-large/  -> v3 high-visibility version (damage-assessment-large/)
 #   /markup-mini/              -> mini overlay build (markup-mini/)
+#   /markup-dock/              -> corner-docked desktop widget (markup-dock/)
 
 on:
   workflow_dispatch:
@@ -44,6 +45,8 @@ jobs:
           cp -r damage-assessment-large/. _site/damage-assessment-large/
           mkdir -p _site/markup-mini
           cp -r markup-mini/. _site/markup-mini/
+          mkdir -p _site/markup-dock
+          cp -r markup-dock/. _site/markup-dock/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
