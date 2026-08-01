@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Breathe &amp; Chill — calm breathing</title>
+<style>
+  /* Self-contained corner-docked breathing & wellbeing widget. A launcher button
+     sits at the bottom-right; clicking it pops up a compact panel so you can take
+     a calm breathing break while still using other apps (non-blocking — no
+     full-screen backdrop). Maximise (⤢) grows it to a comfortable panel. Shares
+     the markup-dock shell; accent is a soothing sky-blue. Namespaced under br*
+     ids / br- classes so it can coexist with sibling modules on one page.
+     Ambient music + cue tones are fully synthesised with the Web Audio API —
+     zero external files, images, fonts or network. */
+  :root{
+    --br-bg:#0b1622; --br-panel:#101f2f; --br-panel2:#16293c; --br-line:#22394f;
+    --br-text:#e8f1f8; --br-muted:#8ba2b8; --br-accent:#38bdf8; --br-accent2:#67cdfa;
+    --br-ok:#34d399; --br-chip:#17293a;
+    /* phase-tinted glow colours (soothing spectrum) */
+    --br-inhale:#38bdf8; --br-hold:#818cf8; --br-exhale:#5eead4; --br-holdout:#38bdf8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* page is click-through; only the widget itself catches clicks */
+  html,body{background:transparent;pointer-events:none}
+
+  .br-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99999;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .br-overlay > *{pointer-events:auto}
+
+  .br-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,var(--br-accent2),var(--br-accent));
+    color:#04121e;border:none;cursor:pointer;
+    font-size:26px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 0 0 rgba(56,189,248,.5);
+    animation:br-fab-pulse 5.5s ease-in-out infinite;
+  }
+  .br-fab:hover{filter:brightness(1.08)}
+  @keyframes br-fab-pulse{
+    0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 0 0 rgba(56,189,248,.45)}
+    50%{box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 0 14px rgba(56,189,248,0)}
+  }
+
+  .br-panel{
+    display:flex; flex-direction:column;
+    width:min(400px,92vw); height:min(560px,82vh);
+    background:linear-gradient(160deg,rgba(16,31,47,.96),rgba(11,22,34,.97));
+    color:var(--br-text);
+    border:1px solid var(--br-line); border-radius:18px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .18s ease, opacity .18s ease, width .18s ease, height .18s ease;
+  }
+  .br-overlay.expanded .br-panel{ width:min(760px,94vw); height:min(640px,90vh); }
+  .br-overlay.collapsed .br-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .br-head{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 12px; border-bottom:1px solid var(--br-line);
+    background:rgba(9,18,28,.5); flex:0 0 auto;
+  }
+  .br-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px;letter-spacing:.2px}
+  .br-title .dot{color:var(--br-accent);font-size:16px}
+  .br-x{background:none;border:none;color:var(--br-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .br-x:hover{color:#fff;background:var(--br-panel2)}
+  .br-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--br-panel2);border:1px solid var(--br-line);color:var(--br-text);
+    border-radius:8px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .br-hb:hover{background:#1e344a}
+
+  .br-body{ flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; }
+
+  /* ---- picker view ---- */
+  .br-intro{
+    padding:14px 16px 6px; color:var(--br-muted); font-size:12.5px; line-height:1.55;
+  }
+  .br-intro b{ color:var(--br-text); }
+  .br-cards{ padding:6px 12px 4px; display:grid; grid-template-columns:1fr; gap:7px; }
+  .br-overlay.expanded .br-cards{ grid-template-columns:1fr 1fr; }
+  .br-card{
+    text-align:left; cursor:pointer;
+    background:var(--br-panel2); border:1px solid var(--br-line); border-radius:12px;
+    padding:10px 12px; color:var(--br-text); transition:border-color .14s, transform .08s, background .14s;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .br-card:hover{ border-color:var(--br-accent); transform:translateY(-1px); }
+  .br-card.sel{ border-color:var(--br-accent); background:#16324a; }
+  .br-card .n{ font-size:13.5px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .br-card .n .em{ font-size:16px; }
+  .br-card .b{ font-size:11.5px; color:var(--br-muted); line-height:1.4; }
+  .br-card .p{ font-size:10.5px; color:var(--br-accent2); font-variant-numeric:tabular-nums; margin-top:2px; letter-spacing:.2px; }
+
+  .br-ground{
+    margin:4px 12px 10px; padding:11px 13px; border-radius:12px;
+    background:linear-gradient(150deg,#12283a,#0f2233); border:1px solid var(--br-line);
+  }
+  .br-ground h4{ margin:0 0 5px; font-size:12.5px; font-weight:650; display:flex; align-items:center; gap:7px; }
+  .br-ground ol{ margin:0; padding-left:18px; font-size:11.5px; color:var(--br-muted); line-height:1.6; }
+  .br-ground ol b{ color:var(--br-text); }
+
+  /* ---- session view ---- */
+  .br-session{ display:none; flex-direction:column; flex:1 1 auto; min-height:0; }
+  .br-session.active{ display:flex; }
+  .br-body.session .br-picker{ display:none; }
+
+  .br-sesstop{
+    display:flex; align-items:center; gap:8px; padding:8px 12px; flex:0 0 auto;
+    border-bottom:1px solid var(--br-line); background:rgba(9,18,28,.35);
+  }
+  .br-back{ background:none;border:none;color:var(--br-muted);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px; }
+  .br-back:hover{ color:#fff;background:var(--br-panel2); }
+  .br-sessname{ font-size:12.5px; font-weight:600; margin-right:auto; }
+  .br-viz-toggle{ display:flex; gap:4px; }
+  .br-vt{
+    background:var(--br-panel2); border:1px solid var(--br-line); color:var(--br-muted);
+    border-radius:7px; font-size:11px; padding:4px 8px; cursor:pointer; line-height:1;
+  }
+  .br-vt.on{ border-color:var(--br-accent); color:var(--br-text); background:#16324a; }
+
+  .br-stage{
+    flex:1 1 auto; min-height:0; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    padding:8px;
+    background:radial-gradient(circle at 50% 42%, rgba(56,189,248,.06), transparent 60%);
+  }
+  #brViz{ display:block; width:100%; height:100%; }
+
+  .br-phaselabel{
+    position:absolute; left:0; right:0; top:14px; text-align:center;
+    pointer-events:none;
+  }
+  .br-phasetext{ font-size:19px; font-weight:600; letter-spacing:.4px; color:var(--br-text); text-shadow:0 1px 8px rgba(0,0,0,.4); }
+  .br-count{ font-size:13px; color:var(--br-muted); margin-top:3px; font-variant-numeric:tabular-nums; }
+
+  .br-done{
+    position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; gap:8px;
+    background:radial-gradient(circle at 50% 45%,rgba(52,211,153,.12),rgba(11,22,34,.9));
+    backdrop-filter:blur(2px);
+  }
+  .br-done.show{ display:flex; }
+  .br-done .big{ font-size:40px; }
+  .br-done h3{ margin:0; font-size:18px; font-weight:650; }
+  .br-done p{ margin:0; font-size:13px; color:var(--br-muted); }
+  .br-done .again{
+    margin-top:8px; background:var(--br-accent); border:none; color:#04121e;
+    font-weight:650; border-radius:10px; padding:9px 20px; cursor:pointer; font-size:13.5px;
+  }
+  .br-done .again:hover{ filter:brightness(1.07); }
+
+  /* ---- controls bar ---- */
+  .br-controls{ flex:0 0 auto; border-top:1px solid var(--br-line); background:rgba(9,18,28,.4); padding:9px 12px; }
+  .br-rowlabel{ font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--br-muted); margin:0 0 5px; }
+  .br-seg{ display:flex; gap:5px; margin-bottom:8px; flex-wrap:wrap; }
+  .br-chip{
+    background:var(--br-chip); border:1px solid var(--br-line); color:var(--br-muted);
+    border-radius:20px; padding:4px 11px; font-size:11.5px; cursor:pointer; line-height:1; font-variant-numeric:tabular-nums;
+  }
+  .br-chip.on{ border-color:var(--br-accent); color:var(--br-text); background:#16324a; }
+  .br-run{ display:flex; align-items:center; gap:9px; }
+  .br-stat{ font-size:11.5px; color:var(--br-muted); font-variant-numeric:tabular-nums; line-height:1.35; margin-right:auto; }
+  .br-stat b{ color:var(--br-text); font-size:13px; }
+  .br-btn{
+    background:var(--br-accent); border:1px solid var(--br-accent); color:#04121e;
+    border-radius:10px; padding:9px 18px; font-size:13.5px; font-weight:700; cursor:pointer;
+    line-height:1; min-width:78px;
+  }
+  .br-btn:hover{ filter:brightness(1.07); }
+  .br-btn.ghost{ background:transparent; color:var(--br-muted); border-color:var(--br-line); min-width:0; padding:9px 13px; font-weight:600; }
+  .br-btn.ghost:hover{ color:var(--br-text); border-color:var(--br-accent); filter:none; }
+
+  /* ---- footer: audio + safety ---- */
+  .br-foot{ flex:0 0 auto; border-top:1px solid var(--br-line); padding:8px 12px; background:rgba(9,18,28,.3); }
+  .br-audio{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .br-tg{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--br-muted); cursor:pointer; user-select:none;
+  }
+  .br-tg input{ accent-color:var(--br-accent); cursor:pointer; }
+  .br-audio input[type=range]{ width:78px; accent-color:var(--br-accent); cursor:pointer; }
+  .br-audio input[type=range]:disabled{ opacity:.4; }
+  .br-safety{
+    margin-top:7px; font-size:10.5px; color:var(--br-muted); line-height:1.5;
+    display:flex; gap:6px; align-items:flex-start;
+  }
+  .br-safety .i{ flex:0 0 auto; }
+  .br-safety b{ color:#bcd0e2; }
+
+  /* ---- light theme ---- */
+  :root[data-theme="light"]{
+    --br-text:#12222f; --br-muted:#5b7183;
+  }
+  :root[data-theme="light"] .br-panel{ background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(238,246,251,.97)); color:#12222f; border-color:#cfe0ec; }
+  :root[data-theme="light"] .br-head{ border-color:#cfe0ec; background:rgba(226,239,248,.6); }
+  :root[data-theme="light"] .br-x:hover{ color:#12222f; background:#dbe8f2; }
+  :root[data-theme="light"] .br-hb{ background:#e7f0f7; border-color:#cfe0ec; color:#12222f; }
+  :root[data-theme="light"] .br-hb:hover{ background:#d8e7f2; }
+  :root[data-theme="light"] .br-card{ background:#eef5fa; border-color:#cfe0ec; }
+  :root[data-theme="light"] .br-card.sel{ background:#dcecf8; }
+  :root[data-theme="light"] .br-ground{ background:linear-gradient(150deg,#e6f2fa,#f1f7fb); border-color:#cfe0ec; }
+  :root[data-theme="light"] .br-sesstop,:root[data-theme="light"] .br-controls,:root[data-theme="light"] .br-foot{ border-color:#cfe0ec; background:rgba(226,239,248,.45); }
+  :root[data-theme="light"] .br-back:hover{ background:#dbe8f2; color:#12222f; }
+  :root[data-theme="light"] .br-vt{ background:#e7f0f7; border-color:#cfe0ec; }
+  :root[data-theme="light"] .br-vt.on{ background:#dcecf8; }
+  :root[data-theme="light"] .br-chip{ background:#e7f0f7; border-color:#cfe0ec; }
+  :root[data-theme="light"] .br-chip.on{ background:#dcecf8; }
+  :root[data-theme="light"] .br-stage{ background:radial-gradient(circle at 50% 42%, rgba(56,189,248,.1), transparent 62%); }
+  :root[data-theme="light"] .br-done{ background:radial-gradient(circle at 50% 45%,rgba(52,211,153,.15),rgba(240,248,252,.92)); }
+  :root[data-theme="light"] .br-btn.ghost{ color:#5b7183; }
+  :root[data-theme="light"] .br-safety b{ color:#2b4256; }
+</style>
+</head>
+<body>
+  <div class="br-overlay collapsed" id="brOverlay">
+    <div class="br-panel" role="dialog" aria-label="Breathe and Chill">
+      <div class="br-head">
+        <span class="br-title"><span class="dot">❋</span> Breathe &amp; Chill</span>
+        <button class="br-hb" id="brTheme" title="Day / night">☀️</button>
+        <button class="br-hb" id="brMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="br-x" id="brClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="br-body" id="brBody">
+        <!-- ============ PICKER ============ -->
+        <div class="br-picker" id="brPicker">
+          <div class="br-intro">
+            <b>Take a moment to slow down.</b> Pick a breathing pattern below, choose how long, and follow the orb. A few mindful breaths can steady your mind and body.
+          </div>
+          <div class="br-cards" id="brCards"></div>
+
+          <div class="br-ground">
+            <h4>🌿 5-4-3-2-1 grounding</h4>
+            <ol>
+              <li>Name <b>5 things you can see</b> around you.</li>
+              <li><b>4 things you can feel</b> (feet on floor, chair, air).</li>
+              <li><b>3 things you can hear</b>, near or far.</li>
+              <li><b>2 things you can smell</b> (or two you like).</li>
+              <li><b>1 thing you can taste</b> — then take a slow breath.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ============ SESSION ============ -->
+        <div class="br-session" id="brSession">
+          <div class="br-sesstop">
+            <button class="br-back" id="brBack" title="Back to patterns" aria-label="Back">←</button>
+            <span class="br-sessname" id="brSessName">Box breathing</span>
+            <div class="br-viz-toggle">
+              <button class="br-vt on" id="brVizOrb" data-viz="orb">◯ Orb</button>
+              <button class="br-vt" id="brVizBox" data-viz="box">▢ Box</button>
+            </div>
+          </div>
+
+          <div class="br-stage" id="brStage">
+            <canvas id="brViz"></canvas>
+            <div class="br-phaselabel">
+              <div class="br-phasetext" id="brPhase">Ready</div>
+              <div class="br-count" id="brCountdown">Press Start</div>
+            </div>
+            <div class="br-done" id="brDone">
+              <div class="big">🌿</div>
+              <h3>Nicely done</h3>
+              <p id="brDoneMsg">You breathed for a while.</p>
+              <button class="again" id="brAgain">Breathe again</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CONTROLS (session only) ============ -->
+      <div class="br-controls" id="brControls" style="display:none">
+        <div class="br-rowlabel" id="brDurLabel">Duration</div>
+        <div class="br-seg" id="brDurSeg"></div>
+        <div class="br-run">
+          <div class="br-stat" id="brStat">Ready when you are</div>
+          <button class="br-btn ghost" id="brStop" style="display:none">Stop</button>
+          <button class="br-btn" id="brStart">Start</button>
+        </div>
+      </div>
+
+      <!-- ============ FOOTER: audio + safety ============ -->
+      <div class="br-foot">
+        <div class="br-audio" id="brAudio">
+          <label class="br-tg" title="Ambient zen pad (synthesised)">
+            <input type="checkbox" id="brMusic" /> 🎵 Zen pad
+          </label>
+          <input type="range" id="brVol" min="0" max="100" value="45" title="Music volume" disabled />
+          <label class="br-tg" title="Soft cue tone on each phase change">
+            <input type="checkbox" id="brCue" /> 🔔 Cues
+          </label>
+        </div>
+        <div class="br-safety">
+          <span class="i">ℹ️</span>
+          <span><b>For relaxation only.</b> Stop if you feel dizzy or light-headed and breathe normally. Not a substitute for medical care. Don't practise while driving or in water.</span>
+        </div>
+      </div>
+    </div>
+    <button class="br-fab" id="brFab" title="Breathe &amp; Chill" aria-label="Open Breathe and Chill">❋</button>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const PREF_KEY = "breathe:prefs:v1";
+  const THEME_KEY = "breathe:theme";
+
+  /* =========================================================================
+     TECHNIQUE DATA — each is data-driven: an ordered array of phases.
+     phase = { label, secs, kind } where kind drives orb scale target:
+       "in"  -> grow to large,  "hold" -> stay large,
+       "out" -> shrink to small,"holdout" -> stay small,
+       "top" -> small extra inhale on top of an already-large orb.
+     ========================================================================= */
+  const TECHNIQUES = [
+    { id:"box", name:"Box breathing", em:"⬜", benefit:"Focus & calm — steady four-count square.",
+      phases:[
+        {label:"Breathe in", secs:4, kind:"in"},
+        {label:"Hold",       secs:4, kind:"hold"},
+        {label:"Breathe out",secs:4, kind:"out"},
+        {label:"Hold",       secs:4, kind:"holdout"}
+      ]},
+    { id:"478", name:"4-7-8 relaxing breath", em:"😌", benefit:"Unwind & sleep — long hold, longer exhale.",
+      phases:[
+        {label:"Breathe in", secs:4, kind:"in"},
+        {label:"Hold",       secs:7, kind:"hold"},
+        {label:"Breathe out",secs:8, kind:"out"}
+      ]},
+    { id:"coherent", name:"Coherent breathing", em:"💗", benefit:"Balance & HRV — ~5.5 breaths a minute.",
+      phases:[
+        {label:"Breathe in", secs:5.5, kind:"in"},
+        {label:"Breathe out",secs:5.5, kind:"out"}
+      ]},
+    { id:"equal", name:"Equal breathing", em:"🟰", benefit:"Simple & beginner-friendly — in four, out four.",
+      phases:[
+        {label:"Breathe in", secs:4, kind:"in"},
+        {label:"Breathe out",secs:4, kind:"out"}
+      ]},
+    { id:"exhale", name:"Extended exhale", em:"🍃", benefit:"Calming — a longer out-breath than in.",
+      phases:[
+        {label:"Breathe in", secs:4, kind:"in"},
+        {label:"Breathe out",secs:6, kind:"out"}
+      ]},
+    { id:"belly", name:"Diaphragmatic (belly)", em:"🫁", benefit:"Breathe into the belly — deep and grounding.",
+      phases:[
+        {label:"Breathe into belly", secs:4, kind:"in"},
+        {label:"Soften & breathe out",secs:6, kind:"out"}
+      ]},
+    { id:"pursed", name:"Pursed-lip", em:"👄", benefit:"Eases breathlessness — in the nose, out slow.",
+      phases:[
+        {label:"In through nose", secs:2, kind:"in"},
+        {label:"Out through pursed lips",secs:4, kind:"out"}
+      ]},
+    { id:"sigh", name:"Physiological sigh", em:"🌬️", benefit:"Fast stress reset — double inhale, long sigh.",
+      phases:[
+        {label:"Breathe in", secs:3, kind:"in"},
+        {label:"Top-up breath",secs:1, kind:"top"},
+        {label:"Long breathe out",secs:7, kind:"out"}
+      ]}
+  ];
+
+  const DURATIONS = [
+    { label:"1 min", mins:1 },
+    { label:"3 min", mins:3 },
+    { label:"5 min", mins:5 },
+    { label:"10 min", mins:10 },
+    { label:"3 cycles", cycles:3 },
+    { label:"5 cycles", cycles:5 }
+  ];
+
+  // ---- prefs ----
+  const prefs = { techId:"box", durIndex:1, music:false, cue:false, vol:45, viz:"orb" };
+  function loadPrefs(){
+    try{
+      const raw = localStorage.getItem(PREF_KEY);
+      if(raw){ const d = JSON.parse(raw);
+        if(d && typeof d==="object"){
+          if(TECHNIQUES.some(t=>t.id===d.techId)) prefs.techId=d.techId;
+          if(Number.isInteger(d.durIndex) && d.durIndex>=0 && d.durIndex<DURATIONS.length) prefs.durIndex=d.durIndex;
+          if(typeof d.music==="boolean") prefs.music=d.music;
+          if(typeof d.cue==="boolean") prefs.cue=d.cue;
+          if(typeof d.vol==="number") prefs.vol=Math.max(0,Math.min(100,d.vol));
+          if(d.viz==="orb"||d.viz==="box") prefs.viz=d.viz;
+        }
+      }
+    }catch(_){}
+  }
+  function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); }catch(_){} notifyChange(); }
+
+  function curTech(){ return TECHNIQUES.find(t=>t.id===prefs.techId) || TECHNIQUES[0]; }
+  function cycleSecs(t){ return t.phases.reduce((a,p)=>a+p.secs,0); }
+
+  /* =========================================================================
+     PICKER RENDER
+     ========================================================================= */
+  function renderCards(){
+    const wrap = $("brCards"); wrap.innerHTML = "";
+    TECHNIQUES.forEach(t => {
+      const c = document.createElement("button");
+      c.className = "br-card" + (t.id===prefs.techId ? " sel" : "");
+      c.type = "button";
+      c.innerHTML =
+        `<span class="n"><span class="em">${t.em}</span>${esc(t.name)}</span>`+
+        `<span class="b">${esc(t.benefit)}</span>`+
+        `<span class="p">${esc(t.phases.map(p=>p.secs+"s").join(" · "))} &nbsp;(${cycleSecs(t)}s / cycle)</span>`;
+      c.onclick = () => { prefs.techId = t.id; renderCards(); openSession(); savePrefs(); };
+      wrap.appendChild(c);
+    });
+  }
+
+  /* =========================================================================
+     DURATION SEGMENT
+     ========================================================================= */
+  function renderDurations(){
+    const seg = $("brDurSeg"); seg.innerHTML = "";
+    DURATIONS.forEach((d,i) => {
+      const b = document.createElement("button");
+      b.className = "br-chip" + (i===prefs.durIndex ? " on" : "");
+      b.type = "button";
+      b.textContent = d.label;
+      b.onclick = () => { if(running) return; prefs.durIndex = i; renderDurations(); updateStat(); savePrefs(); };
+      seg.appendChild(b);
+    });
+  }
+
+  /* =========================================================================
+     SESSION STATE + ENGINE
+     ========================================================================= */
+  const stage = $("brStage");
+  const canvas = $("brViz");
+  const ctx = canvas.getContext("2d");
+  let dpr = Math.max(1, Math.min(3, window.devicePixelRatio||1));
+  let W=0, H=0;
+
+  function sizeCanvas(){
+    const r = stage.getBoundingClientRect();
+    W = Math.max(120, r.width); H = Math.max(120, r.height);
+    dpr = Math.max(1, Math.min(3, window.devicePixelRatio||1));
+    canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  const sess = {
+    phases:[], phaseIdx:0, phaseStart:0, phaseDur:0,
+    cyclesDone:0, targetCycles:Infinity, targetMs:Infinity,
+    startMs:0, orbFrom:0, orbTo:0, // orb scale 0..1
+    orbNow:0
+  };
+  let running = false, paused = false, rafId = null, tickId = null;
+
+  const PHASE_COLORS = { in:"#38bdf8", hold:"#818cf8", out:"#5eead4", holdout:"#38bdf8", top:"#a5b4fc" };
+  const ORB_TARGET = { in:1, hold:1, out:0, holdout:0, top:1 }; // where scale ends
+  // easing
+  const easeInOut = (t)=> t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+
+  function planSession(){
+    const t = curTech();
+    sess.phases = t.phases;
+    const d = DURATIONS[prefs.durIndex];
+    if(d.cycles){ sess.targetCycles = d.cycles; sess.targetMs = Infinity; }
+    else { sess.targetCycles = Infinity; sess.targetMs = d.mins*60*1000; }
+  }
+
+  function beginPhase(idx, initialOrb){
+    const p = sess.phases[idx];
+    sess.phaseIdx = idx;
+    sess.phaseStart = performance.now();
+    sess.phaseDur = p.secs*1000;
+    sess.orbFrom = (initialOrb!=null) ? initialOrb : sess.orbNow;
+    // "top" nudges from current (already large) up to 1; others go to their target
+    sess.orbTo = ORB_TARGET[p.kind];
+    $("brPhase").textContent = p.label;
+    cueTone(p.kind);
+    haptic(p.kind);
+  }
+
+  function start(){
+    if(running && paused){ // resume
+      paused = false;
+      // shift timers forward by paused gap
+      const gap = performance.now() - sess._pausedAt;
+      sess.phaseStart += gap; sess._accStart += gap; sess.startMs += gap;
+      $("brStart").textContent = "Pause";
+      loop(); tickTimers();
+      updateStat();
+      return;
+    }
+    // fresh start
+    ensureAudioForStart();
+    running = true; paused = false;
+    $("brDone").classList.remove("show");
+    planSession();
+    sess.cyclesDone = 0;
+    sess.orbNow = 0;
+    sess.startMs = performance.now();
+    sess._accStart = performance.now();
+    beginPhase(0, 0);
+    $("brStart").textContent = "Pause";
+    $("brStop").style.display = "";
+    disableDurations(true);
+    startPad();
+    loop(); tickTimers();
+    updateStat();
+    post({ type:"change" });
+  }
+
+  function pause(){
+    if(!running || paused) return;
+    paused = true;
+    sess._pausedAt = performance.now();
+    if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+    if(tickId){ clearInterval(tickId); tickId=null; }
+    $("brStart").textContent = "Resume";
+    $("brPhase").textContent = "Paused";
+    stopPad(); // pause the drone gently
+    updateStat();
+  }
+
+  function toggleStart(){
+    if(!running){ start(); }
+    else if(paused){ start(); }
+    else { pause(); }
+  }
+
+  function stop(finished){
+    running = false; paused = false;
+    if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+    if(tickId){ clearInterval(tickId); tickId=null; }
+    $("brStart").textContent = "Start";
+    $("brStop").style.display = "none";
+    disableDurations(false);
+    stopPad();
+    if(finished){
+      const secs = Math.round((performance.now()-sess.startMs)/1000);
+      $("brDoneMsg").textContent =
+        `${sess.cyclesDone} cycle${sess.cyclesDone===1?"":"s"} of ${curTech().name.toLowerCase()} · ${fmtDur(secs)}`;
+      $("brDone").classList.add("show");
+      $("brPhase").textContent = "Complete";
+      $("brCountdown").textContent = "";
+      cueBell();
+    } else {
+      $("brPhase").textContent = "Ready";
+      $("brCountdown").textContent = "Press Start";
+      drawOrb(0,"in",1);
+    }
+    updateStat();
+    post({ type:"change" });
+  }
+
+  function tickTimers(){
+    if(tickId) clearInterval(tickId);
+    tickId = setInterval(updateStat, 250);
+  }
+
+  function loop(){
+    rafId = requestAnimationFrame(loop);
+    const now = performance.now();
+    let elapsed = now - sess.phaseStart;
+    // advance through phases if elapsed overflows
+    while(elapsed >= sess.phaseDur){
+      const wasLast = sess.phaseIdx === sess.phases.length-1;
+      const carry = elapsed - sess.phaseDur;
+      sess.orbNow = sess.orbTo;
+      if(wasLast){
+        sess.cyclesDone++;
+        // check completion
+        if(sess.cyclesDone >= sess.targetCycles){ stop(true); return; }
+        beginPhase(0, sess.orbNow);
+      } else {
+        beginPhase(sess.phaseIdx+1, sess.orbNow);
+      }
+      sess.phaseStart = now - carry;
+      elapsed = carry;
+    }
+    // time-based completion
+    if(now - sess.startMs >= sess.targetMs){ stop(true); return; }
+
+    const p = sess.phases[sess.phaseIdx];
+    const frac = Math.min(1, elapsed / sess.phaseDur);
+    let scale;
+    if(p.kind==="hold" || p.kind==="holdout"){
+      scale = sess.orbFrom; // stay put
+    } else if(p.kind==="top"){
+      scale = sess.orbFrom + (sess.orbTo - sess.orbFrom)*easeInOut(frac);
+    } else {
+      scale = sess.orbFrom + (sess.orbTo - sess.orbFrom)*easeInOut(frac);
+    }
+    sess.orbNow = scale;
+    const remain = Math.ceil((sess.phaseDur - elapsed)/1000);
+    $("brCountdown").textContent = remain + (remain===1?" second":" seconds");
+    if(prefs.viz==="box") drawBox(frac, p.kind, scale);
+    else drawOrb(scale, p.kind, breatheGlow(p, frac));
+  }
+
+  // subtle breathing glow strength
+  function breatheGlow(p, frac){
+    if(p.kind==="in"||p.kind==="top") return 0.5+0.5*frac;
+    if(p.kind==="out") return 1-0.5*frac;
+    if(p.kind==="hold") return 1;
+    return 0.5;
+  }
+
+  /* =========================================================================
+     ORB VISUALISATION
+     ========================================================================= */
+  function lerpColor(a,b,t){
+    const pa=hex(a), pb=hex(b);
+    const r=Math.round(pa[0]+(pb[0]-pa[0])*t), g=Math.round(pa[1]+(pb[1]-pa[1])*t), bl=Math.round(pa[2]+(pb[2]-pa[2])*t);
+    return `rgb(${r},${g},${bl})`;
+  }
+  function hex(h){ h=h.replace("#",""); if(h.length===3) h=h.split("").map(x=>x+x).join(""); const n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+
+  function drawOrb(scale, kind, glow){
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2, cy=H/2 + 6;
+    const rMin = Math.min(W,H)*0.13;
+    const rMax = Math.min(W,H)*0.40;
+    const r = rMin + (rMax-rMin)*Math.max(0,Math.min(1,scale));
+    const col = PHASE_COLORS[kind] || "#38bdf8";
+
+    // phase-progress ring (arc)
+    const p = sess.phases[sess.phaseIdx];
+    let frac = 0;
+    if(running && !paused && p){ frac = Math.min(1,(performance.now()-sess.phaseStart)/sess.phaseDur); }
+    const ringR = rMax + Math.min(W,H)*0.055;
+    ctx.beginPath();
+    ctx.arc(cx,cy,ringR,0,Math.PI*2);
+    ctx.strokeStyle = "rgba(255,255,255,.07)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    if(running && !paused){
+      ctx.beginPath();
+      ctx.arc(cx,cy,ringR,-Math.PI/2,-Math.PI/2 + Math.PI*2*frac);
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    // soft outer glow
+    const g = ctx.createRadialGradient(cx,cy,r*0.2, cx,cy,r*1.9);
+    const a = 0.30 + 0.30*(glow||0.5);
+    g.addColorStop(0, rgba(col, a));
+    g.addColorStop(0.5, rgba(col, a*0.35));
+    g.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx,cy,r*1.9,0,Math.PI*2); ctx.fill();
+
+    // orb body
+    const bg = ctx.createRadialGradient(cx-r*0.3, cy-r*0.35, r*0.1, cx, cy, r);
+    bg.addColorStop(0, rgba(lightHex(col), 0.95));
+    bg.addColorStop(0.7, rgba(col, 0.85));
+    bg.addColorStop(1, rgba(col, 0.55));
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+
+    // gentle rim
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle = rgba("#ffffff", 0.18); ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  function rgba(c, a){ const p = c.startsWith("rgb") ? c.match(/\d+/g).map(Number) : hex(c); return `rgba(${p[0]},${p[1]},${p[2]},${a})`; }
+  function lightHex(c){ const p=hex(c); return `rgb(${Math.min(255,p[0]+70)},${Math.min(255,p[1]+70)},${Math.min(255,p[2]+70)})`; }
+
+  /* =========================================================================
+     BOX-PATH VISUALISATION — dot travels a square, one side per phase.
+     Works best for 4-phase patterns but adapts to any count.
+     ========================================================================= */
+  function drawBox(frac, kind, scale){
+    ctx.clearRect(0,0,W,H);
+    const side = Math.min(W,H)*0.56;
+    const x0 = (W-side)/2, y0 = (H-side)/2 + 4;
+    const col = PHASE_COLORS[kind] || "#38bdf8";
+    const n = sess.phases.length;
+
+    // square track
+    ctx.strokeStyle = "rgba(255,255,255,.10)";
+    ctx.lineWidth = 2; ctx.lineJoin = "round";
+    rr(x0,y0,side,side,16); ctx.stroke();
+
+    // corners as points (perimeter path). We map phase index around perimeter.
+    // Build perimeter points for a square (4 sides). For non-4 counts we still
+    // walk the 4 sides proportionally, one segment per phase.
+    const idx = sess.phaseIdx;
+    // completed sides
+    const perim = [
+      [x0,y0,x0+side,y0],           // top: left->right
+      [x0+side,y0,x0+side,y0+side], // right: top->bottom
+      [x0+side,y0+side,x0,y0+side], // bottom: right->left
+      [x0,y0+side,x0,y0]            // left: bottom->top
+    ];
+    // active side highlight
+    const sideIdx = idx % 4;
+    const seg = perim[sideIdx];
+    ctx.beginPath();
+    ctx.moveTo(seg[0],seg[1]);
+    ctx.lineTo(seg[0]+(seg[2]-seg[0])*frac, seg[1]+(seg[3]-seg[1])*frac);
+    ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.lineCap="round"; ctx.stroke();
+
+    // travelling dot
+    const dx = seg[0]+(seg[2]-seg[0])*frac, dy = seg[1]+(seg[3]-seg[1])*frac;
+    const g = ctx.createRadialGradient(dx,dy,1,dx,dy,18);
+    g.addColorStop(0, rgba(lightHex(col),0.95)); g.addColorStop(1, rgba(col,0));
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(dx,dy,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = rgba(col,0.95); ctx.beginPath(); ctx.arc(dx,dy,8,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = rgba("#ffffff",0.4); ctx.lineWidth=1.5; ctx.stroke();
+
+    // centre phase dot (breathing scale echo)
+    const cr = 6 + 26*Math.max(0,Math.min(1,scale));
+    ctx.beginPath(); ctx.arc(W/2, y0+side/2, cr, 0, Math.PI*2);
+    ctx.fillStyle = rgba(col, 0.16); ctx.fill();
+  }
+  function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  /* =========================================================================
+     STAT / TIMER READOUT
+     ========================================================================= */
+  function fmtDur(secs){ secs=Math.max(0,Math.round(secs)); const m=Math.floor(secs/60), s=secs%60; return m+":"+String(s).padStart(2,"0"); }
+  function updateStat(){
+    const d = DURATIONS[prefs.durIndex];
+    if(!running){
+      const t = curTech();
+      $("brStat").innerHTML = `${t.phases.length} phases · <b>${cycleSecs(t)}s</b> per cycle`;
+      return;
+    }
+    const cy = sess.cyclesDone;
+    if(d.cycles){
+      $("brStat").innerHTML = `Cycle <b>${Math.min(cy+1,d.cycles)}</b> of ${d.cycles}`;
+    } else {
+      const remain = Math.max(0, sess.targetMs - (performance.now()-sess.startMs));
+      $("brStat").innerHTML = `<b>${fmtDur(remain/1000)}</b> left · cycle ${cy+1}`;
+    }
+  }
+  function disableDurations(dis){
+    $("brDurSeg").querySelectorAll(".br-chip").forEach(b=>{ b.style.opacity = dis?"0.5":"1"; b.style.pointerEvents = dis?"none":"auto"; });
+  }
+
+  /* =========================================================================
+     WEB AUDIO — synthesised ambient pad + cue tones. No files.
+     ========================================================================= */
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const AUDIO_OK = !!AudioCtx;
+  let actx = null, masterGain = null, padGain = null, cueGain = null;
+  let padNodes = null, padLfo = null, reverb = null;
+
+  if(!AUDIO_OK){
+    // hide music controls gracefully
+    const a = $("brAudio"); if(a) a.style.display = "none";
+  }
+
+  function ensureCtx(){
+    if(!AUDIO_OK) return null;
+    if(!actx){
+      actx = new AudioCtx();
+      masterGain = actx.createGain(); masterGain.gain.value = 1; masterGain.connect(actx.destination);
+      // procedural reverb (convolver) with generated impulse
+      reverb = actx.createConvolver();
+      reverb.buffer = makeImpulse(2.6, 2.2);
+      const wet = actx.createGain(); wet.gain.value = 0.5;
+      const dry = actx.createGain(); dry.gain.value = 0.75;
+      reverb.connect(wet).connect(masterGain);
+      dry.connect(masterGain);
+      cueGain = actx.createGain(); cueGain.gain.value = 0.0001;
+      cueGain.connect(dry); cueGain.connect(reverb);
+      padGain = actx.createGain(); padGain.gain.value = 0.0001;
+      padGain.connect(dry); padGain.connect(reverb);
+      // expose helper refs
+      ensureCtx._dry = dry; ensureCtx._wet = wet;
+    }
+    return actx;
+  }
+  function makeImpulse(seconds, decay){
+    const rate = actx.sampleRate, len = Math.floor(rate*seconds);
+    const buf = actx.createBuffer(2, len, rate);
+    for(let ch=0; ch<2; ch++){
+      const d = buf.getChannelData(ch);
+      for(let i=0;i<len;i++){
+        d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+      }
+    }
+    return buf;
+  }
+  function resumeCtx(){ if(actx && actx.state==="suspended"){ actx.resume().catch(()=>{}); } }
+
+  // build a slowly evolving detuned drone through a low-pass with a slow LFO
+  function startPad(){
+    if(!AUDIO_OK || !prefs.music) return;
+    ensureCtx(); resumeCtx();
+    if(padNodes) return; // already running
+    const base = 110; // A2 root
+    const filt = actx.createBiquadFilter();
+    filt.type = "lowpass"; filt.frequency.value = 620; filt.Q.value = 0.6;
+    // slow LFO opening/closing the filter for movement
+    padLfo = actx.createOscillator(); padLfo.type = "sine"; padLfo.frequency.value = 0.05;
+    const lfoGain = actx.createGain(); lfoGain.gain.value = 260;
+    padLfo.connect(lfoGain).connect(filt.frequency);
+    padLfo.start();
+
+    const freqs = [base, base*1.5, base*2, base*3]; // root, fifth, octave, twelfth
+    const detunes = [-6, 5, -3, 7];
+    const oscs = [];
+    freqs.forEach((f,i) => {
+      const o = actx.createOscillator();
+      o.type = i%2 ? "triangle" : "sine";
+      o.frequency.value = f; o.detune.value = detunes[i];
+      const og = actx.createGain(); og.gain.value = (i===0?0.5:0.24)/ (1+i*0.15);
+      // gentle per-osc tremolo so it never feels static
+      const tremo = actx.createOscillator(); tremo.type="sine"; tremo.frequency.value = 0.07 + i*0.017;
+      const tg = actx.createGain(); tg.gain.value = og.gain.value*0.35;
+      tremo.connect(tg).connect(og.gain); tremo.start();
+      o.connect(og).connect(filt);
+      o.start();
+      oscs.push(o, tremo);
+    });
+    filt.connect(padGain);
+    padNodes = { filt, oscs };
+    // fade in
+    const now = actx.currentTime;
+    padGain.gain.cancelScheduledValues(now);
+    padGain.gain.setValueAtTime(Math.max(0.0001, padGain.gain.value), now);
+    padGain.gain.linearRampToValueAtTime(volLevel(), now+2.5);
+  }
+  function stopPad(){
+    if(!actx || !padNodes) return;
+    const now = actx.currentTime;
+    padGain.gain.cancelScheduledValues(now);
+    padGain.gain.setValueAtTime(padGain.gain.value, now);
+    padGain.gain.linearRampToValueAtTime(0.0001, now+1.4);
+    const nodes = padNodes; const lfo = padLfo;
+    padNodes = null; padLfo = null;
+    setTimeout(()=>{
+      try{ nodes.oscs.forEach(o=>{ try{o.stop();}catch(_){} }); }catch(_){}
+      try{ lfo && lfo.stop(); }catch(_){}
+      try{ nodes.filt.disconnect(); }catch(_){}
+    }, 1600);
+  }
+  function volLevel(){ return (prefs.vol/100) * 0.32; } // keep it soft
+
+  function setMusic(on){
+    prefs.music = on;
+    $("brVol").disabled = !on;
+    if(on){
+      ensureCtx(); resumeCtx();
+      if(running && !paused) startPad();
+      else if(!running){ /* preview: start a soft pad so they can hear it */ startPad(); }
+    } else {
+      stopPad();
+    }
+    savePrefs();
+  }
+
+  // soft sine "bell" cue on phase change
+  function cueTone(kind){
+    if(!AUDIO_OK || !prefs.cue || !actx) return;
+    // pick a gentle pitch per phase kind
+    const map = { in:528, top:660, hold:440, out:396, holdout:440 };
+    bell(map[kind] || 480, 0.5);
+  }
+  function cueBell(){ // end chime
+    if(!AUDIO_OK || !actx) return;
+    if(!prefs.cue && !prefs.music) return;
+    bell(528, 0.9); setTimeout(()=>bell(792,0.9), 180);
+  }
+  function bell(freq, dur){
+    if(!actx) return;
+    const now = actx.currentTime;
+    const o = actx.createOscillator(); o.type="sine"; o.frequency.value=freq;
+    const o2 = actx.createOscillator(); o2.type="sine"; o2.frequency.value=freq*2.01;
+    const g = actx.createGain(); g.gain.value = 0.0001;
+    const g2 = actx.createGain(); g2.gain.value = 0.0001;
+    o.connect(g).connect(cueGain); o2.connect(g2).connect(cueGain);
+    const peak = 0.22;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(peak, now+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+    g2.gain.setValueAtTime(0.0001, now);
+    g2.gain.exponentialRampToValueAtTime(peak*0.4, now+0.015);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now+dur*0.7);
+    o.start(now); o2.start(now);
+    o.stop(now+dur+0.05); o2.stop(now+dur+0.05);
+  }
+
+  function ensureAudioForStart(){
+    if(!AUDIO_OK) return;
+    ensureCtx(); resumeCtx();
+    // keep cue gain audible
+    if(cueGain) cueGain.gain.value = 1;
+  }
+
+  // update volume live
+  $("brVol") && ($("brVol").oninput = (e)=>{
+    prefs.vol = +e.target.value;
+    if(actx && padGain && padNodes){ padGain.gain.setTargetAtTime(volLevel(), actx.currentTime, 0.3); }
+    savePrefs();
+  });
+
+  // ---- haptics (guarded, mobile only) ----
+  function haptic(kind){
+    if(!prefs.cue) { /* tie haptic to cue toggle for a single "signals" pref */ }
+    if(!("vibrate" in navigator)) return;
+    try{
+      if(kind==="in") navigator.vibrate(18);
+      else if(kind==="out") navigator.vibrate(12);
+      else if(kind==="top") navigator.vibrate([8,20,8]);
+      else navigator.vibrate(8);
+    }catch(_){}
+  }
+
+  /* =========================================================================
+     VIEW SWITCHING
+     ========================================================================= */
+  function openSession(){
+    $("brBody").classList.add("session");
+    $("brSession").classList.add("active");
+    $("brControls").style.display = "";
+    $("brSessName").textContent = curTech().name;
+    $("brDone").classList.remove("show");
+    $("brPhase").textContent = "Ready";
+    $("brCountdown").textContent = "Press Start";
+    sizeCanvas();
+    drawOrb(0,"in",1);
+    updateStat();
+    setViz(prefs.viz);
+  }
+  function backToPicker(){
+    if(running) stop(false);
+    $("brBody").classList.remove("session");
+    $("brSession").classList.remove("active");
+    $("brControls").style.display = "none";
+    renderCards();
+  }
+  function setViz(v){
+    prefs.viz = v;
+    $("brVizOrb").classList.toggle("on", v==="orb");
+    $("brVizBox").classList.toggle("on", v==="box");
+    if(!running){ sizeCanvas(); if(v==="box") drawBox(0,"in",0); else drawOrb(0,"in",1); }
+    savePrefs();
+  }
+
+  /* =========================================================================
+     OPEN / CLOSE / MAXIMISE / THEME
+     ========================================================================= */
+  const overlay = $("brOverlay");
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("brFab").style.display = open ? "none" : "block";
+    if(window.parent !== window){ try{ window.parent.postMessage({type: open ? "breathe:open" : "breathe:close"}, "*"); }catch(_){} }
+    post({ type: open ? "open" : "close" });
+    if(open){ sizeCanvas(); if($("brSession").classList.contains("active")){ if(prefs.viz==="box") drawBox(0,"in",0); else drawOrb(sess.orbNow||0,"in",1); } }
+    else { if(running) pause(); } // pause on minimise so we don't run unseen
+  };
+  $("brFab").onclick = () => setOpen(true);
+  $("brClose").onclick = () => setOpen(false);
+
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("brMax").textContent = exp ? "⤡" : "⤢";
+    $("brMax").title = exp ? "Restore" : "Maximise";
+    // re-render cards grid + canvas after size change
+    setTimeout(()=>{ if($("brSession").classList.contains("active")){ sizeCanvas(); if(!running){ if(prefs.viz==="box") drawBox(0,"in",0); else drawOrb(0,"in",1); } } }, 200);
+  }
+  $("brMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("brTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("brTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  // ---- wire session controls ----
+  $("brStart").onclick = toggleStart;
+  $("brStop").onclick = () => stop(false);
+  $("brBack").onclick = backToPicker;
+  $("brAgain").onclick = () => { $("brDone").classList.remove("show"); start(); };
+  $("brVizOrb").onclick = () => setViz("orb");
+  $("brVizBox").onclick = () => setViz("box");
+  $("brMusic").onchange = (e) => setMusic(e.target.checked);
+  $("brCue").onchange = (e) => { prefs.cue = e.target.checked; savePrefs(); };
+
+  window.addEventListener("resize", () => { if($("brSession").classList.contains("active")){ sizeCanvas(); if(!running){ if(prefs.viz==="box") drawBox(0,"in",0); else drawOrb(0,"in",1); } } });
+
+  /* =========================================================================
+     MODULE CONTRACT — portability layer shared across Toggle modules.
+     ========================================================================= */
+  const MODULE_ID = "breathe";
+  const MODULE_NAME = "Breathe & Chill";
+  const MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#38bdf8";
+  const MSG_NS = "toggle-module";
+
+  function exportData(){
+    return {
+      module: MODULE_ID,
+      version: MODULE_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: { prefs: { ...prefs } }
+    };
+  }
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    let d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    const p = d.prefs && typeof d.prefs==="object" ? d.prefs : d;
+    let touched = false;
+    if(TECHNIQUES.some(t=>t.id===p.techId)){ prefs.techId=p.techId; touched=true; }
+    if(Number.isInteger(p.durIndex) && p.durIndex>=0 && p.durIndex<DURATIONS.length){ prefs.durIndex=p.durIndex; touched=true; }
+    if(typeof p.music==="boolean"){ prefs.music=p.music; touched=true; }
+    if(typeof p.cue==="boolean"){ prefs.cue=p.cue; touched=true; }
+    if(typeof p.vol==="number"){ prefs.vol=Math.max(0,Math.min(100,p.vol)); touched=true; }
+    if(p.viz==="orb"||p.viz==="box"){ prefs.viz=p.viz; touched=true; }
+    if(!touched) return false;
+    applyPrefsToUI();
+    savePrefs();
+    return true;
+  }
+  function applyPrefsToUI(){
+    renderCards(); renderDurations();
+    $("brMusic").checked = prefs.music;
+    $("brCue").checked = prefs.cue;
+    $("brVol").value = prefs.vol; $("brVol").disabled = !prefs.music;
+    if($("brSession").classList.contains("active")){ $("brSessName").textContent = curTech().name; setViz(prefs.viz); updateStat(); }
+  }
+
+  // change notifications — debounced fan-out
+  let _notifyPending = false;
+  function notifyChange(){
+    if(_notifyPending) return; _notifyPending = true;
+    Promise.resolve().then(() => {
+      _notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module: MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping"].includes(t)) return;
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY, m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data: exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+    }
+  });
+
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id: MODULE_ID, name: MODULE_NAME, version: MODULE_VERSION, accent: MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); },
+    importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  // ---- util ----
+  function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  // ---- boot ----
+  loadPrefs();
+  renderCards();
+  renderDurations();
+  $("brMusic").checked = prefs.music;
+  $("brCue").checked = prefs.cue;
+  $("brVol").value = prefs.vol; $("brVol").disabled = !prefs.music;
+  updateStat();
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);   // start docked/minimised — just the launcher shows
+  postReady();      // announce module to any host
+})();
+</script>
+</body>
+</html>

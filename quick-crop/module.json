@@ -1,0 +1,9 @@
+{
+  "id": "quick-crop",
+  "name": "Quick Crop",
+  "version": "1.0",
+  "accent": "#2bb673",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme"],
+  "messageNamespace": "toggle-module"
+}

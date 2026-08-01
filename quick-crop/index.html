@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quick Crop — the world's fastest crop tool</title>
+<style>
+  /* Self-contained corner-docked image crop tool. A launcher button sits at the
+     bottom-right; clicking it pops a compact panel. Paste / drop / pick an image
+     and you land straight in crop mode — copy in one click. Maximise (⤢) grows it
+     to a comfortable working panel. Shares the markup-dock shell; accent swapped
+     to green. Everything is namespaced under qc* ids / qc- classes so it can
+     coexist with sibling Toggle modules on one page. ZERO external deps — even the
+     GIF encoder is embedded below. */
+  :root{
+    --qc-bg:#0f1419; --qc-panel:#1a212b; --qc-panel2:#222c38; --qc-line:#2c3744;
+    --qc-text:#e6edf3; --qc-muted:#8b97a5; --qc-accent:#2bb673; --qc-accent2:#34cf85;
+    --qc-ok:#22c55e; --qc-chip:#2a3340; --qc-warn:#e0b341;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* page is click-through; only the widget itself catches clicks */
+  html,body{background:transparent;pointer-events:none}
+
+  .qc-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99999;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .qc-overlay > *{pointer-events:auto}
+
+  .qc-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--qc-accent);color:#fff;border:none;cursor:pointer;
+    font-size:24px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .qc-fab:hover{background:var(--qc-accent2)}
+
+  .qc-panel{
+    display:flex; flex-direction:column;
+    width:min(420px,92vw); height:min(540px,80vh);
+    background:rgba(26,33,43,.94);
+    color:var(--qc-text);
+    border:1px solid var(--qc-line); border-radius:14px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .16s ease, opacity .16s ease, width .16s ease, height .16s ease;
+  }
+  .qc-overlay.expanded .qc-panel{ width:min(920px,96vw); height:min(680px,90vh); }
+  .qc-overlay.collapsed .qc-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .qc-head{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--qc-line);
+    background:rgba(20,26,34,.6); flex:0 0 auto;
+  }
+  .qc-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px}
+  .qc-title .dot{color:var(--qc-accent);font-size:16px}
+  .qc-x{background:none;border:none;color:var(--qc-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .qc-x:hover{color:#fff;background:var(--qc-panel2)}
+  .qc-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--qc-panel2);border:1px solid var(--qc-line);color:var(--qc-text);
+    border-radius:7px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .qc-hb:hover{background:#2b3645}
+
+  /* preset / shape row */
+  .qc-presets{
+    display:flex; align-items:center; gap:4px; flex-wrap:wrap;
+    padding:7px 8px; border-bottom:1px solid var(--qc-line); flex:0 0 auto;
+  }
+  .qc-presets .sep{width:1px;height:22px;background:var(--qc-line);margin:0 3px}
+  .qc-preset{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:32px;height:30px;padding:0 9px;
+    background:var(--qc-panel2);border:1px solid var(--qc-line);color:var(--qc-text);
+    border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;line-height:1;white-space:nowrap;
+  }
+  .qc-preset:hover{background:#2b3645}
+  .qc-preset.on{border-color:var(--qc-accent);background:#183a2b;color:#fff}
+  .qc-radius{display:none;align-items:center;gap:6px;font-size:11px;color:var(--qc-muted)}
+  .qc-radius.show{display:inline-flex}
+  .qc-radius input[type=range]{width:70px;accent-color:var(--qc-accent)}
+
+  /* stage */
+  .qc-stage{
+    position:relative;flex:1 1 auto;min-height:0;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      linear-gradient(45deg,#12181f 25%,transparent 25%),
+      linear-gradient(-45deg,#12181f 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#12181f 75%),
+      linear-gradient(-45deg,transparent 75%,#12181f 75%);
+    background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;
+    background-color:#0c1116;
+  }
+  .qc-stage.drag{outline:2px dashed var(--qc-accent);outline-offset:-6px}
+  .qc-empty{color:var(--qc-muted);text-align:center;font-size:14px;padding:24px;line-height:1.6}
+  .qc-empty .em{font-size:38px;display:block;margin-bottom:10px}
+  .qc-empty b{color:var(--qc-text)}
+  .qc-empty kbd{
+    display:inline-block;background:var(--qc-panel2);border:1px solid var(--qc-line);
+    border-radius:5px;padding:1px 6px;font-size:12px;font-family:inherit;color:var(--qc-text);
+  }
+
+  .qc-wrap{position:relative;display:flex;max-width:100%;max-height:100%}
+  #qcCanvas{display:block;max-width:100%;max-height:100%;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  #qcDim{position:absolute;left:0;top:0;pointer-events:none}
+  .qc-box{
+    position:absolute;left:0;top:0;width:0;height:0;
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:0 0 0 1px rgba(0,0,0,.35);
+    cursor:move;touch-action:none;
+  }
+  .qc-box::before,.qc-box::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+  }
+  /* rule-of-thirds guides */
+  .qc-box::before{
+    background:
+      linear-gradient(to right,transparent calc(33.33% - .5px),rgba(255,255,255,.35) calc(33.33% - .5px),rgba(255,255,255,.35) calc(33.33% + .5px),transparent calc(33.33% + .5px)),
+      linear-gradient(to right,transparent calc(66.66% - .5px),rgba(255,255,255,.35) calc(66.66% - .5px),rgba(255,255,255,.35) calc(66.66% + .5px),transparent calc(66.66% + .5px)),
+      linear-gradient(to bottom,transparent calc(33.33% - .5px),rgba(255,255,255,.35) calc(33.33% - .5px),rgba(255,255,255,.35) calc(33.33% + .5px),transparent calc(33.33% + .5px)),
+      linear-gradient(to bottom,transparent calc(66.66% - .5px),rgba(255,255,255,.35) calc(66.66% - .5px),rgba(255,255,255,.35) calc(66.66% + .5px),transparent calc(66.66% + .5px));
+  }
+  .qc-h{
+    position:absolute;width:12px;height:12px;background:#fff;border:1.5px solid var(--qc-accent);
+    border-radius:2px;touch-action:none;z-index:2;
+  }
+  .qc-h[data-dir="nw"]{left:-6px;top:-6px;cursor:nwse-resize}
+  .qc-h[data-dir="n"]{left:calc(50% - 6px);top:-6px;cursor:ns-resize}
+  .qc-h[data-dir="ne"]{right:-6px;top:-6px;cursor:nesw-resize}
+  .qc-h[data-dir="e"]{right:-6px;top:calc(50% - 6px);cursor:ew-resize}
+  .qc-h[data-dir="se"]{right:-6px;bottom:-6px;cursor:nwse-resize}
+  .qc-h[data-dir="s"]{left:calc(50% - 6px);bottom:-6px;cursor:ns-resize}
+  .qc-h[data-dir="sw"]{left:-6px;bottom:-6px;cursor:nesw-resize}
+  .qc-h[data-dir="w"]{left:-6px;top:calc(50% - 6px);cursor:ew-resize}
+
+  /* action bar */
+  .qc-actions{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:8px 10px;border-top:1px solid var(--qc-line);flex:0 0 auto;
+  }
+  .qc-info{
+    font-size:11.5px;color:var(--qc-muted);font-variant-numeric:tabular-nums;
+    margin-right:auto;display:flex;flex-direction:column;gap:1px;line-height:1.35;min-width:0;
+  }
+  .qc-info b{color:var(--qc-text);font-size:13px}
+  .qc-btn{
+    background:var(--qc-panel2);border:1px solid var(--qc-line);color:var(--qc-text);
+    border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;line-height:1;
+  }
+  .qc-btn:hover{background:#2b3645}
+  .qc-btn:disabled{opacity:.45;cursor:not-allowed}
+  .qc-btn.primary{background:var(--qc-accent);border-color:var(--qc-accent);color:#fff;min-width:96px}
+  .qc-btn.primary:hover{background:var(--qc-accent2)}
+  .qc-savewrap{position:relative}
+  .qc-menu{
+    position:absolute;right:0;bottom:calc(100% + 6px);min-width:190px;
+    background:var(--qc-panel);border:1px solid var(--qc-line);border-radius:10px;
+    box-shadow:0 16px 44px rgba(0,0,0,.55);padding:6px;display:none;z-index:5;
+  }
+  .qc-menu.show{display:block}
+  .qc-mi{
+    display:flex;align-items:center;gap:8px;width:100%;
+    background:none;border:none;color:var(--qc-text);text-align:left;
+    padding:8px 10px;border-radius:7px;font-size:13px;cursor:pointer;
+  }
+  .qc-mi:hover{background:var(--qc-panel2)}
+  .qc-mi .tag{margin-left:auto;font-size:10px;color:var(--qc-muted)}
+  .qc-mrow{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11.5px;color:var(--qc-muted)}
+  .qc-mrow input[type=range]{flex:1;accent-color:var(--qc-accent)}
+  .qc-mrow input[type=color]{width:26px;height:22px;border:1px solid var(--qc-line);border-radius:5px;background:none;padding:0;cursor:pointer}
+  .qc-msep{height:1px;background:var(--qc-line);margin:5px 2px}
+
+  /* context menu */
+  .qc-ctx{
+    position:fixed;min-width:180px;background:var(--qc-panel);border:1px solid var(--qc-line);
+    border-radius:10px;box-shadow:0 16px 44px rgba(0,0,0,.6);padding:6px;display:none;z-index:100001;
+  }
+  .qc-ctx.show{display:block}
+
+  /* toast */
+  .qc-toast{
+    position:absolute;left:50%;bottom:64px;transform:translate(-50%,10px);
+    background:rgba(0,0,0,.86);color:#fff;border:1px solid var(--qc-line);
+    padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:100002;white-space:nowrap;
+  }
+  .qc-toast.show{opacity:1;transform:translate(-50%,0)}
+  .qc-toast.warn{border-color:var(--qc-warn)}
+
+  /* light theme */
+  :root[data-theme="light"] .qc-panel{background:rgba(255,255,255,.94);color:#17202a;border-color:#d3dae2}
+  :root[data-theme="light"] .qc-head{border-color:#d3dae2;background:rgba(240,243,247,.7)}
+  :root[data-theme="light"] .qc-presets,:root[data-theme="light"] .qc-actions{border-color:#d3dae2}
+  :root[data-theme="light"] .qc-hb{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .qc-hb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .qc-x:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .qc-preset{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .qc-preset:hover{background:#e6ebf1}
+  :root[data-theme="light"] .qc-preset.on{background:#d6f2e4;border-color:var(--qc-accent);color:#0f3d29}
+  :root[data-theme="light"] .qc-btn{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .qc-btn:hover{background:#e6ebf1}
+  :root[data-theme="light"] .qc-btn.primary{background:var(--qc-accent);border-color:var(--qc-accent);color:#fff}
+  :root[data-theme="light"] .qc-menu,:root[data-theme="light"] .qc-ctx{background:#fff;border-color:#d3dae2}
+  :root[data-theme="light"] .qc-mi{color:#17202a}
+  :root[data-theme="light"] .qc-mi:hover{background:#eef1f5}
+  :root[data-theme="light"] .qc-msep{background:#d3dae2}
+  :root[data-theme="light"] .qc-info b{color:#17202a}
+  :root[data-theme="light"] .qc-empty b{color:#17202a}
+  :root[data-theme="light"] .qc-empty kbd{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .qc-stage{background-color:#eef1f6;background-image:
+      linear-gradient(45deg,#e4e9ef 25%,transparent 25%),
+      linear-gradient(-45deg,#e4e9ef 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#e4e9ef 75%),
+      linear-gradient(-45deg,transparent 75%,#e4e9ef 75%)}
+</style>
+</head>
+<body>
+  <div class="qc-overlay collapsed" id="qcOverlay">
+    <div class="qc-panel" role="dialog" aria-label="Quick Crop">
+      <div class="qc-head">
+        <span class="qc-title"><span class="dot">✂</span> Quick Crop</span>
+        <button class="qc-hb" id="qcNew" title="New image (open file)">🖼</button>
+        <input type="file" id="qcFileInput" accept="image/*" hidden />
+        <button class="qc-hb" id="qcTheme" title="Day / night">☀️</button>
+        <button class="qc-hb" id="qcMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="qc-x" id="qcClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="qc-presets" id="qcPresets">
+        <button class="qc-preset on" data-shape="rect" data-ratio="0" title="Freeform (no constraint)">Free</button>
+        <button class="qc-preset" data-shape="rect" data-ratio="1" title="Square">1:1</button>
+        <button class="qc-preset" data-shape="rect" data-ratio="1.7778" title="16:9">16:9</button>
+        <button class="qc-preset" data-shape="rect" data-ratio="1.3333" title="4:3">4:3</button>
+        <button class="qc-preset" data-shape="rect" data-ratio="1.5" title="3:2">3:2</button>
+        <button class="qc-preset" data-shape="rect" data-ratio="0.5625" title="9:16 portrait">9:16</button>
+        <span class="sep"></span>
+        <button class="qc-preset" data-shape="ellipse" data-ratio="0" title="Circle / ellipse (PNG, transparent)">◯</button>
+        <button class="qc-preset" data-shape="rounded" data-ratio="0" title="Rounded rectangle (PNG, transparent)">▢</button>
+        <span class="qc-radius" id="qcRadiusWrap">r<input type="range" id="qcRadius" min="0" max="100" value="18" title="Corner radius" /></span>
+      </div>
+
+      <div class="qc-stage" id="qcStage">
+        <div class="qc-empty" id="qcEmpty">
+          <span class="em">✂️</span>
+          <b>Drop, paste or pick an image</b><br />
+          <kbd>Ctrl/⌘ V</kbd> paste &nbsp;·&nbsp; drag a file here &nbsp;·&nbsp; then crop &amp; <kbd>Copy</kbd> in seconds.
+        </div>
+        <div class="qc-wrap" id="qcWrap" style="display:none">
+          <canvas id="qcCanvas"></canvas>
+          <canvas id="qcDim"></canvas>
+          <div class="qc-box" id="qcBox">
+            <div class="qc-h" data-dir="nw"></div>
+            <div class="qc-h" data-dir="n"></div>
+            <div class="qc-h" data-dir="ne"></div>
+            <div class="qc-h" data-dir="e"></div>
+            <div class="qc-h" data-dir="se"></div>
+            <div class="qc-h" data-dir="s"></div>
+            <div class="qc-h" data-dir="sw"></div>
+            <div class="qc-h" data-dir="w"></div>
+          </div>
+        </div>
+        <div class="qc-toast" id="qcToast"></div>
+      </div>
+
+      <div class="qc-actions">
+        <div class="qc-info" id="qcInfo">
+          <b id="qcDims">— × —</b>
+          <span id="qcPos">ready</span>
+        </div>
+        <button class="qc-btn" id="qcReset" title="Reset selection to full image (Esc)" disabled>Reset</button>
+        <button class="qc-btn primary" id="qcCopy" title="Copy crop to clipboard (Enter / Ctrl+C)" disabled>⧉ Copy</button>
+        <div class="qc-savewrap">
+          <button class="qc-btn" id="qcSaveBtn" title="Save as…" disabled>Save ▾</button>
+          <div class="qc-menu" id="qcSaveMenu">
+            <button class="qc-mi" data-fmt="png">PNG<span class="tag">lossless · alpha</span></button>
+            <button class="qc-mi" data-fmt="jpeg">JPEG<span class="tag">small · no alpha</span></button>
+            <button class="qc-mi" data-fmt="webp">WEBP<span class="tag">small · alpha</span></button>
+            <button class="qc-mi" data-fmt="gif">GIF<span class="tag">256-colour</span></button>
+            <button class="qc-mi" data-fmt="bmp">BMP<span class="tag">uncompressed</span></button>
+            <div class="qc-msep"></div>
+            <div class="qc-mrow">Quality<input type="range" id="qcQuality" min="10" max="100" value="92" /><span id="qcQualityVal">92</span></div>
+            <div class="qc-mrow" id="qcBgRow">Fill<input type="color" id="qcBg" value="#ffffff" /><span>for JPEG/GIF/BMP shapes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="qc-fab" id="qcFab" title="Quick Crop" aria-label="Open Quick Crop">✂</button>
+  </div>
+
+  <div class="qc-ctx" id="qcCtx">
+    <button class="qc-mi" data-act="copy">⧉ Copy</button>
+    <button class="qc-mi" data-act="copysave">⧉ Copy &amp; Save PNG</button>
+    <div class="qc-msep"></div>
+    <button class="qc-mi" data-act="png">Save PNG</button>
+    <button class="qc-mi" data-act="jpeg">Save JPEG</button>
+    <button class="qc-mi" data-act="webp">Save WEBP</button>
+    <button class="qc-mi" data-act="gif">Save GIF</button>
+    <button class="qc-mi" data-act="bmp">Save BMP</button>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const PREFS_KEY = "quick-crop:prefs";
+  const THEME_KEY = "quick-crop:theme";
+
+  // ---- elements ----
+  const overlay = $("qcOverlay"), canvas = $("qcCanvas"), dim = $("qcDim");
+  const wrap = $("qcWrap"), stage = $("qcStage"), empty = $("qcEmpty"), box = $("qcBox");
+  const ctx = canvas.getContext("2d");
+
+  // ---- state ----
+  const st = {
+    img:null, iw:0, ih:0,
+    sel:{x:0,y:0,w:0,h:0},
+    shape:"rect",        // rect | ellipse | rounded
+    ratio:0,             // 0 = freeform, else w/h
+    radiusPct:18,        // rounded-corner radius, % of half min side
+    fmt:"png",
+    quality:0.92,
+    bg:"#ffffff"
+  };
+
+  // ---- prefs ----
+  function loadPrefs(){
+    try{
+      const p = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
+      if(typeof p.shape === "string") st.shape = p.shape;
+      if(typeof p.ratio === "number") st.ratio = p.ratio;
+      if(typeof p.radiusPct === "number") st.radiusPct = p.radiusPct;
+      if(typeof p.fmt === "string") st.fmt = p.fmt;
+      if(typeof p.quality === "number") st.quality = p.quality;
+      if(typeof p.bg === "string") st.bg = p.bg;
+    }catch(_){}
+  }
+  function savePrefs(){
+    try{ localStorage.setItem(PREFS_KEY, JSON.stringify({
+      shape:st.shape, ratio:st.ratio, radiusPct:st.radiusPct, fmt:st.fmt, quality:st.quality, bg:st.bg
+    })); }catch(_){}
+    notifyChange();
+  }
+
+  // ---- geometry helpers ----
+  const clamp = (v,a,b) => v<a?a:(v>b?b:v);
+  function dispScale(){ if(!st.img) return 1; const r = canvas.getBoundingClientRect(); return r.width/st.iw || 1; }
+  function radiusPxFor(w,h){ return st.radiusPct/100 * Math.min(w,h)/2; }
+
+  function shapePath(c,x,y,w,h,r){
+    if(st.shape === "ellipse"){
+      c.moveTo(x+w, y+h/2);
+      c.ellipse(x+w/2, y+h/2, Math.abs(w/2), Math.abs(h/2), 0, 0, Math.PI*2);
+    } else if(st.shape === "rounded"){
+      r = clamp(r, 0, Math.min(w,h)/2);
+      c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
+      c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+    } else {
+      c.rect(x,y,w,h);
+    }
+  }
+
+  // ---- image load ----
+  function loadFile(f){
+    if(!f || !f.type || !f.type.startsWith("image/")) return;
+    const r = new FileReader();
+    r.onload = e => loadSrc(e.target.result);
+    r.readAsDataURL(f);
+  }
+  function loadSrc(src){
+    const im = new Image();
+    im.onload = () => setImg(im);
+    im.onerror = () => toast("Couldn't load that image", true);
+    try{ im.crossOrigin = "anonymous"; }catch(_){}
+    im.src = src;
+  }
+  function setImg(im){
+    st.img = im; st.iw = im.naturalWidth; st.ih = im.naturalHeight;
+    // draw the image once at natural resolution
+    canvas.width = st.iw; canvas.height = st.ih;
+    ctx.clearRect(0,0,st.iw,st.ih);
+    ctx.drawImage(im,0,0);
+    empty.style.display = "none"; wrap.style.display = "flex";
+    defaultSelection();
+    [$("qcCopy"),$("qcSaveBtn"),$("qcReset")].forEach(b=>b.disabled=false);
+    setOpen(true); setExpanded(true);
+    // wait a frame so the canvas has a layout box, then place the crop UI
+    requestAnimationFrame(refresh);
+    post({ type:"change" });
+  }
+  function defaultSelection(){
+    // centred 80% box, honouring the active aspect ratio
+    let w = st.iw*0.8, h = st.ih*0.8;
+    if(st.ratio){ const r = st.ratio; if(w/h > r) w = h*r; else h = w/r; }
+    st.sel = { x:(st.iw-w)/2, y:(st.ih-h)/2, w, h };
+    clampSel();
+  }
+  function clampSel(){
+    const s = st.sel;
+    s.w = clamp(s.w, 8, st.iw); s.h = clamp(s.h, 8, st.ih);
+    s.x = clamp(s.x, 0, st.iw - s.w); s.y = clamp(s.y, 0, st.ih - s.h);
+  }
+
+  // ---- crop-box layout + dim overlay ----
+  let rafPending = false;
+  function refresh(){
+    if(rafPending) return; rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; layoutBox(); paintDim(); updateInfo(); });
+  }
+  function layoutBox(){
+    if(!st.img) return;
+    const s = dispScale();
+    box.style.left = (st.sel.x*s)+"px";
+    box.style.top = (st.sel.y*s)+"px";
+    box.style.width = (st.sel.w*s)+"px";
+    box.style.height = (st.sel.h*s)+"px";
+    if(st.shape === "ellipse") box.style.borderRadius = "50%";
+    else if(st.shape === "rounded") box.style.borderRadius = (radiusPxFor(st.sel.w,st.sel.h)*s)+"px";
+    else box.style.borderRadius = "0";
+  }
+  function paintDim(){
+    if(!st.img) return;
+    const r = canvas.getBoundingClientRect();
+    const W = Math.max(1,Math.round(r.width)), H = Math.max(1,Math.round(r.height));
+    if(dim.width !== W) dim.width = W;
+    if(dim.height !== H) dim.height = H;
+    dim.style.width = W+"px"; dim.style.height = H+"px";
+    const s = W/st.iw;
+    const d = dim.getContext("2d");
+    d.clearRect(0,0,W,H);
+    d.fillStyle = "rgba(0,0,0,.5)";
+    d.beginPath();
+    d.rect(0,0,W,H);
+    shapePath(d, st.sel.x*s, st.sel.y*s, st.sel.w*s, st.sel.h*s, radiusPxFor(st.sel.w,st.sel.h)*s);
+    d.fill("evenodd");
+  }
+  function updateInfo(){
+    if(!st.img){ $("qcDims").textContent = "— × —"; $("qcPos").textContent = "ready"; return; }
+    const s = st.sel;
+    $("qcDims").textContent = Math.round(s.w)+" × "+Math.round(s.h)+" px";
+    const label = st.shape==="ellipse" ? "ellipse" : st.shape==="rounded" ? "rounded" : (st.ratio?"locked":"free");
+    $("qcPos").textContent = "x "+Math.round(s.x)+", y "+Math.round(s.y)+" · "+label;
+  }
+
+  // ---- pointer drag (move + 8-way resize) ----
+  let drag = null;
+  function startDrag(dir, ev){
+    if(!st.img) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const s = dispScale();
+    drag = { dir, sx:ev.clientX, sy:ev.clientY, start:{...st.sel}, s };
+    window.addEventListener("pointermove", onDrag);
+    window.addEventListener("pointerup", endDrag, { once:true });
+  }
+  function onDrag(ev){
+    if(!drag) return;
+    const dx = (ev.clientX - drag.sx)/drag.s;
+    const dy = (ev.clientY - drag.sy)/drag.s;
+    const o = drag.start, dir = drag.dir;
+    if(dir === "move"){
+      st.sel.x = clamp(o.x + dx, 0, st.iw - o.w);
+      st.sel.y = clamp(o.y + dy, 0, st.ih - o.h);
+      refresh(); return;
+    }
+    let left = o.x, right = o.x+o.w, top = o.y, bottom = o.y+o.h;
+    if(dir.indexOf("w") >= 0) left = o.x + dx;
+    if(dir.indexOf("e") >= 0) right = o.x+o.w + dx;
+    if(dir.indexOf("n") >= 0) top = o.y + dy;
+    if(dir.indexOf("s") >= 0) bottom = o.y+o.h + dy;
+    let w = right - left, h = bottom - top;
+    if(st.ratio){                       // aspect-locked resize
+      const R = st.ratio;
+      if(dir.length === 2){             // corner: drive height from width
+        h = w/R;
+        if(dir.indexOf("n") >= 0) top = bottom - h; else bottom = top + h;
+      } else if(dir === "e" || dir === "w"){   // horizontal edge: keep vert centre
+        h = w/R; const cy = o.y + o.h/2; top = cy - h/2; bottom = cy + h/2;
+      } else {                          // vertical edge (n/s): keep horiz centre
+        w = h*R; const cx = o.x + o.w/2; left = cx - w/2; right = cx + w/2;
+      }
+    }
+    // normalise + min size
+    if(right < left){ const t=left; left=right; right=t; }
+    if(bottom < top){ const t=top; top=bottom; bottom=t; }
+    left = clamp(left, 0, st.iw); right = clamp(right, 0, st.iw);
+    top = clamp(top, 0, st.ih); bottom = clamp(bottom, 0, st.ih);
+    st.sel.x = left; st.sel.y = top;
+    st.sel.w = Math.max(8, right-left); st.sel.h = Math.max(8, bottom-top);
+    clampSel();
+    refresh();
+  }
+  function endDrag(){ drag = null; window.removeEventListener("pointermove", onDrag); }
+
+  box.addEventListener("pointerdown", (ev) => { if(ev.target === box) startDrag("move", ev); });
+  box.querySelectorAll(".qc-h").forEach(h => h.addEventListener("pointerdown", (ev) => startDrag(h.dataset.dir, ev)));
+
+  // ---- presets / shape ----
+  function applyPreset(shape, ratio){
+    st.shape = shape; st.ratio = ratio;
+    document.querySelectorAll(".qc-preset").forEach(b =>
+      b.classList.toggle("on", b.dataset.shape===shape && Number(b.dataset.ratio)===ratio));
+    $("qcRadiusWrap").classList.toggle("show", shape==="rounded");
+    if(st.img && ratio){ // re-fit current box to the new ratio around its centre
+      const s = st.sel, cx = s.x+s.w/2, cy = s.y+s.h/2;
+      let w = s.w, h = s.h;
+      if(w/h > ratio) w = h*ratio; else h = w/ratio;
+      st.sel = { x:cx-w/2, y:cy-h/2, w, h }; clampSel();
+    }
+    savePrefs(); refresh();
+  }
+  document.querySelectorAll(".qc-preset").forEach(b =>
+    b.onclick = () => applyPreset(b.dataset.shape, Number(b.dataset.ratio)));
+  $("qcRadius").addEventListener("input", e => { st.radiusPct = Number(e.target.value); savePrefs(); refresh(); });
+
+  // ---- output rendering ----
+  function shapedCanvas(){
+    const w = Math.max(1,Math.round(st.sel.w)), h = Math.max(1,Math.round(st.sel.h));
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const o = c.getContext("2d");
+    o.drawImage(st.img, st.sel.x, st.sel.y, st.sel.w, st.sel.h, 0, 0, w, h);
+    if(st.shape !== "rect"){
+      o.globalCompositeOperation = "destination-in";
+      o.fillStyle = "#fff"; o.beginPath();
+      shapePath(o, 0, 0, w, h, radiusPxFor(w,h));
+      o.fill();
+      o.globalCompositeOperation = "source-over";
+    }
+    return c;
+  }
+  // opaque = we need a solid background (no alpha in the target format)
+  function outputCanvas(opaque){
+    if(st.shape === "rect") return shapedCanvas(); // already fully opaque
+    const s = shapedCanvas();
+    if(!opaque) return s;
+    const c = document.createElement("canvas"); c.width = s.width; c.height = s.height;
+    const o = c.getContext("2d");
+    o.fillStyle = st.bg; o.fillRect(0,0,c.width,c.height);
+    o.drawImage(s,0,0);
+    return c;
+  }
+
+  // ---- clipboard copy ----
+  function copy(){
+    if(!st.img) return;
+    const c = outputCanvas(false);
+    if(navigator.clipboard && window.ClipboardItem){
+      c.toBlob(b => {
+        if(!b){ legacyCopy(c); return; }
+        navigator.clipboard.write([new ClipboardItem({ "image/png": b })])
+          .then(() => { toast("Copied"); post({type:"export"}); })
+          .catch(() => legacyCopy(c));
+      }, "image/png");
+    } else legacyCopy(c);
+  }
+  function legacyCopy(c){
+    try{
+      const holder = document.createElement("div");
+      holder.contentEditable = "true";
+      holder.style.cssText = "position:fixed;left:-9999px;opacity:0";
+      const im = document.createElement("img"); im.src = c.toDataURL("image/png");
+      holder.appendChild(im); document.body.appendChild(im.parentNode);
+      const rng = document.createRange(); rng.selectNode(im);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rng);
+      const ok = document.execCommand("copy");
+      sel.removeAllRanges(); holder.remove();
+      toast(ok ? "Copied" : "Copy blocked — try Save", !ok);
+    }catch(_){ toast("Copy needs a secure (https) context", true); }
+  }
+
+  // ---- download / save ----
+  function fname(ext){
+    const d = new Date(), p = n => String(n).padStart(2,"0");
+    return "crop-" + d.getFullYear()+p(d.getMonth()+1)+p(d.getDate()) + "-" +
+           p(d.getHours())+p(d.getMinutes())+p(d.getSeconds()) + "." + ext;
+  }
+  function dl(blob, name){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function save(fmt){
+    if(!st.img) return;
+    st.fmt = fmt; savePrefs();
+    const noAlpha = (fmt==="jpeg" || fmt==="gif" || fmt==="bmp");
+    const shaped = st.shape !== "rect";
+    if(shaped && noAlpha) toast("No transparency in "+fmt.toUpperCase()+" — filled "+st.bg, true);
+    const c = outputCanvas(noAlpha);
+    if(fmt==="png") c.toBlob(b => dl(b, fname("png")), "image/png");
+    else if(fmt==="jpeg") c.toBlob(b => dl(b, fname("jpg")), "image/jpeg", st.quality);
+    else if(fmt==="webp") c.toBlob(b => { if(b) dl(b, fname("webp")); else toast("WEBP not supported here", true); }, "image/webp", st.quality);
+    else if(fmt==="gif") dl(encodeGIF(c), fname("gif"));
+    else if(fmt==="bmp") dl(encodeBMP(c), fname("bmp"));
+    if(fmt!=="png" || !shaped) toast("Saved "+fmt.toUpperCase());
+  }
+
+  /* =========================================================================
+     Embedded GIF89a encoder (single static frame, 256-colour).
+     Median-cut palette + LZW compression. No external library.
+     ========================================================================= */
+  function quantize(data, maxColors){
+    // sample pixels for palette building (map everything later)
+    const n = data.length/4;
+    const step = Math.max(1, Math.floor(n/60000));
+    const pts = [];
+    for(let i=0;i<n;i+=step){ const j=i*4; pts.push([data[j],data[j+1],data[j+2]]); }
+    // median cut
+    function box(px){
+      let rmin=255,gmin=255,bmin=255,rmax=0,gmax=0,bmax=0;
+      for(const p of px){
+        if(p[0]<rmin)rmin=p[0]; if(p[0]>rmax)rmax=p[0];
+        if(p[1]<gmin)gmin=p[1]; if(p[1]>gmax)gmax=p[1];
+        if(p[2]<bmin)bmin=p[2]; if(p[2]>bmax)bmax=p[2];
+      }
+      return {px,rmin,gmin,bmin,rmax,gmax,bmax,
+        range:Math.max(rmax-rmin,gmax-gmin,bmax-bmin),
+        chan:(rmax-rmin)>=(gmax-gmin)&&(rmax-rmin)>=(bmax-bmin)?0:((gmax-gmin)>=(bmax-bmin)?1:2)};
+    }
+    let boxes = [box(pts)];
+    while(boxes.length < maxColors){
+      // pick splittable box with largest range
+      let bi=-1, best=-1;
+      for(let i=0;i<boxes.length;i++){ if(boxes[i].px.length>1 && boxes[i].range>best){ best=boxes[i].range; bi=i; } }
+      if(bi<0) break;
+      const b = boxes[bi], ch = b.chan;
+      b.px.sort((p,q)=>p[ch]-q[ch]);
+      const mid = b.px.length>>1;
+      const a = b.px.slice(0,mid), c = b.px.slice(mid);
+      if(!a.length || !c.length) break;
+      boxes.splice(bi,1,box(a),box(c));
+    }
+    const palette = boxes.map(b=>{
+      let r=0,g=0,bl=0; for(const p of b.px){ r+=p[0]; g+=p[1]; bl+=p[2]; }
+      const k=b.px.length||1; return [Math.round(r/k),Math.round(g/k),Math.round(bl/k)];
+    });
+    while(palette.length < 256) palette.push([0,0,0]);
+    return palette.slice(0,256);
+  }
+  function mapIndices(data, palette){
+    const n = data.length/4;
+    const out = new Uint8Array(n);
+    const cache = new Int16Array(32768).fill(-1);
+    for(let i=0;i<n;i++){
+      const j=i*4, r=data[j], g=data[j+1], b=data[j+2];
+      const key = ((r>>3)<<10) | ((g>>3)<<5) | (b>>3);
+      let idx = cache[key];
+      if(idx < 0){
+        let bd = 1e12, bi = 0;
+        for(let p=0;p<256;p++){
+          const pr=palette[p][0]-r, pg=palette[p][1]-g, pb=palette[p][2]-b;
+          const dd = pr*pr+pg*pg+pb*pb;
+          if(dd<bd){ bd=dd; bi=p; if(dd===0) break; }
+        }
+        idx = bi; cache[key] = bi;
+      }
+      out[i] = idx;
+    }
+    return out;
+  }
+  function lzwEncode(minCode, indices){
+    const CLEAR = 1<<minCode, EOI = CLEAR+1;
+    let size = minCode+1, next = EOI+1;
+    let dict = Object.create(null);
+    const out = []; let cur = 0, bits = 0;
+    const wr = (code) => { cur |= code<<bits; bits += size; while(bits>=8){ out.push(cur&255); cur>>=8; bits-=8; } };
+    wr(CLEAR);
+    let prefix = indices[0];
+    for(let i=1;i<indices.length;i++){
+      const k = indices[i], key = prefix*256+k;
+      const got = dict[key];
+      if(got !== undefined){ prefix = got; }
+      else{
+        wr(prefix);
+        if(next < 4096){
+          dict[key] = next++;
+          // grow one bit once the dictionary needs it — timed to match the
+          // decoder, which builds its table one code behind the encoder.
+          if(next === (1<<size)+1 && size < 12) size++;
+        } else {
+          wr(CLEAR); dict = Object.create(null); size = minCode+1; next = EOI+1;
+        }
+        prefix = k;
+      }
+    }
+    wr(prefix);
+    // the decoder adds one more entry after the final prefix — mirror the
+    // possible bit-width growth so EOI is read at the matching code size.
+    if(next < 4096){ next++; if(next === (1<<size)+1 && size < 12) size++; }
+    wr(EOI);
+    if(bits>0) out.push(cur&255);
+    return out;
+  }
+  function encodeGIF(cnv){
+    const w = cnv.width, h = cnv.height;
+    const data = cnv.getContext("2d").getImageData(0,0,w,h).data;
+    const palette = quantize(data, 256);
+    const indices = mapIndices(data, palette);
+    const minCode = 8;
+    const lzw = lzwEncode(minCode, indices);
+    const bytes = [];
+    const push = (...b) => { for(const x of b) bytes.push(x&255); };
+    const u16 = (v) => push(v & 255, (v>>8) & 255);
+    // header
+    for(const ch of "GIF89a") push(ch.charCodeAt(0));
+    // logical screen descriptor
+    u16(w); u16(h); push(0xF7, 0, 0); // global table, 256 colours, 8-bit
+    // global colour table
+    for(let i=0;i<256;i++) push(palette[i][0], palette[i][1], palette[i][2]);
+    // image descriptor
+    push(0x2C); u16(0); u16(0); u16(w); u16(h); push(0);
+    // image data
+    push(minCode);
+    for(let i=0;i<lzw.length;i+=255){
+      const chunk = lzw.slice(i, i+255);
+      push(chunk.length); for(const b of chunk) push(b);
+    }
+    push(0);    // block terminator
+    push(0x3B); // trailer
+    return new Blob([new Uint8Array(bytes)], { type:"image/gif" });
+  }
+
+  // ---- simple 24-bit BMP encoder ----
+  function encodeBMP(cnv){
+    const w = cnv.width, h = cnv.height;
+    const data = cnv.getContext("2d").getImageData(0,0,w,h).data;
+    const rowSize = (w*3 + 3) & ~3;      // padded to 4 bytes
+    const pixels = rowSize*h;
+    const size = 54 + pixels;
+    const buf = new ArrayBuffer(size), dv = new DataView(buf);
+    dv.setUint16(0, 0x424D, false);       // 'BM'
+    dv.setUint32(2, size, true);
+    dv.setUint32(10, 54, true);           // pixel data offset
+    dv.setUint32(14, 40, true);           // DIB header size
+    dv.setInt32(18, w, true);
+    dv.setInt32(22, h, true);             // positive = bottom-up
+    dv.setUint16(26, 1, true);            // planes
+    dv.setUint16(28, 24, true);           // bpp
+    dv.setUint32(34, pixels, true);
+    let off = 54;
+    for(let y=h-1;y>=0;y--){
+      let p = off;
+      for(let x=0;x<w;x++){
+        const j = (y*w+x)*4;
+        dv.setUint8(p++, data[j+2]); dv.setUint8(p++, data[j+1]); dv.setUint8(p++, data[j]); // BGR
+      }
+      off += rowSize;
+    }
+    return new Blob([buf], { type:"image/bmp" });
+  }
+
+  // ---- toast ----
+  let toastT = null;
+  function toast(msg, warn){
+    const t = $("qcToast"); t.textContent = msg;
+    t.classList.toggle("warn", !!warn); t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600);
+  }
+
+  // ---- save menu ----
+  const saveMenu = $("qcSaveMenu");
+  function closeMenu(){ saveMenu.classList.remove("show"); }
+  $("qcSaveBtn").onclick = (e) => { e.stopPropagation(); if(!st.img) return; saveMenu.classList.toggle("show"); };
+  saveMenu.querySelectorAll(".qc-mi").forEach(b => b.onclick = () => { closeMenu(); save(b.dataset.fmt); });
+  $("qcQuality").addEventListener("input", e => { st.quality = Number(e.target.value)/100; $("qcQualityVal").textContent = e.target.value; savePrefs(); });
+  $("qcBg").addEventListener("input", e => { st.bg = e.target.value; savePrefs(); });
+  document.addEventListener("click", (e) => { if(!e.target.closest(".qc-savewrap")) closeMenu(); });
+
+  // ---- context menu ----
+  const ctxMenu = $("qcCtx");
+  function hideCtx(){ ctxMenu.classList.remove("show"); }
+  stage.addEventListener("contextmenu", (e) => {
+    if(!st.img) return;
+    e.preventDefault();
+    ctxMenu.style.left = Math.min(e.clientX, innerWidth-190)+"px";
+    ctxMenu.style.top = Math.min(e.clientY, innerHeight-260)+"px";
+    ctxMenu.classList.add("show");
+  });
+  ctxMenu.querySelectorAll(".qc-mi").forEach(b => b.onclick = () => {
+    const a = b.dataset.act; hideCtx();
+    if(a==="copy") copy();
+    else if(a==="copysave"){ copy(); save("png"); }
+    else save(a);
+  });
+  document.addEventListener("click", () => hideCtx());
+  window.addEventListener("scroll", hideCtx, true);
+
+  // ---- buttons ----
+  $("qcCopy").onclick = copy;
+  $("qcReset").onclick = () => { if(!st.img) return; st.sel = {x:0,y:0,w:st.iw,h:st.ih}; refresh(); toast("Full image"); };
+  $("qcNew").onclick = () => $("qcFileInput").click();
+  $("qcFileInput").onchange = e => { if(e.target.files[0]) loadFile(e.target.files[0]); };
+
+  // ---- keyboard ----
+  document.addEventListener("keydown", (ev) => {
+    const tag = (ev.target.tagName || "").toUpperCase();
+    if(tag==="INPUT" || tag==="TEXTAREA" || tag==="SELECT") return;
+    if((ev.ctrlKey||ev.metaKey) && (ev.key==="c"||ev.key==="C")){
+      if(st.img){ ev.preventDefault(); copy(); } return;
+    }
+    if(!st.img || overlay.classList.contains("collapsed")) return;
+    const nudge = ev.shiftKey ? 0 : (ev.altKey ? 10 : 1);
+    const grow = ev.shiftKey ? (ev.altKey ? 10 : 1) : 0;
+    switch(ev.key){
+      case "ArrowLeft":  ev.preventDefault(); if(grow){ st.sel.w=Math.max(8,st.sel.w-grow); } else { st.sel.x-=nudge; } clampSel(); refresh(); break;
+      case "ArrowRight": ev.preventDefault(); if(grow){ st.sel.w+=grow; } else { st.sel.x+=nudge; } clampSel(); refresh(); break;
+      case "ArrowUp":    ev.preventDefault(); if(grow){ st.sel.h=Math.max(8,st.sel.h-grow); } else { st.sel.y-=nudge; } clampSel(); refresh(); break;
+      case "ArrowDown":  ev.preventDefault(); if(grow){ st.sel.h+=grow; } else { st.sel.y+=nudge; } clampSel(); refresh(); break;
+      case "Enter":      ev.preventDefault(); copy(); break;
+      case "Escape":     ev.preventDefault(); st.sel={x:0,y:0,w:st.iw,h:st.ih}; refresh(); break;
+    }
+  });
+
+  // ---- drag & drop + paste ----
+  const panel = document.querySelector(".qc-panel");
+  ["dragenter","dragover"].forEach(ev => panel.addEventListener(ev, e => { e.preventDefault(); stage.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(ev => panel.addEventListener(ev, () => stage.classList.remove("drag")));
+  panel.addEventListener("drop", e => {
+    e.preventDefault(); stage.classList.remove("drag");
+    const dt = e.dataTransfer; if(!dt) return;
+    if(dt.files && dt.files[0] && dt.files[0].type.startsWith("image/")){ loadFile(dt.files[0]); return; }
+    const uri = dt.getData("text/uri-list") || dt.getData("text/plain");
+    if(uri && /^(data:image\/|https?:)/i.test(uri.trim())) loadSrc(uri.trim());
+  });
+  window.addEventListener("paste", e => {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for(const it of items){
+      if(it.type && it.type.startsWith("image/")){ loadFile(it.getAsFile()); e.preventDefault(); return; }
+    }
+    const txt = e.clipboardData && e.clipboardData.getData("text");
+    if(txt && /^(data:image\/|https?:.*\.(png|jpe?g|gif|webp|bmp))/i.test(txt.trim())) loadSrc(txt.trim());
+  });
+
+  // ---- open / close / maximise ----
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("qcFab").style.display = open ? "none" : "block";
+    if(window.parent !== window){ try{ window.parent.postMessage({ type: open?"quickcrop:open":"quickcrop:close" }, "*"); }catch(_){} }
+    post({ type: open ? "open" : "close" });
+    if(open) requestAnimationFrame(refresh);
+  };
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("qcMax").textContent = exp ? "⤡" : "⤢";
+    $("qcMax").title = exp ? "Restore" : "Maximise";
+    requestAnimationFrame(refresh);
+  }
+  $("qcFab").onclick = () => setOpen(true);
+  $("qcClose").onclick = () => setOpen(false);
+  $("qcMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+  window.addEventListener("resize", refresh);
+
+  // ---- theme ----
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("qcTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("qcTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  /* =========================================================================
+     MODULE CONTRACT — shared across Toggle modules. Lets a host app (iframe via
+     postMessage, or same-page via window.ToggleModules) drive the panel, swap
+     theme, and export/import the (minimal) prefs.
+     ========================================================================= */
+  const MODULE_ID = "quick-crop", MODULE_NAME = "Quick Crop", MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#2bb673", MSG_NS = "toggle-module";
+
+  function exportData(){
+    return { module:MODULE_ID, version:MODULE_VERSION, exportedAt:new Date().toISOString(),
+      data:{ shape:st.shape, ratio:st.ratio, radiusPct:st.radiusPct, fmt:st.fmt, quality:st.quality, bg:st.bg } };
+  }
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    const d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    let touched = false;
+    if(typeof d.shape==="string"){ st.shape=d.shape; touched=true; }
+    if(typeof d.ratio==="number"){ st.ratio=d.ratio; touched=true; }
+    if(typeof d.radiusPct==="number"){ st.radiusPct=d.radiusPct; touched=true; }
+    if(typeof d.fmt==="string"){ st.fmt=d.fmt; touched=true; }
+    if(typeof d.quality==="number"){ st.quality=d.quality; touched=true; }
+    if(typeof d.bg==="string"){ st.bg=d.bg; touched=true; }
+    if(!touched) return false;
+    syncControls(); applyPreset(st.shape, st.ratio); savePrefs();
+    return true;
+  }
+  function syncControls(){
+    $("qcRadius").value = st.radiusPct;
+    $("qcQuality").value = Math.round(st.quality*100); $("qcQualityVal").textContent = Math.round(st.quality*100);
+    $("qcBg").value = st.bg;
+  }
+
+  // change notifications
+  let notifyPending = false;
+  function notifyChange(){
+    if(notifyPending) return; notifyPending = true;
+    Promise.resolve().then(() => {
+      notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module:MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping"].includes(t)) return;
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY,m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data:exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+    }
+  });
+
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id:MODULE_ID, name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); }, importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  // ---- boot ----
+  loadPrefs();
+  syncControls();
+  applyPreset(st.shape, st.ratio);
+  updateInfo();
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);   // start docked/minimised — just the launcher shows
+  postReady();
+})();
+</script>
+</body>
+</html>
