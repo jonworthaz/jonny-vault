@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Toggle Track — mini time tracker</title>
+<style>
+  /* Self-contained corner-docked time tracker. A launcher button sits at the
+     bottom-right; clicking it pops up a compact panel so you can track time
+     while still using other apps (non-blocking — no full-screen backdrop).
+     Maximise (⤢) grows it to a desktop-sized panel. Shares the markup-dock
+     shell; accent swapped to pink-red. Namespaced under tk* ids / tk- classes
+     so it can coexist with sibling modules on one page. */
+  :root{
+    --tk-bg:#0f1419; --tk-panel:#1a212b; --tk-panel2:#222c38; --tk-line:#2c3744;
+    --tk-text:#e6edf3; --tk-muted:#8b97a5; --tk-accent:#e0407b; --tk-accent2:#ec5b90;
+    --tk-ok:#22c55e; --tk-chip:#2a3340;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* page is click-through; only the widget itself catches clicks */
+  html,body{background:transparent;pointer-events:none}
+
+  .tk-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99999;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .tk-overlay > *{pointer-events:auto}
+
+  .tk-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--tk-accent);color:#fff;border:none;cursor:pointer;
+    font-size:24px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .tk-fab:hover{background:var(--tk-accent2)}
+
+  .tk-panel{
+    display:flex; flex-direction:column;
+    width:min(400px,92vw); height:min(520px,80vh);
+    background:rgba(26,33,43,.94);
+    color:var(--tk-text);
+    border:1px solid var(--tk-line); border-radius:14px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .16s ease, opacity .16s ease, width .16s ease, height .16s ease;
+  }
+  .tk-overlay.expanded .tk-panel{ width:min(900px,95vw); height:min(640px,88vh); }
+  .tk-overlay.collapsed .tk-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .tk-head{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--tk-line);
+    background:rgba(20,26,34,.6); flex:0 0 auto;
+  }
+  .tk-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px}
+  .tk-title .dot{color:var(--tk-accent);font-size:16px}
+  .tk-x{background:none;border:none;color:var(--tk-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .tk-x:hover{color:#fff;background:var(--tk-panel2)}
+  .tk-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--tk-panel2);border:1px solid var(--tk-line);color:var(--tk-text);
+    border-radius:7px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .tk-hb:hover{background:#2b3645}
+
+  /* input / timer bar */
+  .tk-bar{ padding:10px; border-bottom:1px solid var(--tk-line); flex:0 0 auto; }
+  .tk-inputs{ display:flex; gap:6px; margin-bottom:8px; }
+  .tk-inputs .tk-desc{ flex:1 1 auto; min-width:0; }
+  .tk-inputs .tk-proj{ flex:0 0 34%; min-width:0; }
+  .tk-in{
+    background:var(--tk-panel2); border:1px solid var(--tk-line); color:var(--tk-text);
+    border-radius:8px; padding:8px 10px; font-size:13px; width:100%; outline:none;
+  }
+  .tk-in:focus{ border-color:var(--tk-accent); }
+  .tk-in::placeholder{ color:var(--tk-muted); }
+  .tk-run{ display:flex; align-items:center; gap:10px; }
+  .tk-clock{
+    font-variant-numeric:tabular-nums; font-feature-settings:"tnum";
+    font-size:26px; font-weight:700; letter-spacing:.5px; margin-right:auto;
+    color:var(--tk-text);
+  }
+  .tk-clock.live{ color:var(--tk-accent); }
+  .tk-btn{
+    background:var(--tk-accent); border:1px solid var(--tk-accent); color:#fff;
+    border-radius:9px; padding:9px 20px; font-size:14px; font-weight:700; cursor:pointer;
+    line-height:1; min-width:88px;
+  }
+  .tk-btn:hover{ background:var(--tk-accent2); }
+  .tk-btn.stop{ background:#e23c3c; border-color:#e23c3c; }
+  .tk-btn.stop:hover{ background:#f04d4d; }
+
+  .tk-today{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; border-bottom:1px solid var(--tk-line);
+    font-size:12px; color:var(--tk-muted); flex:0 0 auto;
+  }
+  .tk-today b{ color:var(--tk-text); font-size:14px; font-variant-numeric:tabular-nums; }
+
+  .tk-list{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px 8px 12px; }
+  .tk-daygroup{ margin-top:8px; }
+  .tk-dayhead{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:6px 6px 4px; font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--tk-muted); position:sticky; top:0;
+    background:rgba(26,33,43,.96); backdrop-filter:blur(2px); z-index:1;
+  }
+  .tk-dayhead .tk-daysum{ font-variant-numeric:tabular-nums; color:var(--tk-text); }
+  .tk-row{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 8px; border-radius:9px; margin:2px 0;
+    background:var(--tk-panel2); border:1px solid transparent;
+  }
+  .tk-row:hover{ border-color:var(--tk-line); }
+  .tk-rmain{ flex:1 1 auto; min-width:0; }
+  .tk-rdesc{ font-size:13px; color:var(--tk-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tk-rdesc.none{ color:var(--tk-muted); font-style:italic; }
+  .tk-rmeta{ display:flex; align-items:center; gap:7px; margin-top:3px; }
+  .tk-chip{
+    display:inline-block; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    background:var(--tk-chip); color:var(--tk-accent2); border:1px solid var(--tk-line);
+    border-radius:20px; padding:1px 8px; font-size:10px; font-weight:600;
+  }
+  .tk-rtime{ font-size:10.5px; color:var(--tk-muted); font-variant-numeric:tabular-nums; }
+  .tk-rdur{
+    font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;
+    color:var(--tk-text); flex:0 0 auto;
+  }
+  .tk-ib{
+    background:none; border:none; color:var(--tk-muted); cursor:pointer;
+    font-size:15px; padding:4px 6px; border-radius:6px; line-height:1; flex:0 0 auto;
+  }
+  .tk-ib:hover{ color:#fff; background:#2b3645; }
+  .tk-ib.play:hover{ color:var(--tk-ok); }
+  .tk-ib.del:hover{ color:#f04d4d; }
+
+  .tk-empty{ color:var(--tk-muted); text-align:center; font-size:13.5px; padding:34px 24px; line-height:1.6; }
+  .tk-empty .em{ font-size:34px; display:block; margin-bottom:8px; }
+  .tk-empty b{ color:var(--tk-text); }
+
+  /* light theme */
+  :root[data-theme="light"] .tk-panel{background:rgba(255,255,255,.94);color:#17202a;border-color:#d3dae2}
+  :root[data-theme="light"] .tk-head{border-color:#d3dae2;background:rgba(240,243,247,.7)}
+  :root[data-theme="light"] .tk-bar,:root[data-theme="light"] .tk-today{border-color:#d3dae2}
+  :root[data-theme="light"] .tk-hb{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .tk-hb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .tk-x:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .tk-in{background:#f4f6f9;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .tk-in::placeholder{color:#8b97a5}
+  :root[data-theme="light"] .tk-clock{color:#17202a}
+  :root[data-theme="light"] .tk-clock.live{color:var(--tk-accent)}
+  :root[data-theme="light"] .tk-today b{color:#17202a}
+  :root[data-theme="light"] .tk-row{background:#f4f6f9}
+  :root[data-theme="light"] .tk-row:hover{border-color:#d3dae2}
+  :root[data-theme="light"] .tk-rdesc{color:#17202a}
+  :root[data-theme="light"] .tk-rdur{color:#17202a}
+  :root[data-theme="light"] .tk-chip{background:#fbe4ee;border-color:#f2c3d8;color:#c02f68}
+  :root[data-theme="light"] .tk-ib:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .tk-dayhead{background:rgba(255,255,255,.96)}
+  :root[data-theme="light"] .tk-dayhead .tk-daysum{color:#17202a}
+  :root[data-theme="light"] .tk-empty b{color:#17202a}
+</style>
+</head>
+<body>
+  <div class="tk-overlay collapsed" id="tkOverlay">
+    <div class="tk-panel" role="dialog" aria-label="Toggle Track">
+      <div class="tk-head">
+        <span class="tk-title"><span class="dot">◍</span> Toggle Track</span>
+        <button class="tk-hb" id="tkExport" title="Export data (.json)">⤓</button>
+        <button class="tk-hb" id="tkImport" title="Import data (.json)">⤒</button>
+        <input type="file" id="tkFile" accept="application/json,.json" hidden />
+        <button class="tk-hb" id="tkTheme" title="Day / night">☀️</button>
+        <button class="tk-hb" id="tkMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="tk-x" id="tkClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="tk-bar">
+        <div class="tk-inputs">
+          <input class="tk-in tk-desc" id="tkDesc" type="text" placeholder="What are you working on?" autocomplete="off" />
+          <input class="tk-in tk-proj" id="tkProj" type="text" placeholder="Project" autocomplete="off" />
+        </div>
+        <div class="tk-run">
+          <span class="tk-clock" id="tkClock">00:00:00</span>
+          <button class="tk-btn" id="tkStart">Start</button>
+        </div>
+      </div>
+
+      <div class="tk-today">
+        <span>Today</span>
+        <b id="tkToday">0:00:00</b>
+      </div>
+
+      <div class="tk-list" id="tkList"></div>
+    </div>
+    <button class="tk-fab" id="tkFab" title="Toggle Track" aria-label="Open Toggle Track">◍</button>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const KEY = "toggle-track:v1";
+  const THEME_KEY = "toggle-track:theme";
+
+  // ---- state ----
+  const st = { entries:[], running:null }; // running: {startISO, desc, project}
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const d = JSON.parse(raw);
+        if(Array.isArray(d.entries)) st.entries = d.entries;
+        if(d.running && d.running.startISO) st.running = d.running;
+      }
+    }catch(_){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({entries:st.entries, running:st.running})); }catch(_){}
+  }
+
+  // ---- time helpers ----
+  const pad = (n) => String(n).padStart(2,"0");
+  function hms(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60; return pad(h)+":"+pad(m)+":"+pad(s); }
+  function dur(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60; return h+":"+pad(m)+":"+pad(s); }
+  function clockTime(iso){ const d=new Date(iso); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function dayKey(iso){ const d=new Date(iso); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function todayKey(){ return dayKey(new Date().toISOString()); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  function dayLabel(key){
+    const t = todayKey();
+    if(key===t) return "Today";
+    const parts = key.split("-").map(Number);
+    const d = new Date(parts[0], parts[1]-1, parts[2]);
+    const y = new Date(); y.setDate(y.getDate()-1);
+    if(key===dayKey(y.toISOString())) return "Yesterday";
+    return d.toLocaleDateString(undefined,{weekday:"short", day:"numeric", month:"short"});
+  }
+
+  // ---- running total for today ----
+  function runningSeconds(){ return st.running ? (Date.now()-new Date(st.running.startISO).getTime())/1000 : 0; }
+  function todaySeconds(){
+    const t = todayKey();
+    let s = st.entries.filter(e=>dayKey(e.startISO)===t).reduce((a,e)=>a+e.seconds,0);
+    if(st.running && dayKey(st.running.startISO)===t) s += runningSeconds();
+    return s;
+  }
+
+  // ---- actions ----
+  function start(desc, project){
+    if(st.running) stop();
+    st.running = { startISO:new Date().toISOString(), desc:(desc||"").trim(), project:(project||"").trim() };
+    save(); syncStartUI(); tick();
+  }
+  function stop(){
+    if(!st.running) return;
+    const endISO = new Date().toISOString();
+    const seconds = Math.max(1, Math.round((new Date(endISO).getTime()-new Date(st.running.startISO).getTime())/1000));
+    st.entries.unshift({ id:uid(), desc:st.running.desc, project:st.running.project, startISO:st.running.startISO, endISO, seconds });
+    st.running = null;
+    save(); syncStartUI(); render();
+  }
+  function toggle(){
+    if(st.running){ stop(); }
+    else { start($("tkDesc").value, $("tkProj").value); }
+  }
+  function resume(entry){
+    $("tkDesc").value = entry.desc || "";
+    $("tkProj").value = entry.project || "";
+    start(entry.desc, entry.project);
+  }
+  function del(id){ st.entries = st.entries.filter(e=>e.id!==id); save(); render(); }
+
+  // ---- UI: start button + live clock ----
+  let timer = null;
+  function syncStartUI(){
+    const btn = $("tkStart"), clock = $("tkClock");
+    if(st.running){
+      btn.textContent = "Stop"; btn.classList.add("stop"); clock.classList.add("live");
+      $("tkDesc").value = st.running.desc;
+      $("tkProj").value = st.running.project;
+      if(!timer) timer = setInterval(tick, 1000);
+    } else {
+      btn.textContent = "Start"; btn.classList.remove("stop"); clock.classList.remove("live");
+      clock.textContent = "00:00:00";
+      if(timer){ clearInterval(timer); timer = null; }
+      updateToday();
+    }
+  }
+  function tick(){
+    if(st.running) $("tkClock").textContent = hms(runningSeconds());
+    updateToday();
+  }
+  function updateToday(){ $("tkToday").textContent = dur(todaySeconds()); }
+
+  // ---- render list ----
+  function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  function render(){
+    const list = $("tkList");
+    list.innerHTML = "";
+    if(!st.entries.length){
+      const e = document.createElement("div");
+      e.className = "tk-empty";
+      e.innerHTML = '<span class="em">⏱️</span><b>No time entries yet</b><br>Type what you\'re working on and hit <b>Start</b> (or press Enter).';
+      list.appendChild(e);
+      updateToday();
+      return;
+    }
+    // group by day, newest day first
+    const groups = {};
+    st.entries.forEach(e => { (groups[dayKey(e.startISO)] = groups[dayKey(e.startISO)] || []).push(e); });
+    const keys = Object.keys(groups).sort((a,b)=> a<b?1:-1);
+
+    keys.forEach(key => {
+      const rows = groups[key];
+      const total = rows.reduce((a,e)=>a+e.seconds,0);
+      const g = document.createElement("div");
+      g.className = "tk-daygroup";
+      const head = document.createElement("div");
+      head.className = "tk-dayhead";
+      head.innerHTML = '<span>'+esc(dayLabel(key))+'</span><span class="tk-daysum">'+dur(total)+'</span>';
+      g.appendChild(head);
+
+      rows.forEach(e => g.appendChild(rowEl(e)));
+      list.appendChild(g);
+    });
+    updateToday();
+  }
+
+  function rowEl(e){
+    const row = document.createElement("div");
+    row.className = "tk-row";
+    const main = document.createElement("div");
+    main.className = "tk-rmain";
+    const desc = document.createElement("div");
+    desc.className = "tk-rdesc" + (e.desc ? "" : " none");
+    desc.textContent = e.desc || "(no description)";
+    const meta = document.createElement("div");
+    meta.className = "tk-rmeta";
+    if(e.project){ const chip = document.createElement("span"); chip.className="tk-chip"; chip.textContent=e.project; meta.appendChild(chip); }
+    const tspan = document.createElement("span");
+    tspan.className = "tk-rtime";
+    tspan.textContent = clockTime(e.startISO) + "–" + clockTime(e.endISO);
+    meta.appendChild(tspan);
+    main.appendChild(desc); main.appendChild(meta);
+
+    const durEl = document.createElement("span");
+    durEl.className = "tk-rdur";
+    durEl.textContent = dur(e.seconds);
+
+    const play = document.createElement("button");
+    play.className = "tk-ib play"; play.title = "Resume"; play.textContent = "▶";
+    play.onclick = () => resume(e);
+    const dl = document.createElement("button");
+    dl.className = "tk-ib del"; dl.title = "Delete"; dl.textContent = "✕";
+    dl.onclick = () => del(e.id);
+
+    row.appendChild(main); row.appendChild(durEl); row.appendChild(play); row.appendChild(dl);
+    return row;
+  }
+
+  // ---- open / close / maximise ----
+  const overlay = $("tkOverlay");
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("tkFab").style.display = open ? "none" : "block";
+    if(window.parent !== window) window.parent.postMessage({type: open ? "toggletrack:open" : "toggletrack:close"}, "*");
+    post({ type: open ? "open" : "close" }); // module-contract event
+    if(open) $("tkDesc").focus();
+  };
+  $("tkFab").onclick = () => setOpen(true);
+  $("tkClose").onclick = () => setOpen(false);
+
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("tkMax").textContent = exp ? "⤡" : "⤢";
+    $("tkMax").title = exp ? "Restore" : "Maximise";
+  }
+  $("tkMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+
+  // ---- theme ----
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("tkTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("tkTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  // ---- input handlers ----
+  $("tkStart").onclick = toggle;
+  function onKey(ev){ if(ev.key==="Enter"){ ev.preventDefault(); toggle(); } }
+  $("tkDesc").addEventListener("keydown", onKey);
+  $("tkProj").addEventListener("keydown", onKey);
+
+  /* =========================================================================
+     MODULE CONTRACT — portability layer shared across Toggle modules.
+     Lets a host app (iframe via postMessage, or same-page via window.ToggleModules)
+     drive the panel, swap theme, and export/import data.
+     ========================================================================= */
+  const MODULE_ID = "toggle-track";
+  const MODULE_NAME = "Toggle Track";
+  const MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#e0407b";
+  const MSG_NS = "toggle-module";
+
+  // exportData -> plain JSON-serialisable snapshot
+  function exportData(){
+    return {
+      module: MODULE_ID,
+      version: MODULE_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: { entries: st.entries.slice(), running: st.running ? {...st.running} : null }
+    };
+  }
+  // importData -> tolerant: accepts the wrapper {module,version,data} OR a bare data object
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    let d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    const entries = Array.isArray(d.entries) ? d.entries.filter(e => e && typeof e === "object" && typeof e.seconds === "number") : null;
+    if(!entries && !("running" in d)) return false;
+    if(entries){
+      st.entries = entries.map(e => ({
+        id: e.id || uid(),
+        desc: typeof e.desc === "string" ? e.desc : "",
+        project: typeof e.project === "string" ? e.project : "",
+        startISO: e.startISO || new Date().toISOString(),
+        endISO: e.endISO || e.startISO || new Date().toISOString(),
+        seconds: Math.max(0, Math.floor(e.seconds) || 0)
+      }));
+    }
+    st.running = (d.running && d.running.startISO) ? { startISO:d.running.startISO, desc:(d.running.desc||""), project:(d.running.project||"") } : null;
+    save(); render(); syncStartUI(); if(st.running) tick();
+    return true;
+  }
+
+  // change notifications — wrap save() so every data change fans out
+  const _save = save;
+  save = function(){ _save(); notifyChange(); };
+  let _notifyPending = false;
+  function notifyChange(){
+    if(_notifyPending) return; _notifyPending = true;
+    Promise.resolve().then(() => {
+      _notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module: MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  // postMessage helpers
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  // host command listener — accepts {type:"module:x"} and bare {type:"x"}
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping"].includes(t)) return; // ignore unrelated bare messages
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY, m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data: exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+    }
+  });
+
+  // same-page inline API registry
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id: MODULE_ID, name: MODULE_NAME, version: MODULE_VERSION, accent: MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); },
+    importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  // Export / Import UI affordances
+  $("tkExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = MODULE_ID + "-" + todayKey() + ".json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  };
+  $("tkImport").onclick = () => $("tkFile").click();
+  $("tkFile").onchange = (ev) => {
+    const f = ev.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try{ importData(JSON.parse(r.result)); }catch(_){ alert("Could not read that file — expected Toggle Track JSON."); } };
+    r.readAsText(f); ev.target.value = "";
+  };
+
+  // ---- boot ----
+  load();
+  render();
+  syncStartUI();       // resumes a running timer that survived reload
+  if(st.running) tick();
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);      // start docked/minimised — just the launcher shows
+  postReady();         // announce module to any host
+})();
+</script>
+</body>
+</html>

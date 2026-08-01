@@ -1,0 +1,9 @@
+{
+  "id": "toggle-track",
+  "name": "Toggle Track",
+  "version": "1.0",
+  "accent": "#e0407b",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme", "export", "import"],
+  "messageNamespace": "toggle-module"
+}

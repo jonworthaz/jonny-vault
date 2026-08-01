@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Toggle Plan — mini planner</title>
+<style>
+  /* Self-contained corner-docked day planner. A launcher button sits at the
+     bottom-right; clicking it pops up a compact panel so you can plan while
+     still using other apps (non-blocking — no full-screen backdrop). Maximise
+     (⤢) grows it to a desktop-sized panel. Shares the markup-dock shell; accent
+     swapped to indigo. Namespaced under pl* ids / pl- classes so it can coexist
+     with sibling modules on one page. */
+  :root{
+    --pl-bg:#0f1419; --pl-panel:#1a212b; --pl-panel2:#222c38; --pl-line:#2c3744;
+    --pl-text:#e6edf3; --pl-muted:#8b97a5; --pl-accent:#5b6ffa; --pl-accent2:#7385fb;
+    --pl-ok:#22c55e; --pl-warn:#e0407b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  html,body{background:transparent;pointer-events:none}
+
+  .pl-overlay{
+    position:fixed; right:16px; bottom:16px; z-index:99998;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  }
+  .pl-overlay > *{pointer-events:auto}
+
+  .pl-fab{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--pl-accent);color:#fff;border:none;cursor:pointer;
+    font-size:24px;line-height:1;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .pl-fab:hover{background:var(--pl-accent2)}
+
+  .pl-panel{
+    display:flex; flex-direction:column;
+    width:min(400px,92vw); height:min(520px,80vh);
+    background:rgba(26,33,43,.94);
+    color:var(--pl-text);
+    border:1px solid var(--pl-line); border-radius:14px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    overflow:hidden;
+    transform-origin:bottom right;
+    transition:transform .16s ease, opacity .16s ease, width .16s ease, height .16s ease;
+  }
+  .pl-overlay.expanded .pl-panel{ width:min(900px,95vw); height:min(640px,88vh); }
+  .pl-overlay.collapsed .pl-panel{
+    transform:scale(.85) translateY(10px); opacity:0; pointer-events:none;
+    position:absolute;
+  }
+  .pl-head{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--pl-line);
+    background:rgba(20,26,34,.6); flex:0 0 auto;
+  }
+  .pl-title{font-size:13px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:7px}
+  .pl-title .dot{color:var(--pl-accent);font-size:16px}
+  .pl-x{background:none;border:none;color:var(--pl-muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .pl-x:hover{color:#fff;background:var(--pl-panel2)}
+  .pl-hb{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:30px;height:30px;padding:0 7px;
+    background:var(--pl-panel2);border:1px solid var(--pl-line);color:var(--pl-text);
+    border-radius:7px;font-size:14px;cursor:pointer;line-height:1;
+  }
+  .pl-hb:hover{background:#2b3645}
+
+  /* quick add */
+  .pl-add{ display:flex; gap:6px; padding:10px; border-bottom:1px solid var(--pl-line); flex:0 0 auto; }
+  .pl-in{
+    background:var(--pl-panel2); border:1px solid var(--pl-line); color:var(--pl-text);
+    border-radius:8px; padding:8px 10px; font-size:13px; outline:none;
+  }
+  .pl-in:focus{ border-color:var(--pl-accent); }
+  .pl-in::placeholder{ color:var(--pl-muted); }
+  .pl-name{ flex:1 1 auto; min-width:0; }
+  .pl-date{ flex:0 0 auto; width:132px; color-scheme:dark; }
+  .pl-addbtn{
+    background:var(--pl-accent); border:1px solid var(--pl-accent); color:#fff;
+    border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; line-height:1;
+    flex:0 0 auto;
+  }
+  .pl-addbtn:hover{ background:var(--pl-accent2); }
+
+  .pl-summary{
+    display:flex; align-items:center; gap:6px; justify-content:space-between;
+    padding:7px 12px; border-bottom:1px solid var(--pl-line);
+    font-size:12px; color:var(--pl-muted); flex:0 0 auto;
+  }
+  .pl-summary .pl-counts b{ color:var(--pl-text); }
+  .pl-summary .pl-over{ color:var(--pl-warn); font-weight:600; }
+  .pl-hide{ display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; font-size:11.5px; }
+  .pl-hide input{ accent-color:var(--pl-accent); cursor:pointer; }
+
+  .pl-list{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px 8px 12px; }
+  .pl-group{ margin-top:8px; }
+  .pl-ghead{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:6px 6px 4px; font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--pl-muted); position:sticky; top:0;
+    background:rgba(26,33,43,.96); backdrop-filter:blur(2px); z-index:1;
+  }
+  .pl-ghead .pl-gcount{ color:var(--pl-text); font-weight:600; }
+  .pl-group.overdue .pl-ghead{ color:var(--pl-warn); }
+
+  .pl-row{
+    display:flex; align-items:center; gap:9px;
+    padding:8px 9px 8px 8px; border-radius:9px; margin:2px 0;
+    background:var(--pl-panel2); border:1px solid transparent;
+    position:relative; overflow:hidden;
+  }
+  .pl-row:hover{ border-color:var(--pl-line); }
+  .pl-bar{ position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--pl-accent); }
+  .pl-group.overdue .pl-bar{ background:var(--pl-warn); }
+  .pl-check{
+    flex:0 0 auto; width:18px; height:18px; border-radius:5px;
+    border:2px solid var(--pl-muted); background:transparent; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    color:#fff; font-size:12px; line-height:1; padding:0; margin-left:2px;
+  }
+  .pl-check:hover{ border-color:var(--pl-accent); }
+  .pl-check.done{ background:var(--pl-ok); border-color:var(--pl-ok); }
+  .pl-nm{ flex:1 1 auto; min-width:0; font-size:13px; color:var(--pl-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pl-row.done .pl-nm{ text-decoration:line-through; color:var(--pl-muted); }
+  .pl-row.done .pl-bar{ opacity:.35; }
+  .pl-del{
+    flex:0 0 auto; background:none; border:none; color:var(--pl-muted); cursor:pointer;
+    font-size:15px; padding:4px 6px; border-radius:6px; line-height:1;
+  }
+  .pl-del:hover{ color:#f04d4d; background:#2b3645; }
+
+  .pl-empty{ color:var(--pl-muted); text-align:center; font-size:13.5px; padding:34px 24px; line-height:1.6; }
+  .pl-empty .em{ font-size:34px; display:block; margin-bottom:8px; }
+  .pl-empty b{ color:var(--pl-text); }
+
+  /* light theme */
+  :root[data-theme="light"] .pl-panel{background:rgba(255,255,255,.94);color:#17202a;border-color:#d3dae2}
+  :root[data-theme="light"] .pl-head{border-color:#d3dae2;background:rgba(240,243,247,.7)}
+  :root[data-theme="light"] .pl-add,:root[data-theme="light"] .pl-summary{border-color:#d3dae2}
+  :root[data-theme="light"] .pl-hb{background:#eef1f5;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .pl-hb:hover{background:#e6ebf1}
+  :root[data-theme="light"] .pl-x:hover{color:#17202a;background:#e6ebf1}
+  :root[data-theme="light"] .pl-in{background:#f4f6f9;border-color:#d3dae2;color:#17202a}
+  :root[data-theme="light"] .pl-date{color-scheme:light}
+  :root[data-theme="light"] .pl-in::placeholder{color:#8b97a5}
+  :root[data-theme="light"] .pl-summary .pl-counts b{color:#17202a}
+  :root[data-theme="light"] .pl-row{background:#f4f6f9}
+  :root[data-theme="light"] .pl-row:hover{border-color:#d3dae2}
+  :root[data-theme="light"] .pl-nm{color:#17202a}
+  :root[data-theme="light"] .pl-ghead{background:rgba(255,255,255,.96)}
+  :root[data-theme="light"] .pl-ghead .pl-gcount{color:#17202a}
+  :root[data-theme="light"] .pl-del:hover{background:#e6ebf1}
+  :root[data-theme="light"] .pl-empty b{color:#17202a}
+</style>
+</head>
+<body>
+  <div class="pl-overlay collapsed" id="plOverlay">
+    <div class="pl-panel" role="dialog" aria-label="Toggle Plan">
+      <div class="pl-head">
+        <span class="pl-title"><span class="dot">◈</span> Toggle Plan</span>
+        <button class="pl-hb" id="plExport" title="Export data (.json)">⤓</button>
+        <button class="pl-hb" id="plImport" title="Import data (.json)">⤒</button>
+        <input type="file" id="plFile" accept="application/json,.json" hidden />
+        <button class="pl-hb" id="plTheme" title="Day / night">☀️</button>
+        <button class="pl-hb" id="plMax" title="Maximise" aria-label="Maximise">⤢</button>
+        <button class="pl-x" id="plClose" title="Minimise" aria-label="Minimise">▾</button>
+      </div>
+
+      <div class="pl-add">
+        <input class="pl-in pl-name" id="plName" type="text" placeholder="Add a task…" autocomplete="off" />
+        <input class="pl-in pl-date" id="plDate" type="date" />
+        <button class="pl-addbtn" id="plAdd">Add</button>
+      </div>
+
+      <div class="pl-summary">
+        <span class="pl-counts" id="plCounts"></span>
+        <label class="pl-hide"><input type="checkbox" id="plHide" /> Hide completed</label>
+      </div>
+
+      <div class="pl-list" id="plList"></div>
+    </div>
+    <button class="pl-fab" id="plFab" title="Toggle Plan" aria-label="Open Toggle Plan">◈</button>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const KEY = "toggle-plan:v1";
+  const THEME_KEY = "toggle-plan:theme";
+
+  // ---- state ----
+  const st = { tasks:[], hideDone:false }; // task: {id,name,dateISO,done,order}
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const d = JSON.parse(raw);
+        if(Array.isArray(d.tasks)) st.tasks = d.tasks;
+        st.hideDone = !!d.hideDone;
+      }
+    }catch(_){}
+  }
+  let save = function(){
+    try{ localStorage.setItem(KEY, JSON.stringify({tasks:st.tasks, hideDone:st.hideDone})); }catch(_){}
+  };
+
+  // ---- date helpers ----
+  const pad = (n) => String(n).padStart(2,"0");
+  function iso(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function todayISO(){ return iso(new Date()); }
+  function offsetISO(days){ const d=new Date(); d.setDate(d.getDate()+days); return iso(d); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  function label(dateISO){
+    const t = todayISO();
+    if(dateISO === t) return "Today";
+    if(dateISO === offsetISO(1)) return "Tomorrow";
+    const p = dateISO.split("-").map(Number);
+    const d = new Date(p[0], p[1]-1, p[2]);
+    return d.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
+  }
+
+  // ---- actions ----
+  function add(){
+    const name = $("plName").value.trim();
+    if(!name) return;
+    const dateISO = $("plDate").value || todayISO();
+    const order = st.tasks.reduce((m,t)=>Math.max(m, t.order||0), 0) + 1;
+    st.tasks.push({ id:uid(), name, dateISO, done:false, order });
+    $("plName").value = "";
+    save(); render(); $("plName").focus();
+  }
+  function toggleDone(id){ const t = st.tasks.find(x=>x.id===id); if(t){ t.done = !t.done; save(); render(); } }
+  function del(id){ st.tasks = st.tasks.filter(x=>x.id!==id); save(); render(); }
+
+  // ---- counts ----
+  function counts(){
+    const t = todayISO();
+    let today=0, upcoming=0, overdue=0;
+    st.tasks.forEach(x => { if(x.done) return;
+      if(x.dateISO < t) overdue++;
+      else if(x.dateISO === t) today++;
+      else upcoming++;
+    });
+    return { today, upcoming, overdue };
+  }
+
+  // ---- render ----
+  function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  function render(){
+    // summary
+    const c = counts();
+    let html = '<b>'+c.today+'</b> today · <b>'+c.upcoming+'</b> upcoming';
+    if(c.overdue) html += ' · <span class="pl-over">'+c.overdue+' overdue</span>';
+    $("plCounts").innerHTML = html;
+    $("plHide").checked = st.hideDone;
+
+    const list = $("plList");
+    list.innerHTML = "";
+
+    let visible = st.tasks.slice();
+    if(st.hideDone) visible = visible.filter(t=>!t.done);
+
+    if(!visible.length){
+      const e = document.createElement("div");
+      e.className = "pl-empty";
+      e.innerHTML = st.tasks.length
+        ? '<span class="em">✅</span><b>All clear</b><br>Completed tasks are hidden.'
+        : '<span class="em">🗓️</span><b>No tasks yet</b><br>Add one above with a date and press <b>Enter</b>.';
+      list.appendChild(e);
+      return;
+    }
+
+    const t = todayISO();
+    // overdue = past-due tasks; date groups for today & future
+    const overdue = [];
+    const byDate = {};
+    visible.forEach(x => {
+      if(x.dateISO < t) overdue.push(x);
+      else (byDate[x.dateISO] = byDate[x.dateISO] || []).push(x);
+    });
+
+    const bySeq = (a,b) => (a.order||0)-(b.order||0);
+
+    if(overdue.length){
+      overdue.sort((a,b)=> a.dateISO<b.dateISO?-1:a.dateISO>b.dateISO?1:bySeq(a,b));
+      list.appendChild(groupEl("Overdue", overdue, true));
+    }
+    Object.keys(byDate).sort().forEach(key => {
+      byDate[key].sort(bySeq);
+      list.appendChild(groupEl(label(key), byDate[key], false));
+    });
+  }
+
+  function groupEl(heading, rows, isOverdue){
+    const g = document.createElement("div");
+    g.className = "pl-group" + (isOverdue ? " overdue" : "");
+    const head = document.createElement("div");
+    head.className = "pl-ghead";
+    head.innerHTML = '<span>'+esc(heading)+'</span><span class="pl-gcount">'+rows.length+'</span>';
+    g.appendChild(head);
+    rows.forEach(x => g.appendChild(rowEl(x)));
+    return g;
+  }
+
+  function rowEl(x){
+    const row = document.createElement("div");
+    row.className = "pl-row" + (x.done ? " done" : "");
+    const bar = document.createElement("span"); bar.className = "pl-bar";
+    const chk = document.createElement("button");
+    chk.className = "pl-check" + (x.done ? " done" : "");
+    chk.title = x.done ? "Mark not done" : "Mark done";
+    chk.setAttribute("aria-pressed", x.done ? "true" : "false");
+    chk.textContent = x.done ? "✓" : "";
+    chk.onclick = () => toggleDone(x.id);
+    const nm = document.createElement("span");
+    nm.className = "pl-nm"; nm.textContent = x.name; nm.title = x.name;
+    const dl = document.createElement("button");
+    dl.className = "pl-del"; dl.title = "Delete"; dl.textContent = "✕";
+    dl.onclick = () => del(x.id);
+    row.appendChild(bar); row.appendChild(chk); row.appendChild(nm); row.appendChild(dl);
+    return row;
+  }
+
+  // ---- open / close / maximise ----
+  const overlay = $("plOverlay");
+  const setOpen = (open) => {
+    overlay.classList.toggle("collapsed", !open);
+    $("plFab").style.display = open ? "none" : "block";
+    if(window.parent !== window) window.parent.postMessage({type: open ? "toggleplan:open" : "toggleplan:close"}, "*");
+    post({ type: open ? "open" : "close" }); // module-contract event
+    if(open) $("plName").focus();
+  };
+  $("plFab").onclick = () => setOpen(true);
+  $("plClose").onclick = () => setOpen(false);
+
+  function setExpanded(exp){
+    overlay.classList.toggle("expanded", exp);
+    $("plMax").textContent = exp ? "⤡" : "⤢";
+    $("plMax").title = exp ? "Restore" : "Maximise";
+  }
+  $("plMax").onclick = () => setExpanded(!overlay.classList.contains("expanded"));
+
+  // ---- theme ----
+  const applyTheme = (t) => { document.documentElement.setAttribute("data-theme", t); $("plTheme").textContent = t==="light" ? "🌙" : "☀️"; };
+  let theme = "dark"; try{ theme = localStorage.getItem(THEME_KEY) || "dark"; }catch(_){}
+  applyTheme(theme);
+  $("plTheme").onclick = () => { theme = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light"; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(_){} };
+
+  // ---- input handlers ----
+  $("plAdd").onclick = add;
+  $("plName").addEventListener("keydown", (ev) => { if(ev.key==="Enter"){ ev.preventDefault(); add(); } });
+  $("plDate").addEventListener("keydown", (ev) => { if(ev.key==="Enter"){ ev.preventDefault(); add(); } });
+  $("plHide").onchange = () => { st.hideDone = $("plHide").checked; save(); render(); };
+
+  /* =========================================================================
+     MODULE CONTRACT — portability layer shared across Toggle modules.
+     ========================================================================= */
+  const MODULE_ID = "toggle-plan";
+  const MODULE_NAME = "Toggle Plan";
+  const MODULE_VERSION = "1.0";
+  const MODULE_ACCENT = "#5b6ffa";
+  const MSG_NS = "toggle-module";
+
+  function exportData(){
+    return {
+      module: MODULE_ID,
+      version: MODULE_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: { tasks: st.tasks.slice(), hideDone: st.hideDone }
+    };
+  }
+  function importData(obj){
+    if(!obj || typeof obj !== "object") return false;
+    let d = ("data" in obj && obj.data && typeof obj.data === "object") ? obj.data : obj;
+    if(!Array.isArray(d.tasks)) return false;
+    let seq = 0;
+    st.tasks = d.tasks.filter(x => x && typeof x === "object" && typeof x.name === "string").map(x => ({
+      id: x.id || uid(),
+      name: x.name,
+      dateISO: /^\d{4}-\d{2}-\d{2}$/.test(x.dateISO) ? x.dateISO : todayISO(),
+      done: !!x.done,
+      order: typeof x.order === "number" ? x.order : (++seq)
+    }));
+    if("hideDone" in d) st.hideDone = !!d.hideDone;
+    save(); render();
+    return true;
+  }
+
+  // change notifications — wrap save()
+  const _save = save;
+  save = function(){ _save(); notifyChange(); };
+  let _notifyPending = false;
+  function notifyChange(){
+    if(_notifyPending) return; _notifyPending = true;
+    Promise.resolve().then(() => {
+      _notifyPending = false;
+      post({ type:"change" });
+      try{ window.dispatchEvent(new CustomEvent("togglemodule:change", { detail:{ module: MODULE_ID } })); }catch(_){}
+      changeCbs.forEach(cb => { try{ cb(MODULE_ID); }catch(_){} });
+    });
+  }
+  const changeCbs = [];
+
+  function post(msg){ if(window.parent && window.parent !== window){ try{ window.parent.postMessage(Object.assign({ source:MSG_NS, module:MODULE_ID }, msg), "*"); }catch(_){} } }
+  function postReady(){ post({ type:"ready", name:MODULE_NAME, version:MODULE_VERSION, accent:MODULE_ACCENT }); }
+
+  window.addEventListener("message", (ev) => {
+    const m = ev.data;
+    if(!m || typeof m !== "object" || typeof m.type !== "string") return;
+    let t = m.type;
+    if(t.indexOf("module:") === 0) t = t.slice(7);
+    else if(!["open","close","setTheme","export","import","ping"].includes(t)) return;
+    switch(t){
+      case "open": setOpen(true); break;
+      case "close": setOpen(false); break;
+      case "setTheme": if(m.theme==="light"||m.theme==="dark"){ applyTheme(m.theme); try{ localStorage.setItem(THEME_KEY, m.theme); }catch(_){} theme=m.theme; } break;
+      case "export": post({ type:"export", data: exportData() }); break;
+      case "import": if(importData(m.data)) post({ type:"change" }); break;
+      case "ping": postReady(); break;
+    }
+  });
+
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules[MODULE_ID] = {
+    id: MODULE_ID, name: MODULE_NAME, version: MODULE_VERSION, accent: MODULE_ACCENT,
+    open(){ setOpen(true); }, close(){ setOpen(false); },
+    setTheme(t){ if(t==="light"||t==="dark"){ applyTheme(t); theme=t; try{ localStorage.setItem(THEME_KEY,t); }catch(_){} } },
+    exportData(){ return exportData(); },
+    importData(o){ return importData(o); },
+    on(cb){ if(typeof cb==="function") changeCbs.push(cb); }
+  };
+
+  $("plExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = MODULE_ID + "-" + todayISO() + ".json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  };
+  $("plImport").onclick = () => $("plFile").click();
+  $("plFile").onchange = (ev) => {
+    const f = ev.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try{ importData(JSON.parse(r.result)); }catch(_){ alert("Could not read that file — expected Toggle Plan JSON."); } };
+    r.readAsText(f); ev.target.value = "";
+  };
+
+  // ---- boot ----
+  load();
+  $("plDate").value = todayISO();
+  render();
+
+  const params = new URLSearchParams(location.search);
+  if(params.get("full") === "1") setExpanded(true);
+  setOpen(false);      // start docked/minimised — just the launcher shows
+  postReady();         // announce module to any host
+})();
+</script>
+</body>
+</html>

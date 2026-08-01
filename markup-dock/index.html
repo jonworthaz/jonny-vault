@@ -300,6 +300,19 @@
   ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>e.preventDefault()));
   dz.addEventListener("drop",e=>{ e.preventDefault(); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
   window.addEventListener("paste",e=>{ for(const it of (e.clipboardData?.items||[])) if(it.type.startsWith("image/")){ loadFile(it.getAsFile()); break; } });
+
+  // ---- module contract (so a host superapp can drive this widget) ----
+  const post = (m) => { try{ if(window.parent!==window) window.parent.postMessage(Object.assign({source:"toggle-module",module:"markup"},m),"*"); }catch(_){} };
+  window.ToggleModules = window.ToggleModules || {};
+  window.ToggleModules["markup"] = { id:"markup", name:"Quick MarkUp", version:"1.0", accent:"#ff5a3c",
+    open:()=>setOpen(true), close:()=>setOpen(false), setTheme:t=>applyTheme(t),
+    exportData:()=>({module:"markup",version:"1.0",note:"image tool — use Save/Copy for output"}), importData:()=>{} };
+  window.addEventListener("message",e=>{ const d=e&&e.data; if(!d||typeof d.type!=="string") return;
+    const t=d.type.replace(/^module:/,"");
+    if(t==="open") setOpen(true); else if(t==="close") setOpen(false);
+    else if(t==="setTheme"&&(d.theme==="light"||d.theme==="dark")) applyTheme(d.theme);
+    else if(t==="ping") post({type:"ready",name:"Quick MarkUp",version:"1.0",accent:"#ff5a3c"}); });
+  post({type:"ready",name:"Quick MarkUp",version:"1.0",accent:"#ff5a3c"});
 })();
 </script>
 </body>
