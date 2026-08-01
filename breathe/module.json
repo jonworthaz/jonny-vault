@@ -1,0 +1,9 @@
+{
+  "id": "breathe",
+  "name": "Breathe & Chill",
+  "version": "1.0",
+  "accent": "#38bdf8",
+  "entry": "index.html",
+  "capabilities": ["open", "close", "setTheme"],
+  "messageNamespace": "toggle-module"
+}
