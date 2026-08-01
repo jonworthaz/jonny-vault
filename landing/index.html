@@ -122,6 +122,20 @@
       </div>
     </div>
 
+    <!-- embed the mini overlay -->
+    <div class="compare" style="margin-top:20px">
+      <h3>Embed the mini overlay in your own app</h3>
+      <div style="padding:16px 20px;color:var(--muted);font-size:14px;line-height:1.55">
+        A compact, ~90%-opacity <b style="color:var(--text)">Quick MarkUp</b> overlay — core tools only —
+        to drop into a larger app.
+        <a href="./markup-mini/" style="color:var(--accent-2)">Open the mini overlay →</a>
+        <pre style="margin:12px 0 0;padding:12px 14px;background:#0c1116;border:1px solid var(--line);border-radius:8px;overflow-x:auto;color:#cbd5e1;font-size:12.5px"><code>&lt;iframe src="https://jonworthaz.github.io/jonny-vault/markup-mini/"
+        style="position:fixed;inset:0;border:0;width:100%;height:100%;z-index:9999"
+        allow="clipboard-write"&gt;&lt;/iframe&gt;</code></pre>
+        <div style="margin-top:8px;font-size:12.5px">The close (✕) button posts <code>window.parent.postMessage({type:"quickmarkup:close"})</code> so the host can remove the iframe.</div>
+      </div>
+    </div>
+
     <!-- difference table -->
     <div class="compare">
       <h3>What's the difference?</h3>
