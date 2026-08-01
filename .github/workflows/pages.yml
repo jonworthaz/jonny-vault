@@ -1,13 +1,7 @@
 name: Deploy MarkUp tools (Pages)
 
 # Runs on the repository's DEFAULT branch (the only ref GitHub Pages allows to
-# deploy via Actions). Checks out `main` and publishes:
-#   /                          -> landing page (landing/)
-#   /markup/                   -> v1 single-image annotator (image-annotator/)
-#   /damage-assessment/        -> v2 multi-photo damage assessment (damage-assessment/)
-#   /damage-assessment-large/  -> v3 high-visibility version (damage-assessment-large/)
-#   /markup-mini/              -> mini overlay build (markup-mini/)
-#   /markup-dock/              -> corner-docked desktop widget (markup-dock/)
+# deploy via Actions). Checks out `main` and publishes each app under its path.
 
 on:
   workflow_dispatch:
@@ -37,16 +31,13 @@ jobs:
         run: |
           mkdir -p _site
           cp -r landing/. _site/
-          mkdir -p _site/markup
-          cp -r image-annotator/. _site/markup/
-          mkdir -p _site/damage-assessment
-          cp -r damage-assessment/. _site/damage-assessment/
-          mkdir -p _site/damage-assessment-large
-          cp -r damage-assessment-large/. _site/damage-assessment-large/
-          mkdir -p _site/markup-mini
-          cp -r markup-mini/. _site/markup-mini/
-          mkdir -p _site/markup-dock
-          cp -r markup-dock/. _site/markup-dock/
+          for app in image-annotator:markup damage-assessment:damage-assessment \
+                     damage-assessment-large:damage-assessment-large \
+                     markup-mini:markup-mini markup-dock:markup-dock \
+                     toggle-track:toggle-track toggle-plan:toggle-plan superapp:superapp; do
+            src="${app%%:*}"; dst="${app##*:}"
+            mkdir -p "_site/$dst"; cp -r "$src/." "_site/$dst/"
+          done
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
