@@ -34,7 +34,10 @@ jobs:
           for app in image-annotator:markup damage-assessment:damage-assessment \
                      damage-assessment-large:damage-assessment-large \
                      markup-mini:markup-mini markup-dock:markup-dock \
-                     toggle-track:toggle-track toggle-plan:toggle-plan superapp:superapp; do
+                     toggle-track:toggle-track toggle-plan:toggle-plan superapp:superapp \
+                     quick-crop:quick-crop quick-summary:quick-summary \
+                     file-converter:file-converter video-stabiliser:video-stabiliser \
+                     breathe:breathe; do
             src="${app%%:*}"; dst="${app##*:}"
             mkdir -p "_site/$dst"; cp -r "$src/." "_site/$dst/"
           done
