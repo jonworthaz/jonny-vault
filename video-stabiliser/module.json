@@ -1,0 +1,18 @@
+{
+  "id": "video-stabiliser",
+  "name": "Video Stabiliser",
+  "version": "1.0",
+  "accent": "#12b5a6",
+  "entry": "index.html",
+  "capabilities": [
+    "load-video",
+    "shake-detection-offline",
+    "stabilise-ffmpeg-wasm",
+    "before-after-compare",
+    "library-indexeddb",
+    "export-import",
+    "theme-toggle",
+    "ai-optional-hook"
+  ],
+  "messageNamespace": "toggle-module"
+}
