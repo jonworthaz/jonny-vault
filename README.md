@@ -47,6 +47,7 @@ Self-contained, zero-dependency web tools that live alongside the playbook
 | [**Architect**](./agent-architect/) | Agent creation wizard: objective/JD → best-practice agent spec ([+ no-UI prompt](./agent-architect-prompt.md)) |
 | [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
 | [**MarkUp**](./image-annotator/) | Image annotation & markup |
+| [**Base Reality**](./base-reality/) | Design-first website sales: posted access codes, sites that build themselves on login, claim flow + mail-out ops |
 
 ## The one-line thesis
 
