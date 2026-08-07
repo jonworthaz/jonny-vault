@@ -48,6 +48,12 @@ Self-contained, zero-dependency web tools that live alongside the playbook
 | [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
 | [**MarkUp**](./image-annotator/) | Image annotation & markup |
 
+## Adjacent playbooks
+
+| Playbook | What it is |
+|---|---|
+| [**base-reality**](./base-reality/) | Local web-design business: post traders a login code that renders their own near-finished website on the spot; build for real only on a "yes". A local, physical-distribution counterpart to the geo-agnostic model above. |
+
 ## The one-line thesis
 
 > Own the customer and the recurring charge. Automate or outsource everything else.
