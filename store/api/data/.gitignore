@@ -1,0 +1,3 @@
+# Never commit real customer orders
+orders.jsonl
+*.jsonl

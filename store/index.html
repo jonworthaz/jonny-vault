@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Store</title>
+  <meta name="description" content="A lightweight online store powered by Lumen Commerce." />
+  <link rel="stylesheet" href="storefront.css" />
+</head>
+<body>
+  <div class="topbar" id="topbar"></div>
+
+  <header class="site">
+    <div class="wrap head">
+      <button class="iconbtn menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+      <a class="brand" href="#/" id="brand">
+        <span class="mark">◆</span><span id="brandName">Store</span>
+      </a>
+      <nav class="main" id="mainNav"></nav>
+      <div class="searchbox">
+        <input type="search" id="searchInput" placeholder="Search products…" />
+      </div>
+      <div class="head-actions">
+        <button class="iconbtn" id="cartBtn" aria-label="Cart">
+          🛒 <span class="cart-count" id="cartCount" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="site">
+    <div class="wrap foot" id="footer"></div>
+    <div class="subfoot" id="subfoot"></div>
+  </footer>
+
+  <!-- Cart drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="cartDrawer" aria-label="Shopping cart">
+    <div class="dhead">
+      <h3>Your cart</h3>
+      <button class="close" id="cartClose" aria-label="Close">×</button>
+    </div>
+    <div class="ditems" id="cartItems"></div>
+    <div class="dfoot" id="cartFoot"></div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="catalog.js"></script>
+  <script src="shared.js"></script>
+  <script src="storefront.js"></script>
+</body>
+</html>
