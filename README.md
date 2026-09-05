@@ -35,6 +35,7 @@ warning letter, FTC scrutiny, and class actions. We copy the engine, not the fra
 | 08 | [Roadmap](./08-roadmap.md) | 90-day phased build, with build-then-decide gates |
 | 09 | [Idea Board](./09-idea-board.md) | Running board of scored product ideas — the on-ramp to the niche sprint |
 | 10 | [Build & Tooling Board](./10-build-and-tooling-board.md) | Internal tooling / Claude Home workflow ideas, scored on leverage |
+| 11 | [Crypto Trading Desk](./11-crypto-trading-desk.md) | What we learned testing an AI crypto trading bot against real data |
 
 ## The tools
 
@@ -47,6 +48,7 @@ Self-contained, zero-dependency web tools that live alongside the playbook
 | [**Architect**](./agent-architect/) | Agent creation wizard: objective/JD → best-practice agent spec ([+ no-UI prompt](./agent-architect-prompt.md)) |
 | [**Forge**](./workflow-builder/) | Visual Claude Code workflow builder; generates real config |
 | [**MarkUp**](./image-annotator/) | Image annotation & markup |
+| [**Crypto Desk**](./crypto-desk/) | Evidence-first research platform for crypto strategies — built to be able to say "no edge" |
 
 ## The one-line thesis
 
