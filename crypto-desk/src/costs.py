@@ -22,9 +22,18 @@ class Venue:
     spread_bps: float       # half-spread paid crossing, per side
     impact_bps: float       # expected price impact at our size, per side
     gas_usd: float = 0.0    # fixed on-chain cost per side
-    funding_bps_day: float = 0.0  # perp funding paid per day of exposure
+    funding_bps_day: float = 0.0  # carry paid per day of exposure
+    # On spot, a long is owned and costs nothing to hold; only a short borrows.
+    # On a perp, funding is paid on any open position. Getting this wrong taxes
+    # the long-only variants that win most folds.
+    carry_on_short_only: bool = False
     can_short: bool = True
     min_notional_usd: float = 0.0
+
+    def carry_fraction(self, position: float) -> float:
+        """Daily carry as a fraction of equity for a position of size `position`."""
+        exposure = max(-position, 0.0) if self.carry_on_short_only else abs(position)
+        return self.funding_bps_day * 1e-4 * exposure
 
     @property
     def cost_bps_per_side(self) -> float:
@@ -58,13 +67,16 @@ class Venue:
 # small size. They are deliberately pessimistic: a backtest that only works under
 # optimistic costs is not a strategy, it is a wish.
 VENUES: dict[str, Venue] = {
-    # funding_bps_day on the shortable spot venues represents margin borrow at
-    # roughly 7% APR. Leaving it at zero silently subsidised every short-capable
-    # variant in the selection contest.
+    # Margin borrow on the shortable spot venues, charged on the short leg only.
+    # 7% APR / 365 = 0.01918% per day = 1.918 bps/day. An earlier version used
+    # 0.02 bps/day, which is 0.073% APR -- 96x too small, and it left shorts
+    # effectively free while still silently taxing longs.
     "cex_maker": Venue("CEX spot, maker", fee_bps=10, spread_bps=0, impact_bps=1,
-                       funding_bps_day=0.02, min_notional_usd=10.0),
+                       funding_bps_day=1.918, carry_on_short_only=True,
+                       min_notional_usd=10.0),
     "cex_taker": Venue("CEX spot, taker", fee_bps=20, spread_bps=1, impact_bps=2,
-                       funding_bps_day=0.02, min_notional_usd=10.0),
+                       funding_bps_day=1.918, carry_on_short_only=True,
+                       min_notional_usd=10.0),
     "cex_spot_long_only": Venue(
         "CEX spot, taker, long-only", fee_bps=20, spread_bps=1, impact_bps=2,
         can_short=False, min_notional_usd=10.0,

@@ -59,8 +59,8 @@ def run_backtest(
         turnover = pos.diff()
         turnover.iloc[0] = pos.iloc[0]
         turnover = turnover.abs()
-        cost_s = (venue.cost_bps_per_side * 1e-4 * turnover
-                  + venue.funding_bps_day * 1e-4 * pos.abs()).rename("cost")
+        carry = pos.map(venue.carry_fraction)
+        cost_s = (venue.cost_bps_per_side * 1e-4 * turnover + carry).rename("cost")
         gross_s = (pos * fwd).rename("gross")
         net_s = (gross_s - cost_s).rename("net")
         eq_s = (starting_equity * (1.0 + net_s).cumprod()).rename("equity")
@@ -70,7 +70,7 @@ def run_backtest(
 
     equity = starting_equity
     prev_pos = 0.0
-    eq_path, gross_l, cost_l = [], [], []
+    eq_path, gross_l, cost_l, held_l = [], [], [], []
 
     for date, p in pos.items():
         turnover = abs(p - prev_pos)
@@ -88,8 +88,7 @@ def run_backtest(
         # much of it was traded.
         variable = venue.cost_bps_per_side * 1e-4 * turnover
         fixed = (venue.gas_usd / equity) if turnover > 1e-12 else 0.0
-        funding = venue.funding_bps_day * 1e-4 * abs(p)
-        cost = variable + fixed + funding
+        cost = variable + fixed + venue.carry_fraction(p)
         gross = p * fwd.loc[date]
         net = gross - cost
 
@@ -97,6 +96,10 @@ def run_backtest(
         eq_path.append(equity)
         gross_l.append(gross)
         cost_l.append(cost)
+        # Record what was actually held, not what was requested. When the
+        # minimum-notional rule suppresses a trade these differ, and every
+        # exposure and accuracy metric is computed from this series.
+        held_l.append(p)
         prev_pos = p
         if equity <= 0:
             break
@@ -107,7 +110,8 @@ def run_backtest(
     net_s = (gross_s - cost_s).rename("net")
     eq_s = pd.Series(eq_path, index=idx, name="equity")
 
-    res = BacktestResult(net_s, gross_s, cost_s, pos.loc[idx], eq_s, venue.name)
+    held_s = pd.Series(held_l, index=idx, name="position")
+    res = BacktestResult(net_s, gross_s, cost_s, held_s, eq_s, venue.name)
     res.metrics = compute_metrics(res, starting_equity)
     return res
 

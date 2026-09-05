@@ -57,48 +57,63 @@ Rolling 1095d training window, 90d test blocks, 5d embargo. Parameters chosen on
 
 Before reading any result below: this is **always long, volatility-targeted, no forecast of any kind**. It contains zero predictive information.
 
-> **Control OOS Sharpe: 1.065** (CAGR 35.0%, max DD -50.0%)
+> **Control OOS Sharpe: 1.091** (CAGR 33.4%, max DD -50.0%)
 
 Any strategy that does not beat this number has a signal that contributes nothing. This clause was added after an adversarial review found the first version of this gate certifying beta as alpha.
 
+Trial-Sharpe variance pooled across 25 configurations: 1.162e-03. Expected best Sharpe under zero skill at N=500: **1.99**.
+
 ### Results
 
-| Strategy | Venue | Sharpe | 95% CI | Beta | Alpha (t) | DSR | PBO | 24m Sharpe | Verdict |
-|---|---|---|---|---|---|---|---|---|---|
-| no_signal_ablation | cex_maker | 1.08 | [0.39, 1.84] | 0.47 | +4.1% (+0.77) | 0.999 | 0.49 | +0.25 | REJECT: edge alive in last 24m; alpha t > 2.5 vs buy-and-hold |
-| no_signal_ablation | cex_taker | 1.07 | [0.37, 1.83] | 0.47 | +3.5% (+0.68) | 0.999 | 0.50 | +0.23 | REJECT: PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| buy_and_hold | cex_maker | 1.05 | [0.44, 1.76] | 1.00 | -0.5% (-8.31) | 0.659 | n/a | +0.59 | REJECT: DSR > 0.95; PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| buy_and_hold | cex_taker | 1.04 | [0.43, 1.75] | 1.00 | -1.0% (-7.70) | 0.650 | n/a | +0.58 | REJECT: DSR > 0.95; PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| no_signal_ablation | base_amm_realistic | 1.04 | [0.35, 1.81] | 0.48 | +2.7% (+0.53) | 0.999 | 0.51 | +0.21 | REJECT: PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| buy_and_hold | base_amm_realistic | 1.04 | [0.42, 1.74] | 1.00 | -1.7% (-7.15) | 0.638 | n/a | +0.57 | REJECT: DSR > 0.95; PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| trend_risk_managed | cex_maker | 0.92 | [0.13, 1.82] | 0.32 | +4.7% (+0.66) | 0.686 | 0.36 | +0.33 | REJECT: DSR > 0.95; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| trend_risk_managed | base_amm_realistic | 0.91 | [0.18, 1.76] | 0.32 | +3.6% (+0.54) | 0.950 | 0.24 | +0.21 | REJECT: DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| donchian | base_amm_realistic | 0.90 | [0.21, 1.56] | 0.45 | +8.4% (+0.81) | 0.959 | 0.27 | +0.40 | REJECT: drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| sma_cross | base_amm_realistic | 0.90 | [0.27, 1.59] | 0.69 | +0.8% (+0.08) | 0.992 | 0.51 | +0.20 | REJECT: PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| trend_risk_managed | cex_taker | 0.87 | [0.08, 1.77] | 0.32 | +3.3% (+0.47) | 0.575 | 0.34 | +0.28 | REJECT: DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| sma_cross | cex_maker | 0.83 | [0.20, 1.52] | 0.65 | +1.1% (+0.09) | 0.765 | 0.49 | +0.27 | REJECT: DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| ts_momentum | base_amm_realistic | 0.80 | [0.14, 1.56] | 0.62 | -2.0% (-0.19) | 0.976 | 0.56 | +0.46 | REJECT: PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| sma_cross | cex_taker | 0.78 | [0.14, 1.47] | 0.66 | -2.0% (-0.18) | 0.704 | 0.50 | +0.24 | REJECT: DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| ts_momentum | cex_maker | 0.64 | [-0.07, 1.46] | 0.57 | -4.7% (-0.37) | 0.429 | 0.56 | +0.57 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| ts_momentum | cex_taker | 0.61 | [-0.12, 1.43] | 0.58 | -8.0% (-0.66) | 0.341 | 0.60 | +0.53 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| donchian | cex_taker | 0.54 | [-0.24, 1.27] | 0.23 | +14.8% (+0.87) | 0.785 | 0.67 | -0.12 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| donchian | cex_maker | 0.53 | [-0.24, 1.27] | 0.24 | +13.7% (+0.80) | 0.756 | 0.60 | -0.07 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| mean_reversion | base_amm_realistic | 0.00 | [-0.44, 0.55] | 0.17 | -11.8% (-1.46) | 0.006 | 0.26 | -0.56 | REJECT: Sharpe CI excludes 0; DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| mean_reversion | cex_maker | -0.07 | [-0.51, 0.38] | 0.06 | -6.5% (-0.66) | 0.000 | 0.20 | -0.72 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| mean_reversion | cex_taker | -0.34 | [-0.79, 0.11] | 0.06 | -15.4% (-1.59) | 0.000 | 0.13 | -0.69 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| random | cex_maker | -0.69 | [-1.34, -0.07] | 0.07 | -50.9% (-2.44) | 0.000 | 0.57 | -2.20 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| random | base_amm_realistic | -0.89 | [-1.54, -0.24] | 0.53 | -81.4% (-7.85) | 0.000 | 0.61 | -2.84 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
-| random | cex_taker | -1.34 | [-1.99, -0.74] | 0.08 | -95.1% (-4.57) | 0.000 | 0.57 | -3.25 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown > -50%; edge alive in last 24m; alpha t > 2.5 vs buy-and-hold; beats no-signal ablation |
+`alpha t` is versus buy-and-hold; `span t` is versus the no-signal control.
 
-**Read the alpha column, not the Sharpe column.** A high Sharpe with beta near 1 and a t-statistic below 2 is the underlying asset, not a strategy.
+| Strategy | Venue | Sharpe | 95% CI | Beta | Alpha (t) | Span t | DSR | PBO | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| no_signal_ablation | cex_maker | 1.10 | [0.42, 1.87] | 0.43 | +4.6% (+0.97) | n/a | 0.002 | 0.49 | REJECT: DSR > 0.95; alpha t > 2.5 vs buy-and-hold |
+| no_signal_ablation | cex_taker | 1.09 | [0.40, 1.86] | 0.43 | +4.1% (+0.88) | n/a | 0.002 | 0.50 | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold |
+| no_signal_ablation | base_amm_realistic | 1.07 | [0.37, 1.83] | 0.43 | +3.3% (+0.70) | n/a | 0.001 | 0.51 | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold |
+| buy_and_hold | cex_maker | 1.05 | [0.44, 1.76] | 1.00 | -0.5% (n/a) | +0.47 | 0.001 | n/a | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| buy_and_hold | cex_taker | 1.05 | [0.43, 1.75] | 1.00 | -0.9% (n/a) | +0.42 | 0.001 | n/a | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| trend_risk_managed | cex_maker | 1.04 | [0.30, 1.89] | 0.32 | +7.2% (+1.06) | +0.81 | 0.002 | 0.36 | REJECT: DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| buy_and_hold | base_amm_realistic | 1.04 | [0.42, 1.74] | 1.00 | -1.7% (n/a) | +0.33 | 0.001 | n/a | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| trend_risk_managed | cex_taker | 0.99 | [0.26, 1.85] | 0.32 | +5.9% (+0.87) | +0.61 | 0.001 | 0.34 | REJECT: DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| donchian | base_amm_realistic | 0.92 | [0.23, 1.58] | 0.44 | +9.7% (+0.93) | +1.07 | 0.000 | 0.27 | REJECT: DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| trend_risk_managed | base_amm_realistic | 0.91 | [0.18, 1.76] | 0.32 | +3.6% (+0.54) | +0.27 | 0.000 | 0.24 | REJECT: DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| sma_cross | base_amm_realistic | 0.91 | [0.28, 1.59] | 0.69 | +1.2% (+0.13) | +0.60 | 0.000 | 0.51 | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| ts_momentum | base_amm_realistic | 0.89 | [0.20, 1.62] | 0.63 | +2.6% (+0.25) | +0.47 | 0.000 | 0.56 | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| sma_cross | cex_maker | 0.85 | [0.19, 1.54] | 0.67 | +0.3% (+0.03) | +0.54 | 0.000 | 0.49 | REJECT: DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| sma_cross | cex_taker | 0.80 | [0.13, 1.50] | 0.68 | -2.7% (-0.26) | +0.30 | 0.000 | 0.50 | REJECT: DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| ts_momentum | cex_maker | 0.72 | [-0.02, 1.55] | 0.61 | -3.3% (-0.28) | -0.03 | 0.000 | 0.56 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| ts_momentum | cex_taker | 0.68 | [-0.06, 1.52] | 0.61 | -5.6% (-0.47) | -0.19 | 0.000 | 0.60 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| donchian | cex_maker | 0.66 | [-0.09, 1.31] | 0.15 | +23.3% (+1.47) | +1.44 | 0.000 | 0.60 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| donchian | cex_taker | 0.63 | [-0.11, 1.31] | 0.14 | +22.0% (+1.39) | +1.34 | 0.000 | 0.67 | REJECT: Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| mean_reversion | base_amm_realistic | 0.00 | [-0.44, 0.55] | 0.17 | -11.8% (-1.46) | -1.47 | 0.000 | 0.26 | REJECT: Sharpe CI excludes 0; DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| mean_reversion | cex_maker | -0.16 | [-0.58, 0.31] | 0.06 | -9.6% (-1.00) | -0.93 | 0.000 | 0.17 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| mean_reversion | cex_taker | -0.35 | [-0.76, 0.14] | 0.06 | -15.6% (-1.61) | -1.55 | 0.000 | 0.13 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| random | cex_maker | -0.74 | [-1.40, -0.12] | 0.07 | -54.3% (-2.60) | -2.66 | 0.000 | 0.57 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| random | base_amm_realistic | -0.89 | [-1.54, -0.24] | 0.53 | -81.4% (-7.85) | -7.14 | 0.000 | 0.61 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+| random | cex_taker | -1.39 | [-2.05, -0.79] | 0.08 | -98.5% (-4.74) | -4.76 | 0.000 | 0.57 | REJECT: positive OOS Sharpe; Sharpe CI excludes 0; DSR > 0.95; PBO < 0.5; drawdown within mandate; alpha t > 2.5 vs buy-and-hold; alpha t > 2.0 vs no-signal control |
+
+**Read the alpha columns, not the Sharpe column.** A high Sharpe with beta near 1 and a t-statistic below 2 is the underlying asset, not a strategy.
+
+### Warning flags (reported, not gated)
+
+- `no_signal_ablation` / `cex_maker`: <Flags(allows_duplicate_labels=True)>
+- `no_signal_ablation` / `cex_taker`: <Flags(allows_duplicate_labels=True)>
+- `no_signal_ablation` / `base_amm_realistic`: <Flags(allows_duplicate_labels=True)>
+- `buy_and_hold` / `cex_maker`: <Flags(allows_duplicate_labels=True)>
+- `buy_and_hold` / `cex_taker`: <Flags(allows_duplicate_labels=True)>
+- `buy_and_hold` / `base_amm_realistic`: <Flags(allows_duplicate_labels=True)>
+- `trend_risk_managed` / `cex_taker`: <Flags(allows_duplicate_labels=True)>
+- `donchian` / `base_amm_realistic`: <Flags(allows_duplicate_labels=True)>
 
 ## 3. Sensitivity — does the result survive its own settings?
 
 | Sample start | test_days=60 | test_days=90 | test_days=180 |
 |---|---|---|---|
-| 2013-04-01 | 0.95 | 0.87 | 0.80 |
-| 2015-01-01 | 0.82 | 0.83 | 0.87 |
-| 2016-01-01 | 0.59 | 0.52 | 0.40 |
+| 2013-04-01 | 1.02 | 0.99 | 0.97 |
+| 2015-01-01 | 0.86 | 0.83 | 0.87 |
+| 2016-01-01 | 0.56 | 0.53 | 0.40 |
 
 If these cells disagree, the headline number is a choice, not a measurement.
 
@@ -107,21 +122,21 @@ If these cells disagree, the headline number is a choice, not a measurement.
 | Year | Strategy Sharpe | Strategy return | BTC return |
 |---|---|---|---|
 | 2015 | 1.20 | +14.6% | +55.7% |
-| 2016 | 2.17 | +76.9% | +116.6% |
-| 2017 | 3.35 | +191.7% | +1179.9% |
+| 2016 | 2.17 | +77.0% | +116.6% |
+| 2017 | 3.35 | +191.8% | +1179.9% |
 | 2018 | -1.99 | -26.9% | -77.1% |
 | 2019 | 2.32 | +78.8% | +88.1% |
-| 2020 | 0.34 | +2.9% | +304.2% |
+| 2020 | 1.04 | +45.7% | +304.2% |
 | 2021 | 0.29 | +4.3% | +57.8% |
 | 2022 | -2.11 | -23.7% | -63.4% |
-| 2023 | 1.04 | +25.7% | +141.5% |
+| 2023 | 1.04 | +25.8% | +141.5% |
 | 2024 | 1.48 | +39.6% | +97.4% |
-| 2025 | -0.07 | -6.8% | -4.3% |
+| 2025 | -0.07 | -6.7% | -4.3% |
 | 2026 | -0.93 | -3.3% | -5.7% |
 
 **Last 24 months: Sharpe 0.28, return +7.9%.**
 
-Beta to BTC 0.32, annualised alpha +3.3% with Newey-West t = +0.47. A t-statistic below 2 means the alpha is indistinguishable from zero.
+Beta to BTC 0.32, annualised alpha +5.9% with Newey-West t = +0.87. A t-statistic below 2 means the alpha is indistinguishable from zero.
 
 ## 5. Gate outcome
 

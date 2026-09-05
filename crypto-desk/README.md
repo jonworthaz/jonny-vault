@@ -32,6 +32,7 @@ The short version of what the data said:
 ```bash
 pip3 install numpy pandas scikit-learn
 python3 tests/test_integrity.py     # prove the engine isn't lying
+python3 tests/test_gate_power.py    # prove the gate can still say yes
 python3 run_evaluation.py           # full evaluation -> reports/evaluation.md
 python3 run_evaluation.py --quick   # single venue, faster
 python3 run_cross_asset.py          # BTC vs ETH -> reports/cross_asset.md
@@ -50,6 +51,9 @@ python3 run_cross_asset.py          # BTC vs ETH -> reports/cross_asset.md
 | Fitting to the test set | Purged, embargoed walk-forward; params chosen only on prior data | `walkforward.py` |
 | Shorting on spot | Venue capability flags enforced in the backtester | `costs.Venue.can_short` |
 | A verdict shaped by hope | Gate defined in advance, applied mechanically | `walkforward.verdict` |
+| **A gate that only says no** | Positive control with known edge must pass | `tests/test_gate_power.py` |
+| **Selecting for what the gate punishes** | One drawdown mandate shared by selection and gate | `MAX_DRAWDOWN_MANDATE` |
+| **Deflating against too small a search** | Trial variance pooled across every configuration run | `walkforward.pool_trial_variance` |
 | **Beta mistaken for alpha** | Newey-West alpha vs buy-and-hold, plus a forecast-free control | `benchmark.py`, `strategies.no_signal_ablation` |
 | **A result fitted to one asset** | Identical pipeline replicated on ETH | `run_cross_asset.py` |
 | **A point estimate hiding a range** | Sensitivity grid over sample start x refit frequency | `run_evaluation.sensitivity` |
@@ -64,25 +68,46 @@ A strategy is only `FUNDABLE` if **every** clause holds:
 - Deflated Sharpe Ratio > 0.95, deflated at the **project-wide** search budget
 - Probability of Backtest Overfitting < 0.5, within comparable variant blocks
 - maximum drawdown better than −50%
-- **the edge is alive in the last 24 months** (not merely historical)
 - **Newey-West alpha t-statistic > 2.5 vs buy-and-hold** — it must be alpha, not beta
-- **it beats the no-signal ablation** — the same risk machinery with the forecast deleted
+- **spanning-test alpha t > 2.0 vs the no-signal control** — the signal must add
+  something the risk machinery does not already provide
 
-The last three clauses were added after an adversarial review. Without them the
+The last two clauses were added after an adversarial review. Without them the
 gate returned `FUNDABLE` for a strategy that a *forecast-free* control beat.
+
+Weak recent performance, close benchmark tracking and frozen parameters are
+reported as **warning flags** rather than gated on — a two-year Sharpe has a
+standard error near 0.7, too noisy to reject on by itself.
 
 Clearing the gate authorises **paper trading**, not capital. Capital requires
 phase 4 sign-off (PRD §6).
 
 ## Current verdict
 
-**REJECT — every strategy, both assets, every venue.** Nothing has measurable
-alpha; no strategy reaches an alpha t-statistic of 0.9. The no-signal control
-ranks *above* every strategy that actually predicts something.
+**REJECT — every strategy, both assets, every venue.**
 
-See [`reports/critic-review.md`](./reports/critic-review.md) for the review that
-overturned the first result, and [`reports/cross_asset.md`](./reports/cross_asset.md)
-for the ETH replication.
+- The **no-signal control** — the same risk machinery with the forecast deleted —
+  ranks **above every strategy that actually predicts something**.
+- Maximum alpha t-statistic across 24 BTC configurations: **+1.06**. Nothing is
+  distinguishable from zero.
+- Pooled across the 25 configurations actually evaluated, the expected best
+  Sharpe under **zero skill** at N=500 trials is **1.99**. The best real strategy
+  reaches 1.04.
+- ETH does not replicate.
+
+Two rounds of adversarial critic review are on file. Round 1 overturned an
+earlier `FUNDABLE` verdict; round 2 verified the fixes and confirmed via a
+**positive control** that the gate still passes a genuinely good strategy
+(FUNDABLE at information coefficient 0.20) — so the rejection is a finding, not a
+broken filter.
+
+See [`reports/critic-review.md`](./reports/critic-review.md) and
+[`reports/cross_asset.md`](./reports/cross_asset.md).
+
+> **Note on which clause does the work.** The drawdown mandate rejects more
+> configurations than any statistical clause. That is deliberate for an account
+> that cannot lose the stack — but it means "REJECT" often says *too risky*, not
+> only *no edge*. Both are reported separately.
 
 ## Layout
 

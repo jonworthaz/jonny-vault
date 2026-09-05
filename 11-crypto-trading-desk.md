@@ -74,17 +74,30 @@ That fourth one is the lesson worth keeping. Regressing the strategy on BTC over
 identical days: beta 0.31, alpha +8%/yr with a t-statistic of **1.5** — and
 negative from 2021. The "strategy" was a one-third-sized holding of BTC.
 
-After every fix, the corrected results rank the **no-signal control above every
-strategy that actually predicts something**, and no strategy anywhere reaches an
-alpha t-statistic of 0.9. The same pipeline on ETH agrees: nothing passes.
+A second critic round then found the first round of fixes had *two failures of
+its own* — the short-borrow cost was 96x too small, and the deflation change had
+made the gate **more lenient, not stricter** (correlated trials cluster, so their
+observed spread is narrow, so the noise bar comes out low). Both are now fixed.
+
+After every fix: the **no-signal control ranks above every strategy that actually
+predicts something**, the maximum alpha t-statistic across 24 configurations is
+**+1.06**, and the expected best Sharpe under *zero skill* at 500 trials is
+**1.99** against a best real strategy of 1.04. ETH agrees: nothing passes.
+
+Crucially, round 2 also built a **positive control** — a strategy with known,
+injected predictive power — and confirmed the gate still passes it. So the
+rejection is a finding, not a broken filter.
 
 **Verdict: do not deploy capital.** The valuable output of this project is the
 platform and the correct negative result — not a bot.
 
 ## The lesson that generalises furthest
 
-> **Always run the ablation.** Delete the clever part and re-measure. If the
-> result survives without it, the clever part was never doing the work.
+> **Always run the ablation, and always run the positive control.** Delete the
+> clever part and re-measure — if the result survives without it, the clever part
+> was never doing the work. Then inject a known-good input and check your test
+> still says yes — a filter that only ever says no is just as useless as one that
+> only ever says yes, and far more flattering to your judgement.
 
 This applies to every "does it work?" question in the business — a landing page
 variant, an ad creative, an onboarding change, a prompt. Most measured "wins" are

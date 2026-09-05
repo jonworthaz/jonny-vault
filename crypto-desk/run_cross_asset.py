@@ -18,12 +18,15 @@ from pathlib import Path
 warnings.filterwarnings("ignore")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import numpy as np
 import pandas as pd
 
 from src.costs import VENUES
 from src.data import DATA_DIR, load_ohlcv, trim_illiquid_history, validate
 from src.strategies import REGISTRY
-from src.walkforward import WalkForwardConfig, verdict, walk_forward
+from src.walkforward import (
+    WalkForwardConfig, apply_pooled_variance, pool_trial_variance, verdict, walk_forward,
+)
 
 OUT: list[str] = []
 
@@ -49,16 +52,26 @@ def main() -> int:
 
         abl = walk_forward(df, REGISTRY["no_signal_ablation"], venue, cfg)
         a = abl.metrics["oos_sharpe"]
+        runs = []
         emit(f"Control (no forecast, always long, vol-targeted): **Sharpe {a:.3f}**\n")
-        emit("| Strategy | Sharpe | Beta | Alpha (t) | DSR | 24m Sharpe | Verdict |")
-        emit("|---|---|---|---|---|---|---|")
         for name in ("trend_risk_managed", "sma_cross", "ts_momentum", "donchian",
                      "mean_reversion", "buy_and_hold"):
-            m = walk_forward(df, REGISTRY[name], venue, cfg, ablation_sharpe=a).metrics
-            if not m:
-                continue
+            r = walk_forward(df, REGISTRY[name], venue, cfg,
+                             ablation_returns=abl.oos_returns)
+            if r.metrics:
+                runs.append((name, r))
+        pooled = pool_trial_variance([abl] + [r for _, r in runs])
+        for _, r in runs:
+            apply_pooled_variance(r, pooled)
+
+        emit("| Strategy | Sharpe | Beta | Alpha (t) | Span t | DSR | 24m | Verdict |")
+        emit("|---|---|---|---|---|---|---|---|")
+        for name, r in runs:
+            m = r.metrics
+            at = "n/a" if np.isnan(m["alpha_t"]) else f"{m['alpha_t']:+.2f}"
+            st = "n/a" if np.isnan(m["alpha_t_vs_ablation"]) else f"{m['alpha_t_vs_ablation']:+.2f}"
             emit(f"| {name} | {m['oos_sharpe']:.2f} | {m['beta_to_btc']:.2f} | "
-                 f"{m['alpha_ann']:+.1%} ({m['alpha_t']:+.2f}) | {m['dsr']:.3f} | "
+                 f"{m['alpha_ann']:+.1%} ({at}) | {st} | {m['dsr']:.3f} | "
                  f"{m['recent_24m_sharpe']:+.2f} | {verdict(m)} |")
         emit()
 

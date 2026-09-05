@@ -42,6 +42,13 @@ from .strategies import Strategy
 # freedom is several hundred. Understating it is how a backtest flatters itself.
 PROJECT_SEARCH_BUDGET = 500
 
+# The maximum drawdown this account can tolerate. Used by BOTH the selection step
+# and the funding gate. Keeping them as one constant closes an inconsistency
+# found by the gate-power test: selecting variants purely on Sharpe picked the
+# highest-volatility configuration available, which the gate then rejected on
+# drawdown. A platform must not select for what it goes on to punish.
+MAX_DRAWDOWN_MANDATE = -0.50
+
 
 @dataclass
 class WalkForwardConfig:
@@ -73,11 +80,25 @@ def _score(returns: pd.Series) -> float:
     return -np.inf if np.isnan(s) else s
 
 
+def _selection_score(result) -> float:
+    """Training score used to choose a variant.
+
+    Sharpe, but a variant that already breaches the drawdown mandate in training
+    is not eligible: it is disqualified before it can win. If nothing qualifies,
+    the least-bad option is still ranked so a fold always makes a choice.
+    """
+    s = _score(result.net_returns)
+    dd = result.metrics.get("max_drawdown", 0.0)
+    if dd is not None and not np.isnan(dd) and dd < MAX_DRAWDOWN_MANDATE:
+        return -np.inf if np.isinf(s) else s - 100.0
+    return s
+
+
 def walk_forward(df: pd.DataFrame, strategy: Strategy, venue: Venue,
                  cfg: WalkForwardConfig | None = None,
                  starting_equity: float = 1000.0,
                  trials_searched: int | None = None,
-                 ablation_sharpe: float | None = None) -> WalkForwardResult:
+                 ablation_returns: pd.Series | None = None) -> WalkForwardResult:
     """Run the walk-forward and score it.
 
     `trials_searched` is the honest size of the search that produced this result.
@@ -110,7 +131,7 @@ def walk_forward(df: pd.DataFrame, strategy: Strategy, venue: Venue,
         best_key, best_score = None, -np.inf
         for key, pos in variants.items():
             tr = run_backtest(df.loc[train_slice], pos.loc[train_slice], venue, starting_equity)
-            s = _score(tr.net_returns)
+            s = _selection_score(tr)
             if s > best_score:
                 best_key, best_score = key, s
 
@@ -140,24 +161,54 @@ def walk_forward(df: pd.DataFrame, strategy: Strategy, venue: Venue,
     n_trials = trials_searched if trials_searched is not None else PROJECT_SEARCH_BUDGET
     res = WalkForwardResult(strategy.name, venue.name, oos, oos_pos, folds, n_trials, var_oos)
     if len(oos) > 30:
-        res.metrics = _score_result(df, res, starting_equity, ablation_sharpe)
+        res.metrics = _score_result(df, res, starting_equity, ablation_returns)
     return res
 
 
+def pool_trial_variance(results: list[WalkForwardResult]) -> float:
+    """Cross-sectional variance of per-period Sharpes across EVERY configuration.
+
+    The deflated Sharpe ratio needs the variance of the trial Sharpes over the
+    search that produced the result. Measuring it within one strategy's handful
+    of near-identical variants gives a variance roughly ten times too small --
+    correlated trials cluster, so their observed spread is narrow, so the
+    expected-maximum bar comes out low. That makes the gate MORE lenient, which
+    is the opposite of what deflation is for.
+
+    Pooling across all strategies is not perfect either, but it at least
+    describes the same search that `PROJECT_SEARCH_BUDGET` counts.
+    """
+    sharpes = []
+    for r in results:
+        m = r.oos_variant_returns
+        if m is None or m.empty:
+            continue
+        sharpes.extend(
+            m.apply(lambda c: c.mean() / c.std() if c.std() > 0 else np.nan).dropna().tolist()
+        )
+    return float(np.var(sharpes)) if len(sharpes) > 2 else float("nan")
+
+
+def apply_pooled_variance(res: WalkForwardResult, pooled_var: float) -> None:
+    """Re-deflate an already-scored result using the project-wide trial variance."""
+    if not res.metrics or np.isnan(pooled_var):
+        return
+    dsr = deflated_sharpe_ratio(res.oos_returns, res.n_trials, trial_sr_variance=pooled_var)
+    res.metrics["dsr"] = dsr["dsr"]
+    res.metrics["expected_max_sharpe_from_search"] = dsr["expected_max_sharpe_ann"]
+    res.metrics["trial_sr_variance"] = pooled_var
+
+
 def _score_result(df: pd.DataFrame, res: WalkForwardResult, starting_equity: float,
-                  ablation_sharpe: float | None) -> dict:
+                  ablation_returns: pd.Series | None) -> dict:
     oos, folds = res.oos_returns, res.folds
     eq = starting_equity * (1 + oos).cumprod()
     years = max((oos.index[-1] - oos.index[0]).days, 1) / 365
 
-    # Bailey & Lopez de Prado specify the observed cross-sectional variance of
-    # trial Sharpes. Using the theoretical 1/n null instead understates the bar
-    # when trials are correlated -- and here they are, heavily.
-    per_period = res.oos_variant_returns.apply(
-        lambda c: c.mean() / c.std() if c.std() > 0 else np.nan)
-    trial_var = float(per_period.var()) if per_period.notna().sum() > 2 else None
-
-    dsr = deflated_sharpe_ratio(oos, res.n_trials, trial_sr_variance=trial_var)
+    # Deflate against the theoretical null by default. The project-wide pooled
+    # variance is applied afterwards by `apply_pooled_variance`; using this
+    # strategy's own variants here would understate the bar roughly ten-fold.
+    dsr = deflated_sharpe_ratio(oos, res.n_trials)
     lo, hi = stationary_bootstrap_ci(oos, n_boot=600)
 
     # Alpha over the underlying, on exactly the days the strategy traded.
@@ -166,6 +217,16 @@ def _score_result(df: pd.DataFrame, res: WalkForwardResult, starting_equity: flo
 
     recent = oos[oos.index > oos.index.max() - pd.Timedelta(days=730)]
     recent_sharpe = sharpe(recent) if len(recent) > 60 else float("nan")
+
+    # Spanning test: does the strategy add anything the forecast-free control
+    # does not already provide? Comparing raw Sharpes instead would reject a
+    # genuinely good low-beta strategy simply for being smaller than a levered
+    # long in a bull market.
+    if ablation_returns is not None and len(ablation_returns) > 60:
+        span = newey_west_alpha(oos, ablation_returns.reindex(oos.index))
+        span_alpha, span_t = span["alpha_ann"], span["alpha_t"]
+    else:
+        span_alpha = span_t = np.nan
 
     # PBO within structurally comparable variants only. Mixing long-only and
     # long/short variants makes CSCV detect a persistent beta ranking and score
@@ -192,7 +253,9 @@ def _score_result(df: pd.DataFrame, res: WalkForwardResult, starting_equity: flo
         "alpha_ann": reg["alpha_ann"],
         "alpha_t": reg["alpha_t"],
         "benchmark_sharpe": sharpe(bench),
-        "ablation_sharpe": ablation_sharpe if ablation_sharpe is not None else np.nan,
+        "alpha_vs_ablation": span_alpha,
+        "alpha_t_vs_ablation": span_t,
+        "tracking_error_ann": reg.get("tracking_error_ann", np.nan),
         "recent_24m_sharpe": recent_sharpe,
         "recent_24m_return": float((1 + recent).prod() - 1) if len(recent) else np.nan,
         "param_stability": float(folds["chosen"].nunique()) if len(folds) else np.nan,
@@ -215,14 +278,37 @@ def verdict(m: dict) -> str:
         "DSR > 0.95": m.get("dsr", 0) > 0.95,
         "PBO < 0.5": (m.get("n_trials", 1) <= 1
                       or ok(m.get("pbo"), lambda v: v < 0.5)),
-        "drawdown > -50%": m.get("oos_max_dd", -1) > -0.50,
-        # The edge must still be present, not merely historical.
-        "edge alive in last 24m": ok(m.get("recent_24m_sharpe"), lambda v: v > 0.3),
+        "drawdown within mandate": m.get("oos_max_dd", -1) > MAX_DRAWDOWN_MANDATE,
         # It must be alpha, not beta wearing a signal's clothes.
         "alpha t > 2.5 vs buy-and-hold": ok(m.get("alpha_t"), lambda v: v > 2.5),
-        # And it must beat the same risk machinery with the forecast deleted.
-        "beats no-signal ablation": (np.isnan(m.get("ablation_sharpe", np.nan))
-                                     or m.get("oos_sharpe", -9) > m["ablation_sharpe"]),
+        # And it must add something the forecast-free control does not already
+        # provide. This is a spanning test, not a Sharpe comparison: a low-beta
+        # strategy with real alpha should not be rejected merely for being
+        # smaller than a levered long in a bull market.
+        "alpha t > 2.0 vs no-signal control": (
+            np.isnan(m.get("alpha_t_vs_ablation", np.nan))
+            or m["alpha_t_vs_ablation"] > 2.0),
     }
     failed = [k for k, v in checks.items() if not v]
     return "FUNDABLE" if not failed else "REJECT: " + "; ".join(failed)
+
+
+def flags(m: dict) -> list[str]:
+    """Non-blocking warnings: real concerns that are too noisy to gate on.
+
+    A two-year Sharpe has a standard error near 0.7, so gating on it hard would
+    discard a genuinely good strategy roughly a third of the time -- and would
+    fire against any trend strategy in a chop regime, which is exactly when the
+    literature expects trend to underperform. Reported loudly, gated softly.
+    """
+    out = []
+    r24 = m.get("recent_24m_sharpe", np.nan)
+    if not np.isnan(r24) and r24 < 0.3:
+        out.append(f"edge weak in last 24m (Sharpe {r24:.2f})")
+    te = m.get("tracking_error_ann", np.nan)
+    if not np.isnan(te) and te < 0.05:
+        out.append(f"tracks the benchmark closely (TE {te:.1%})")
+    ps = m.get("param_stability", np.nan)
+    if not np.isnan(ps) and ps <= 1:
+        out.append("every fold chose identical parameters (window may be too long)")
+    return out

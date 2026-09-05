@@ -26,7 +26,8 @@ from src.stats import deflated_sharpe_ratio
 from src.strategies import REGISTRY
 from src.benchmark import buy_and_hold_returns
 from src.walkforward import (
-    PROJECT_SEARCH_BUDGET, WalkForwardConfig, verdict, walk_forward,
+    PROJECT_SEARCH_BUDGET, WalkForwardConfig, apply_pooled_variance, flags,
+    pool_trial_variance, verdict, walk_forward,
 )
 
 REPORTS = Path(__file__).resolve().parent / "reports"
@@ -94,7 +95,7 @@ def audit_the_claims(df: pd.DataFrame) -> None:
          "Accuracy weights every day equally; the market does not.\n")
 
 
-def evaluate_strategies(df: pd.DataFrame, quick: bool) -> tuple[pd.DataFrame, float]:
+def evaluate_strategies(df: pd.DataFrame, quick: bool) -> tuple[pd.DataFrame, pd.Series]:
     emit("## 2. Walk-forward evaluation\n")
     cfg = WalkForwardConfig()
     emit(f"Rolling {cfg.rolling_train_days}d training window, {cfg.test_days}d test blocks, "
@@ -115,39 +116,65 @@ def evaluate_strategies(df: pd.DataFrame, quick: bool) -> tuple[pd.DataFrame, fl
          "version of this gate certifying beta as alpha.\n")
 
     venues = ["cex_taker"] if quick else ["cex_maker", "cex_taker", "base_amm_realistic"]
-    rows = []
+    runs = []
     for vk in venues:
         for name, strat in REGISTRY.items():
-            res = walk_forward(df, strat, VENUES[vk], cfg, ablation_sharpe=abl_sharpe)
-            if not res.metrics:
-                continue
-            m = res.metrics
-            rows.append({
-                "strategy": name, "venue": vk, "sharpe": m["oos_sharpe"],
-                "ci_lo": m["sharpe_ci_lo"], "ci_hi": m["sharpe_ci_hi"],
-                "cagr": m["oos_cagr"], "max_dd": m["oos_max_dd"], "dsr": m["dsr"],
-                "pbo": m["pbo"], "accuracy": m["directional_accuracy"],
-                "beta": m["beta_to_btc"], "alpha_ann": m["alpha_ann"], "alpha_t": m["alpha_t"],
-                "recent_24m_sharpe": m["recent_24m_sharpe"], "trials": m["n_trials"],
-                "verdict": verdict(m),
-            })
+            res = walk_forward(df, strat, VENUES[vk], cfg, ablation_returns=abl.oos_returns)
+            if res.metrics:
+                runs.append((name, vk, res))
+
+    # Deflate every result against the variance of trial Sharpes across the WHOLE
+    # search, not each strategy's own near-identical variants. Measured within a
+    # single grid, correlated trials cluster and the bar comes out ~10x too low.
+    pooled = pool_trial_variance([abl] + [r for _, _, r in runs])
+    apply_pooled_variance(abl, pooled)
+    for _, _, r in runs:
+        apply_pooled_variance(r, pooled)
+    emit(f"Trial-Sharpe variance pooled across {len(runs) + 1} configurations: "
+         f"{pooled:.3e}. Expected best Sharpe under zero skill at N="
+         f"{PROJECT_SEARCH_BUDGET}: "
+         f"**{abl.metrics['expected_max_sharpe_from_search']:.2f}**.\n")
+
+    rows = []
+    for name, vk, res in runs:
+        m = res.metrics
+        rows.append({
+            "strategy": name, "venue": vk, "sharpe": m["oos_sharpe"],
+            "ci_lo": m["sharpe_ci_lo"], "ci_hi": m["sharpe_ci_hi"],
+            "cagr": m["oos_cagr"], "max_dd": m["oos_max_dd"], "dsr": m["dsr"],
+            "pbo": m["pbo"], "accuracy": m["directional_accuracy"],
+            "beta": m["beta_to_btc"], "alpha_ann": m["alpha_ann"], "alpha_t": m["alpha_t"],
+            "span_t": m["alpha_t_vs_ablation"],
+            "recent_24m_sharpe": m["recent_24m_sharpe"], "trials": m["n_trials"],
+            "verdict": verdict(m), "flags": "; ".join(flags(m)),
+        })
     tbl = pd.DataFrame(rows).sort_values("sharpe", ascending=False)
 
     emit("### Results\n")
-    emit("| Strategy | Venue | Sharpe | 95% CI | Beta | Alpha (t) | DSR | PBO | 24m Sharpe | Verdict |")
+    emit("`alpha t` is versus buy-and-hold; `span t` is versus the no-signal control.\n")
+    emit("| Strategy | Venue | Sharpe | 95% CI | Beta | Alpha (t) | Span t | DSR | PBO | Verdict |")
     emit("|---|---|---|---|---|---|---|---|---|---|")
     for _, x in tbl.iterrows():
         pbo = "n/a" if np.isnan(x.pbo) else f"{x.pbo:.2f}"
+        at = "n/a" if np.isnan(x.alpha_t) else f"{x.alpha_t:+.2f}"
+        st = "n/a" if np.isnan(x.span_t) else f"{x.span_t:+.2f}"
         emit(f"| {x.strategy} | {x.venue} | {x.sharpe:.2f} | [{x.ci_lo:.2f}, {x.ci_hi:.2f}] | "
-             f"{x.beta:.2f} | {x.alpha_ann:+.1%} ({x.alpha_t:+.2f}) | {x.dsr:.3f} | {pbo} | "
-             f"{x.recent_24m_sharpe:+.2f} | {x.verdict} |")
+             f"{x.beta:.2f} | {x.alpha_ann:+.1%} ({at}) | {st} | {x.dsr:.3f} | {pbo} | "
+             f"{x.verdict} |")
     emit()
-    emit("**Read the alpha column, not the Sharpe column.** A high Sharpe with beta near "
+    emit("**Read the alpha columns, not the Sharpe column.** A high Sharpe with beta near "
          "1 and a t-statistic below 2 is the underlying asset, not a strategy.\n")
-    return tbl, abl_sharpe
+
+    warned = tbl[tbl["flags"] != ""]
+    if len(warned):
+        emit("### Warning flags (reported, not gated)\n")
+        for _, x in warned.head(8).iterrows():
+            emit(f"- `{x.strategy}` / `{x.venue}`: {x.flags}")
+        emit()
+    return tbl, abl.oos_returns
 
 
-def sensitivity(df: pd.DataFrame, abl_sharpe: float) -> None:
+def sensitivity(df: pd.DataFrame, abl_ret: pd.Series) -> None:
     """A metric that moves with arbitrary settings is not a point estimate."""
     emit("## 3. Sensitivity — does the result survive its own settings?\n")
     emit("| Sample start | test_days=60 | test_days=90 | test_days=180 |")
@@ -158,17 +185,17 @@ def sensitivity(df: pd.DataFrame, abl_sharpe: float) -> None:
         for td in (60, 90, 180):
             cfg = WalkForwardConfig(test_days=td)
             m = walk_forward(sub, REGISTRY["trend_risk_managed"], VENUES["cex_taker"],
-                             cfg, ablation_sharpe=abl_sharpe).metrics
+                             cfg, ablation_returns=abl_ret).metrics
             cells.append(f"{m['oos_sharpe']:.2f}" if m else "n/a")
         emit(f"| {start} | " + " | ".join(cells) + " |")
     emit("\nIf these cells disagree, the headline number is a choice, not a measurement.\n")
 
 
-def regime_check(df: pd.DataFrame, abl_sharpe: float) -> None:
+def regime_check(df: pd.DataFrame, abl_ret: pd.Series) -> None:
     """The question that decides everything: does the edge still exist?"""
     emit("## 4. Regime check — is the edge still alive?\n")
     res = walk_forward(df, REGISTRY["trend_risk_managed"], VENUES["cex_taker"],
-                       ablation_sharpe=abl_sharpe)
+                       ablation_returns=abl_ret)
     oos = res.oos_returns
     bench = buy_and_hold_returns(df, oos.index)
     emit("| Year | Strategy Sharpe | Strategy return | BTC return |")
@@ -200,9 +227,9 @@ def main() -> int:
     emit(f"Data integrity: `{rep.describe()}`\n")
 
     audit_the_claims(df)
-    tbl, abl_sharpe = evaluate_strategies(df, args.quick)
-    sensitivity(df, abl_sharpe)
-    regime_check(df, abl_sharpe)
+    tbl, abl_ret = evaluate_strategies(df, args.quick)
+    sensitivity(df, abl_ret)
+    regime_check(df, abl_ret)
 
     emit("## 5. Gate outcome\n")
     passed = tbl[tbl.verdict == "FUNDABLE"]

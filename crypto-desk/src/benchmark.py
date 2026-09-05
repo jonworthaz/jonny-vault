@@ -16,6 +16,9 @@ import pandas as pd
 
 from .data import forward_open_to_open_returns
 
+# Annualised tracking error below which an alpha t-statistic is not meaningful.
+MIN_TRACKING_ERROR = 0.01
+
 
 def newey_west_alpha(strategy: pd.Series, benchmark: pd.Series,
                      lags: int = 10, periods: int = 365) -> dict[str, float]:
@@ -27,7 +30,8 @@ def newey_west_alpha(strategy: pd.Series, benchmark: pd.Series,
     """
     df = pd.concat([strategy.rename("y"), benchmark.rename("x")], axis=1).dropna()
     if len(df) < 60:
-        return {"alpha_ann": np.nan, "beta": np.nan, "alpha_t": np.nan, "n": len(df)}
+        return {"alpha_ann": np.nan, "beta": np.nan, "alpha_t": np.nan,
+                "n": len(df), "tracking_error_ann": np.nan}
 
     y = df["y"].values
     X = np.column_stack([np.ones(len(df)), df["x"].values])
@@ -47,7 +51,18 @@ def newey_west_alpha(strategy: pd.Series, benchmark: pd.Series,
     cov = xtx_inv @ S @ xtx_inv
     se_alpha = float(np.sqrt(max(cov[0, 0], 1e-300)))
 
+    # A strategy that tracks the benchmark almost exactly has a near-noiseless
+    # residual, which makes the t-statistic explode on an economically
+    # meaningless difference -- buy-and-hold regressed on itself scores t = -7.7,
+    # and a small positive cost advantage would score an equally large +7.7.
+    # Below a floor of tracking error the t-statistic is not meaningful.
+    tracking_error_ann = float(resid.std() * np.sqrt(periods))
+    if tracking_error_ann < MIN_TRACKING_ERROR:
+        return {"alpha_ann": float(coef[0] * periods), "beta": float(coef[1]),
+                "alpha_t": np.nan, "n": n, "tracking_error_ann": tracking_error_ann}
+
     return {
+        "tracking_error_ann": tracking_error_ann,
         "alpha_ann": float(coef[0] * periods),
         "beta": float(coef[1]),
         "alpha_t": float(coef[0] / se_alpha) if se_alpha > 0 else np.nan,

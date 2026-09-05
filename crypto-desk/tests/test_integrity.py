@@ -138,6 +138,25 @@ def test_fast_path_matches_loop(df: pd.DataFrame) -> None:
     check("fast path net returns match the loop", d < 1e-9, f"max delta={d:.3e}")
 
 
+def test_min_notional_binds(df: pd.DataFrame) -> None:
+    """The minimum-order-size branch had no test until an adversarial review."""
+    print("\n5c. Minimum notional suppresses undersized trades")
+    v = Venue("tiny-min test", fee_bps=20, spread_bps=1, impact_bps=2,
+              min_notional_usd=100.0)
+    # On $1,000 of equity a 0.01 position change is $10 of notional -- below the
+    # $100 floor, so it must not be placed.
+    pos = pd.Series([0.0, 0.5, 0.51, 0.52, 0.0] + [0.0] * 7, index=df.index[:12])
+    r = run_backtest(df.iloc[:12], pos, v, starting_equity=1000.0)
+    check("an undersized adjustment is not executed",
+          abs(r.positions.iloc[2] - 0.5) < 1e-12,
+          f"held={r.positions.iloc[2]:.4f} requested=0.51")
+    check("reported positions reflect what was held, not what was requested",
+          abs(r.positions.iloc[3] - 0.5) < 1e-12,
+          f"held={r.positions.iloc[3]:.4f} requested=0.52")
+    check("a large enough trade still executes",
+          abs(r.positions.iloc[1] - 0.5) < 1e-12)
+
+
 def test_stats_reject_noise() -> None:
     print("\n6. Statistics reject noise")
     rng = np.random.default_rng(42)
@@ -171,6 +190,7 @@ def main() -> int:
     test_return_alignment(df)
     test_costs_bite(df)
     test_fast_path_matches_loop(df)
+    test_min_notional_binds(df)
     test_stats_reject_noise()
     test_no_short_on_spot(df)
     print("\n" + "=" * 60)

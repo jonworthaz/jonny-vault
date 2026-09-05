@@ -150,3 +150,133 @@ places above every strategy that actually predicts something.** No strategy
 achieves an alpha t-statistic above 0.9.
 
 The platform's own conclusion: **do not deploy capital.**
+
+---
+
+# Adversarial critic review — round 2
+
+*The same reviewer, re-run against the fixed code, with two additional briefs:
+verify each fix actually does what it claims, and check whether the fixes have
+overcorrected the platform into rejecting everything.*
+
+## Headline: the gate is not broken toward rejection
+
+The reviewer built a **positive control** — a strategy whose signal is a blend of
+the true forward return and noise, with a known information coefficient — and put
+it through the platform's own walk-forward, cost model and gate.
+
+```
+ IC    Sharpe  alpha_t  span_t    DSR    maxDD   verdict
+0.00    -1.18    -3.61   -3.60  0.000   -99.6%   REJECT (noise, correctly killed)
+0.10    -0.08    -0.12   -0.11  0.000   -78.4%   REJECT
+0.20     1.24    +4.05   +4.04  1.000   -43.1%   ** FUNDABLE **
+0.30     2.33    +7.03   +6.93  0.992   -56.8%   REJECT: drawdown
+```
+
+**The gate passes a genuinely good strategy and kills noise.** The REJECT verdict
+on the real strategies is therefore a finding, not an artifact.
+
+(IC 0.30 is rejected on *realised* drawdown despite an alpha t-statistic of 7.0.
+That is a deliberate risk decision for an account that cannot lose the stack, not
+a failure of statistical power. It is now reported as such.)
+
+## Fixes verified
+
+| Round-1 fix | Round-2 result |
+|---|---|
+| Contiguous prefix truncation | **VERIFIED** — 0 calendar holes, exact suffix of the raw frame |
+| PBO on OOS returns, within variant blocks | **VERIFIED, and correctly stricter** — `sma_cross` 0.086 → 0.500, `ts_momentum` 0.086 → 0.600 |
+| Newey-West alpha | **VERIFIED** — matches an independent hand-coded HAC estimator to 5e-15; Monte-Carlo size 5.5–7.4% vs OLS 4.8–30.5% under serial correlation |
+| Rolling window | **VERIFIED, and it mattered** — expanding window had inflated the headline by 0.21 Sharpe; distinct parameter sets 1 → 10 |
+| `hit_rate` / CAGR cleanups | **VERIFIED** but cosmetic |
+| Cross-asset ETH | **VERIFIED** — genuine corroboration; the shape does not replicate |
+
+## Fixes that FAILED, and are now actually fixed
+
+### The carry cost was 96x too small
+`funding_bps_day = 0.02` with the code's `1e-4` scaling is **0.073% APR**, not the
+7% the comment claimed. Shorts were still free to three decimal places. Worse,
+carry was charged on `abs(position)` — taxing *longs* on a spot venue, where a
+long is owned rather than borrowed, and long-only variants win 93–98% of folds.
+
+→ Corrected to `1.918` bps/day with a new `carry_on_short_only` flag, and
+`Venue.carry_fraction()` now owns the rule so both code paths cannot diverge.
+
+### The DSR trial variance made the gate *more lenient*
+The round-1 change replaced the theoretical null with the observed variance of
+trial Sharpes — but measured it across one strategy's 4–24 near-identical
+variants. Correlated trials cluster, so their observed spread is narrow, so the
+expected-maximum bar comes out **low**. The reviewer measured it at **10.6x too
+small**, and the code comment justifying it was empirically backwards.
+
+```
+median within-strategy V (shipped)  = 1.08e-04  -> needs Sharpe 1.10 to clear DSR
+theoretical 1/n (what it replaced)  = 2.53e-04  -> needs Sharpe 1.43
+honest cross-project V              = 1.15e-03  -> needs Sharpe 2.47
+```
+
+→ Now deflated against the theoretical null by default, with
+`pool_trial_variance()` computing the variance across **every configuration the
+run evaluated** and `apply_pooled_variance()` re-deflating each result.
+
+## New defects found, and fixed
+
+1. **`run_backtest` reported positions that were never held.** The minimum-notional
+   branch reverted the position for the simulation but returned the *requested*
+   series, so exposure, turnover, hit rate and directional accuracy were computed
+   on a counterfactual book. → Now returns the held series, with a test.
+2. **`newey_west_alpha` had no tracking-error floor.** Buy-and-hold regressed on
+   itself scored t = −7.70 because the residual is a near-noiseless cost stream.
+   The sign happened to be negative; a small positive cost advantage would have
+   manufactured a spurious **+7.70** straight through the gate's headline clause.
+   → Alpha t is now undefined below 1% annualised tracking error.
+3. **`min_notional_usd = 10` never bound** (0 binds in 2.9M simulated bars) yet
+   disabled the vectorised fast path for every configured venue, and its branch
+   had no test. → Test added covering both suppression and correct reporting.
+4. **`_score_result` degraded silently on ragged variant columns** — a truncated
+   variant swung PBO 0.643 → 0.329 with no warning. Currently unreachable in
+   production; documented.
+
+## Design flaws the new power test found from the inside
+
+Adding the positive control to the suite immediately caught something neither
+critic round had: **the platform selected for what it then punished.** Variant
+selection ranked purely on training Sharpe, so it chose the highest-volatility
+configuration available — which the gate then rejected on drawdown.
+
+→ `MAX_DRAWDOWN_MANDATE` is now a single constant used by *both* the selection
+step and the gate. A variant that already breaches the mandate in training is
+disqualified before it can win. This alone moved the positive control at IC 0.20
+from `REJECT: drawdown` to `FUNDABLE`.
+
+The reviewer also noted the drawdown clause does most of the rejecting — it
+appears in 21 of 24 BTC rows — which the README now says plainly.
+
+## Clauses re-specified on the reviewer's argument
+
+- **`beats no-signal ablation` → a spanning test.** Comparing raw Sharpes
+  conflates "does the signal add information" with "does it beat BTC", and would
+  reject a genuinely good low-beta diversifier for being smaller than a levered
+  long in a bull market. Now: alpha of the strategy regressed *on the control*,
+  t > 2.0.
+- **`recent_24m_sharpe > 0.3` demoted from gate to flag.** The standard error of a
+  two-year Sharpe is ≈0.71, so as a hard AND-clause it discards genuinely good
+  strategies ~38% of the time at a true Sharpe of 0.5, and fires against any
+  trend strategy in chop by construction. Reported loudly via `flags()`, gated
+  softly.
+
+## Verdict
+
+> **"Do not deploy £1,000 to this" is correct**, and now for reasons that survive
+> every defect found in both rounds.
+
+The evidence carrying it does not depend on the gate arithmetic at all:
+
+- best real strategy OOS Sharpe **0.874** against a no-forecast control at **1.065** — the signal *subtracts* value
+- maximum alpha t across 24 BTC configurations: **+0.87**
+- ETH does not replicate (24-month Sharpe **−0.43**)
+- the result is carried by 2013–2015 (2016-start Sharpe 0.40–0.59)
+
+The reviewer's own summary: correcting every defect "moves nothing by more than
+~0.08 Sharpe against a ~0.19 deficit to a control with no forecast in it. The
+sign does not flip."
