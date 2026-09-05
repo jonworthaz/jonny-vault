@@ -51,18 +51,45 @@ Three bots talking to each other adds latency, failure modes and cost. It does
 not create alpha. Coordination is worth building *after* a single component has a
 measured edge — never before.
 
-## What actually survived
+## What survived: nothing
 
-Not a prediction model. A **risk-management shape**: time-series momentum,
-volatility-targeted, with a no-trade buffer to suppress turnover. Its directional
-accuracy is ~53% — *lower* than the claim it replaces — and it is profitable
-anyway, because it sizes down into volatility and doesn't churn.
+The first run of this platform produced a `FUNDABLE` verdict for a risk-managed
+trend strategy at OOS Sharpe 1.13. **An adversarial critic review destroyed it**,
+and it was wrong for four independent reasons — any one disqualifying:
 
-The overlays, not the signal, do the work. That is the opposite of where the
-original plan spends its effort.
+1. **A 0.8%-of-sample data bug flipped the decision.** Filtering out days where
+   BTC traded below $100 punched 40 holes into 2013 and selected on the dependent
+   variable. Removing 40 days out of 4,787 reversed the funding call. Sharpe fell
+   monotonically as early history was removed — the edge lived in 2013–2015, the
+   era the code's own docstring calls untradeable.
+2. **The trial count was understated ~20x.** Deflating for 24 trials instead of
+   the honest ≥500 was the difference between DSR 0.96 (pass) and 0.75 (fail).
+3. **The overfitting statistic was computed on the wrong data.** Rebuilt
+   correctly, PBO was **0.81** — the selection procedure was *worse than random*.
+4. **The gate had no benchmark clause, so it certified beta as alpha.** A
+   strategy with the forecast deleted entirely — constant long, volatility
+   targeted — scored a **higher** Sharpe and passed the gate cleanly.
 
-**Open concern:** the edge is concentrated in earlier regimes. See the report's
-regime section before treating any of this as live-ready.
+That fourth one is the lesson worth keeping. Regressing the strategy on BTC over
+identical days: beta 0.31, alpha +8%/yr with a t-statistic of **1.5** — and
+negative from 2021. The "strategy" was a one-third-sized holding of BTC.
+
+After every fix, the corrected results rank the **no-signal control above every
+strategy that actually predicts something**, and no strategy anywhere reaches an
+alpha t-statistic of 0.9. The same pipeline on ETH agrees: nothing passes.
+
+**Verdict: do not deploy capital.** The valuable output of this project is the
+platform and the correct negative result — not a bot.
+
+## The lesson that generalises furthest
+
+> **Always run the ablation.** Delete the clever part and re-measure. If the
+> result survives without it, the clever part was never doing the work.
+
+This applies to every "does it work?" question in the business — a landing page
+variant, an ad creative, an onboarding change, a prompt. Most measured "wins" are
+the control wearing a costume, and the only way to find out is to build the
+control and race it.
 
 ## The method we now use for any "is there an edge?" question
 
@@ -72,8 +99,15 @@ regime section before treating any of this as live-ready.
 3. **Walk forward** with purge and embargo. Never score on data used to choose.
 4. **Count every trial** and deflate for it (DSR), plus PBO for selection risk.
 5. Define the **gate in advance** and apply it mechanically.
-6. Put an **adversarial critic** on the result whose job is to veto it.
-7. **Paper trade before funding.** Always.
+6. **Run the no-signal ablation.** Delete the signal, keep the machinery. If the
+   ablation wins, there is no signal.
+7. **Test alpha, not return.** Regress on the benchmark; demand a t-statistic
+   above 2.5. A high Sharpe with beta near 1 is the asset, not a strategy.
+8. **Publish the sensitivity grid, not the best cell.** If the answer moves when
+   you change an arbitrary setting, it is a choice, not a measurement.
+9. Put an **adversarial critic** on the result whose job is to veto it — and
+   act on what it finds, including when it kills the headline.
+10. **Paper trade before funding.** Always.
 
 ## Guardrails adopted (extends [07 — Guardrails](./07-guardrails.md))
 
@@ -92,9 +126,9 @@ regime section before treating any of this as live-ready.
 |---|---|
 | 0 — Evaluate the proposal | ✅ Complete |
 | 1 — Research platform + critic review | ✅ Complete |
-| 2 — Strategy to a verdict | ✅ Complete, with a live regime caveat |
-| 3 — Paper trading (90 days) | ⛔ Not started — needs venue decision (PRD Q2) |
-| 4 — Capital | ⛔ Blocked on phase 3 and written sign-off |
+| 2 — Strategy to a verdict | ✅ Complete — **verdict is REJECT on every strategy, both assets** |
+| 3 — Paper trading (90 days) | ⛔ Not reached — nothing cleared the gate to paper trade |
+| 4 — Capital | ⛔ **Not recommended.** No strategy has measurable alpha |
 
 ## Open threads
 
@@ -102,3 +136,6 @@ regime section before treating any of this as live-ready.
 - Define "good" for the altcoin bot before building it (PRD Q3).
 - Absolute return, or beat buy-and-hold BTC? These give opposite answers (PRD Q4).
 - Is the recent-regime weakness decay, or a normal drawdown for this strategy class?
+- Worth testing next: cross-sectional momentum across many coins (a real
+  universe, not one survivor), and funding-rate carry — the two crypto anomalies
+  with the most credible out-of-sample literature. Neither is a "direction bot".

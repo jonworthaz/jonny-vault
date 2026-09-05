@@ -163,3 +163,23 @@ REGISTRY["trend_risk_managed"] = Strategy(
     {"lookback": (63, 90, 126), "target_vol": (0.25, 0.40),
      "buffer": (0.10, 0.20), "long_only": (False, True)},
 )
+
+
+def no_signal_ablation(df: pd.DataFrame, target_vol: float = 0.40,
+                       buffer: float = 0.15, vol_lookback: int = 30) -> Positions:
+    """The same risk machinery with the forecast deleted: always long.
+
+    This is the control experiment. If a strategy cannot beat this, its signal
+    contributes nothing and what looked like skill was the volatility overlay
+    plus a rising market.
+    """
+    flat_long = pd.Series(1.0, index=df.index)
+    scaled = volatility_target(flat_long, df, target_ann_vol=target_vol,
+                               lookback=vol_lookback, max_leverage=1.0)
+    return apply_trade_buffer(scaled, buffer=buffer)
+
+
+REGISTRY["no_signal_ablation"] = Strategy(
+    "no_signal_ablation", no_signal_ablation,
+    {"target_vol": (0.25, 0.40), "buffer": (0.10, 0.20)},
+)

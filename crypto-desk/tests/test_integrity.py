@@ -105,12 +105,20 @@ def test_costs_bite(df: pd.DataFrame) -> None:
           f"total={r_paid.metrics['total_return']:.1%}")
 
     # Crossing from short to long is two units of turnover, not one.
+    v = VENUES["cex_taker"]
     flip = pd.Series([0.0] + [1.0] * 5 + [-1.0] * 5, index=df.index[:11])
-    r = run_backtest(df.iloc[:11], flip, VENUES["cex_taker"])
-    per_side = VENUES["cex_taker"].cost_bps_per_side * 1e-4
-    check("a -1 -> +1 reversal is charged two units of turnover",
-          abs(r.costs.iloc[6] - 2 * per_side) < 1e-9,
-          f"charged={r.costs.iloc[6]:.6f} expected={2*per_side:.6f}")
+    r = run_backtest(df.iloc[:11], flip, v)
+    expected = 2 * v.cost_bps_per_side * 1e-4 + v.funding_bps_day * 1e-4
+    check("a -1 -> +1 reversal is charged two units of turnover, plus carry",
+          abs(r.costs.iloc[6] - expected) < 1e-9,
+          f"charged={r.costs.iloc[6]:.6f} expected={expected:.6f}")
+
+    # Borrow is charged on a short and not on a flat book.
+    # The last two bars have no forward return and are dropped, so pad the slice.
+    short = pd.Series([-1.0] * 5 + [0.0] * 7, index=df.index[:12])
+    rs = run_backtest(df.iloc[:12], short, v)
+    check("carry is charged while short and not while flat",
+          rs.costs.iloc[3] > 0 and abs(rs.costs.iloc[8]) < 1e-12)
 
 
 def test_fast_path_matches_loop(df: pd.DataFrame) -> None:
@@ -118,10 +126,13 @@ def test_fast_path_matches_loop(df: pd.DataFrame) -> None:
     print("\n5b. Vectorised fast path equals the explicit loop")
     rng = np.random.default_rng(3)
     pos = pd.Series(rng.choice([-1.0, 0.0, 0.5, 1.0], len(df)), index=df.index)
-    v = VENUES["cex_taker"]
+    # The fast path is only taken when there is no fixed cost and no minimum, so
+    # build a venue that qualifies, then force the loop with a negligible gas fee.
+    v = Venue("fast-path test", fee_bps=20, spread_bps=1, impact_bps=2,
+              funding_bps_day=0.02)
     fast = run_backtest(df, pos, v)
-    # Force the loop by giving the venue a negligible fixed cost.
-    slow_venue = Venue(v.name, v.fee_bps, v.spread_bps, v.impact_bps, gas_usd=1e-12)
+    slow_venue = Venue(v.name, v.fee_bps, v.spread_bps, v.impact_bps,
+                       gas_usd=1e-12, funding_bps_day=v.funding_bps_day)
     slow = run_backtest(df, pos, slow_venue)
     d = float((fast.net_returns - slow.net_returns).abs().max())
     check("fast path net returns match the loop", d < 1e-9, f"max delta={d:.3e}")

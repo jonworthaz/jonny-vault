@@ -58,10 +58,16 @@ class Venue:
 # small size. They are deliberately pessimistic: a backtest that only works under
 # optimistic costs is not a strategy, it is a wish.
 VENUES: dict[str, Venue] = {
-    "cex_maker": Venue("CEX spot, maker", fee_bps=10, spread_bps=0, impact_bps=1),
-    "cex_taker": Venue("CEX spot, taker", fee_bps=20, spread_bps=1, impact_bps=2),
+    # funding_bps_day on the shortable spot venues represents margin borrow at
+    # roughly 7% APR. Leaving it at zero silently subsidised every short-capable
+    # variant in the selection contest.
+    "cex_maker": Venue("CEX spot, maker", fee_bps=10, spread_bps=0, impact_bps=1,
+                       funding_bps_day=0.02, min_notional_usd=10.0),
+    "cex_taker": Venue("CEX spot, taker", fee_bps=20, spread_bps=1, impact_bps=2,
+                       funding_bps_day=0.02, min_notional_usd=10.0),
     "cex_spot_long_only": Venue(
-        "CEX spot, taker, long-only", fee_bps=20, spread_bps=1, impact_bps=2, can_short=False
+        "CEX spot, taker, long-only", fee_bps=20, spread_bps=1, impact_bps=2,
+        can_short=False, min_notional_usd=10.0,
     ),
     "perp_dex": Venue(
         "Perp DEX", fee_bps=4.5, spread_bps=1, impact_bps=2,

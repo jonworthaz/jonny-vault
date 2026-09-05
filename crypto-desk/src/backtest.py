@@ -74,19 +74,21 @@ def run_backtest(
 
     for date, p in pos.items():
         turnover = abs(p - prev_pos)
-        notional = max(abs(p) * equity, 1e-9)
+        traded_notional = turnover * equity
 
-        # Fixed costs are charged on the traded notional, which is what makes
-        # them punitive for small accounts.
-        traded_notional = max(turnover * equity, 1e-9)
+        # Below the venue minimum the order cannot be placed, so the position
+        # stays where it was. This is resolved BEFORE any cost is computed --
+        # charging funding on a position that was never taken was a real bug.
+        if 0 < traded_notional < venue.min_notional_usd:
+            p, turnover = prev_pos, 0.0
+
+        # Every term is expressed as a fraction of equity, so the fixed gas cost
+        # is divided by equity rather than by the traded notional: paying $0.05
+        # of gas costs the account 0.05/equity of its value regardless of how
+        # much of it was traded.
         variable = venue.cost_bps_per_side * 1e-4 * turnover
         fixed = (venue.gas_usd / equity) if turnover > 1e-12 else 0.0
         funding = venue.funding_bps_day * 1e-4 * abs(p)
-
-        # Below the venue minimum the trade simply cannot be placed.
-        if 0 < traded_notional < venue.min_notional_usd:
-            p, turnover, variable, fixed = prev_pos, 0.0, 0.0, 0.0
-
         cost = variable + fixed + funding
         gross = p * fwd.loc[date]
         net = gross - cost
@@ -115,7 +117,10 @@ def compute_metrics(res: BacktestResult, starting_equity: float) -> dict[str, fl
     n = len(net)
     if n == 0:
         return {}
-    years = n / TRADING_DAYS
+    # Rows are dropped where the forward return is unavailable, so counting rows
+    # under-states elapsed time and over-states CAGR. Use the calendar span.
+    span = (net.index[-1] - net.index[0]).days
+    years = max(span, 1) / TRADING_DAYS
     total = eq.iloc[-1] / starting_equity - 1.0
     # A blown-up account has no meaningful growth rate; report -100% rather than
     # taking a fractional power of a non-positive number.
@@ -128,7 +133,10 @@ def compute_metrics(res: BacktestResult, starting_equity: float) -> dict[str, fl
     dd = (eq / eq.cummax() - 1.0)
     maxdd = dd.min()
     turnover = pos.diff().abs().fillna(pos.abs()).sum()
-    traded = net[pos.shift().fillna(0) != 0]
+    # Positions are already indexed by signal date with the matching forward
+    # return at the same index, so no shift is needed here. The shift that used
+    # to be here mis-selected ~200 bars.
+    traded = net[pos != 0]
     return {
         "n_days": float(n),
         "years": round(years, 2),

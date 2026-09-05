@@ -34,6 +34,7 @@ pip3 install numpy pandas scikit-learn
 python3 tests/test_integrity.py     # prove the engine isn't lying
 python3 run_evaluation.py           # full evaluation -> reports/evaluation.md
 python3 run_evaluation.py --quick   # single venue, faster
+python3 run_cross_asset.py          # BTC vs ETH -> reports/cross_asset.md
 ```
 
 ## How it resists fooling itself
@@ -49,6 +50,9 @@ python3 run_evaluation.py --quick   # single venue, faster
 | Fitting to the test set | Purged, embargoed walk-forward; params chosen only on prior data | `walkforward.py` |
 | Shorting on spot | Venue capability flags enforced in the backtester | `costs.Venue.can_short` |
 | A verdict shaped by hope | Gate defined in advance, applied mechanically | `walkforward.verdict` |
+| **Beta mistaken for alpha** | Newey-West alpha vs buy-and-hold, plus a forecast-free control | `benchmark.py`, `strategies.no_signal_ablation` |
+| **A result fitted to one asset** | Identical pipeline replicated on ETH | `run_cross_asset.py` |
+| **A point estimate hiding a range** | Sensitivity grid over sample start x refit frequency | `run_evaluation.sensitivity` |
 | Illiquid-era fantasy returns | Pre-liquidity history truncated as a contiguous prefix | `data.trim_illiquid_history` |
 
 ## The funding gate
@@ -57,12 +61,28 @@ A strategy is only `FUNDABLE` if **every** clause holds:
 
 - positive out-of-sample Sharpe
 - bootstrap 95% CI on Sharpe excludes zero
-- Deflated Sharpe Ratio > 0.95 (survives the search that found it)
-- Probability of Backtest Overfitting < 0.5
+- Deflated Sharpe Ratio > 0.95, deflated at the **project-wide** search budget
+- Probability of Backtest Overfitting < 0.5, within comparable variant blocks
 - maximum drawdown better than −50%
+- **the edge is alive in the last 24 months** (not merely historical)
+- **Newey-West alpha t-statistic > 2.5 vs buy-and-hold** — it must be alpha, not beta
+- **it beats the no-signal ablation** — the same risk machinery with the forecast deleted
+
+The last three clauses were added after an adversarial review. Without them the
+gate returned `FUNDABLE` for a strategy that a *forecast-free* control beat.
 
 Clearing the gate authorises **paper trading**, not capital. Capital requires
 phase 4 sign-off (PRD §6).
+
+## Current verdict
+
+**REJECT — every strategy, both assets, every venue.** Nothing has measurable
+alpha; no strategy reaches an alpha t-statistic of 0.9. The no-signal control
+ranks *above* every strategy that actually predicts something.
+
+See [`reports/critic-review.md`](./reports/critic-review.md) for the review that
+overturned the first result, and [`reports/cross_asset.md`](./reports/cross_asset.md)
+for the ETH replication.
 
 ## Layout
 
@@ -70,7 +90,8 @@ phase 4 sign-off (PRD §6).
 crypto-desk/
 ├── PRD.md                  problem, success criteria, scope, phase gates
 ├── run_evaluation.py       the harness -> reports/
-├── data/btc_usd_daily.csv  BTC/USD daily OHLCV
+├── run_cross_asset.py      BTC vs ETH replication
+├── data/                   BTC and ETH daily OHLCV
 ├── src/
 │   ├── data.py             loading + integrity checks + return alignment
 │   ├── costs.py            venue cost models, breakeven accuracy
@@ -85,8 +106,8 @@ crypto-desk/
 
 ## Deliberate limitations
 
-- **Daily bars, BTC only, one vendor.** No intraday microstructure; conclusions
-  do not automatically transfer to other assets.
+- **Daily bars, two assets, one vendor.** No intraday microstructure, and a
+  single data provider cannot detect its own artifacts.
 - **No live trading path.** By design. See PRD §8.
 - **UK tax not modelled.** Every disposal is a CGT event; a high-turnover
   strategy carries a real admin burden that no backtest captures.

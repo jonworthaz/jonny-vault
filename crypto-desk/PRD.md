@@ -1,6 +1,6 @@
 # PRD — Crypto Desk
 
-**Status:** Draft, awaiting sign-off
+**Status:** Phases 0–2 complete. Outcome: **do not deploy capital.**
 **Owner:** Jonny (hello@shelle.uk)
 **Date:** 2026-09-05
 **Decision required:** Phase gate 1 (see §6). Nothing below phase 3 touches money.
@@ -33,11 +33,11 @@ edge, don't deploy" is a successful outcome of this project.
 | # | Criterion | Measure | Status |
 |---|---|---|---|
 | S1 | Every claim in the source proposal is tested against real data | Numbers published, reproducible | ✅ done |
-| S2 | Backtester cannot silently look ahead | Automated leakage tests pass | 🔄 in review |
+| S2 | Backtester cannot silently look ahead | Automated leakage tests pass | ✅ verified by critic |
 | S3 | Costs are explicit, pessimistic and per-venue | Venue model with breakeven accuracy | ✅ done |
 | S4 | Results are deflated for search intensity | DSR + PBO reported on every result | ✅ done |
-| S5 | An independent expert critic reviews and can veto | Written adversarial review on file | 🔄 in review |
-| S6 | A strategy passes the full gate, or is honestly rejected | `verdict()` output | 🔄 |
+| S5 | An independent expert critic reviews and can veto | Written adversarial review on file | ✅ **critic vetoed** |
+| S6 | A strategy passes the full gate, or is honestly rejected | `verdict()` output | ✅ **rejected** |
 | S7 | If deployed, paper trading precedes capital by ≥90 days | Live-vs-backtest tracking report | ⛔ not started |
 
 **Profitability target (only meaningful if S1–S6 pass):** beat buy-and-hold BTC on
@@ -102,9 +102,9 @@ Four principles, each a direct response to a failure mode in the source proposal
 | Phase | Work | Gate to pass | Money at risk |
 |---|---|---|---|
 | 0 ✅ | Evaluate the proposal against real data | Quantified verdict delivered | £0 |
-| 1 🔄 | Research platform + walk-forward + critic review | Critic signs off on methodology; leakage tests pass | £0 |
-| 2 | Strategy evaluation to a `FUNDABLE`/`REJECT` verdict | A strategy clears the gate, **and** shows edge in the most recent 24 months | £0 |
-| 3 | Paper trading, ≥90 days, live data, real cost assumptions | Realised Sharpe within bootstrap CI of backtest; slippage within model | £0 |
+| 1 ✅ | Research platform + walk-forward + critic review | Critic reviewed; leakage tests pass; four defects found and fixed | £0 |
+| 2 ✅ | Strategy evaluation to a `FUNDABLE`/`REJECT` verdict | **REJECT on every strategy, both assets, every venue** | £0 |
+| 3 ⛔ | Paper trading, ≥90 days, live data, real cost assumptions | Not reached — nothing cleared the gate | £0 |
 | 4 | Capital deployment, staged | **Explicit written sign-off from Jonny.** Start at 10% of capital | £100 → staged |
 | 5 | Scale on realised, not backtested, performance | Each step-up requires a fresh 60-day live window | staged |
 
